@@ -1,12 +1,27 @@
 # Built-in
 import os
 import re
-from typing import Dict, Any, Optional
+from typing import List, Dict, Any, Optional
 
 
-def create_structure_from_dict(
-    directory_structure: Dict[str, Any], parent_path: str = "."
-) -> None:
+def replace_backward_slashes(path: str) -> str:
+    """Replaces backward slashes with forward slashes in a given path.
+
+    Args:
+        path (str): The input path containing backward slashes.
+
+    Returns:
+        str: The path with all backward slashes replaced by forward slashes.
+
+    Examples:
+        >>> replace_backward_slashes("C:\\Users\\User\\Documents")
+        "C:/Users/User/Documents"
+    """
+
+    return path.replace("\\", "/")
+
+
+def create_structure_from_dict(directory_structure: Dict[str, Any], parent_path: str = ".") -> None:
     """Recursively creates folders and files based on the provided directory
     structure.
 
@@ -30,6 +45,33 @@ def create_structure_from_dict(
         else:
             with open(path, "w") as file:
                 file.write(content)
+
+
+def replace_in_json(data: Dict, replacements: Dict) -> Dict:
+    """Replaces placeholders in a JSON object with values from a dictionary.
+
+    Args:
+        data (Dict): The JSON data as a dictionary.
+        replacements (Dict): A dictionary mapping placeholder strings to replacement values.
+
+    Returns:
+        Dict: A new dictionary with the replacements made.
+    """
+
+    if isinstance(data, str):
+        # Handle string values (e.g., within quotes)
+        for placeholder, replacement in replacements.items():
+            data = data.replace(placeholder, replacement)
+        return data
+    elif isinstance(data, dict):
+        # Recursively replace in dictionaries
+        return {replace_in_json(k, replacements): replace_in_json(v, replacements) for k, v in data.items()}
+    elif isinstance(data, list):
+        # Recursively replace in lists
+        return [replace_in_json(item, replacements) for item in data]
+    else:
+        # Return other data types unchanged
+        return data
 
 
 def get_next_version(path: str, as_string: bool = False) -> int:
@@ -108,9 +150,7 @@ class FXWorkfileTemplate:
         version (str): The version number.
     """
 
-    def __init__(
-        self, sequence: str, shot: str, step: str, task: str, version: str
-    ):
+    def __init__(self, sequence: str, shot: str, step: str, task: str, version: str):
         self.sequence = sequence
         self.shot = shot
         self.step = step
@@ -166,8 +206,6 @@ class FXWorkfileTemplate:
 
 if __name__ == "__main__":
 
-    template = FXWorkfileTemplate(
-        sequence="000", shot="0010", step="LGT", task="main", version="v001"
-    )
+    template = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
     template_a = FXWorkfileTemplate.from_string(str(template))
     template_b = FXWorkfileTemplate.from_string("000_0020_LGT_main_v001")

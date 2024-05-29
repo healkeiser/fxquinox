@@ -1,5 +1,6 @@
 {
     "<project>": {
+        "<project>_info.json": "{\"project_name\": \"<project>\", \"project_path\": \"<project_path>\"}",
         ".pipeline": {
             "custom_modules": {
                 "README.md": ""
@@ -9,7 +10,8 @@
             }
         },
         "production": {
-            "shots": {}
+            "shots": {},
+            "assets": {}
         }
     }
 }

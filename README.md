@@ -1,2 +1,4 @@
 # fxquinox
-Personal pipeline for feature animation and VFX projects.
+
+
+USD centric pipeline for feature animation and VFX projects.

@@ -1,4 +1,36 @@
-import os
+# Built-in
+import json
+from pathlib import Path
+from functools import lru_cache
+
+# Internal
+import fxlog, fxfiles
+
+# Log
+_logger = fxlog.get_logger(__name__)
+
+
+@lru_cache(maxsize=None)
+def _get_structure_dict(entity: str) -> dict:
+    """Reads the project structure from the JSON file and returns it.
+
+    Args:
+        entity (str): The entity type for which the structure is needed.
+
+    Returns:
+        dict: The project structure dictionary.
+
+    Note:
+        This function is decorated with lru_cache to avoid reading the file every time.
+
+    """
+
+    structure_path = Path(__file__).parent / "structures" / f"{entity}_structure.json"
+    if structure_path.exists():
+        return json.loads(structure_path.read_text())
+    else:
+        _logger.error(f"Structure file '{structure_path}' not found")
+        return {}
 
 
 def create_project(project_name: str, base_dir: str = ".") -> None:
@@ -23,21 +55,65 @@ def create_project(project_name: str, base_dir: str = ".") -> None:
         Project 'my_project' created in '/path/to/your/directory'.
     """
 
-    # Define the project structure
-    project_structure = {
-        "src": "source code",
-        "data": "data files",
-        "docs": "documentation",
-    }
+    # Get the project directory to create
+    base_dir_path = Path(base_dir)
+    project_dir = base_dir_path / project_name
 
-    # Create the project directory
-    project_dir = os.path.join(base_dir, project_name)
-    os.makedirs(project_dir, exist_ok=True)
+    # Get the project structure dictionary
+    structure_dict = _get_structure_dict("project")
 
-    # Create subdirectories
-    for subdir, subdir_desc in project_structure.items():
-        subdir_path = os.path.join(project_dir, subdir)
-        os.makedirs(subdir_path, exist_ok=True)
-        print(f"Created '{subdir}' directory for {subdir_desc}.")
+    # Replace the placeholders in the structure dictionary
+    structure_dict = fxfiles.replace_in_json(
+        structure_dict,
+        {
+            "<project>": project_name,
+            "<project_path>": fxfiles.replace_backward_slashes(str(project_dir)),
+        },
+    )
 
-    print(f"Project '{project_name}' created in '{base_dir}'.")
+    # If the project directory already exists, ask for confirmation
+    if base_dir_path.exists():
+        confirmation = input(
+            f"There's already a project '{project_name}' in '{base_dir}', do you want to continue? (y/N): "
+        )
+        if confirmation.lower() != "y":
+            _logger.info("Project creation cancelled")
+            return
+
+    # Create the project directory and its structure
+    try:
+        fxfiles.create_structure_from_dict(structure_dict, str(base_dir_path))
+        _logger.info(f"Project '{project_name}' created in '{str(base_dir_path)}'")
+    except Exception as e:
+        _logger.error(f"Failed to create project '{project_name}': {str(e)}")
+
+
+def create_sequence(sequence_name: str, base_dir: str = ".") -> None:
+    """_summary_
+
+    Args:
+        sequence_name (str): _description_
+        base_dir (str, optional): _description_. Defaults to ".".
+    """
+
+
+def create_shot(shot_name: str, base_dir: str = ".") -> None:
+    """_summary_
+
+    Args:
+        shot_name (str): _description_
+        base_dir (str, optional): _description_. Defaults to (`"."`).
+    """
+
+
+def create_asset(asset_name: str, base_dir: str = ".") -> None:
+    """_summary_
+
+    Args:
+        asset_name (str): _description_
+        base_dir (str, optional): _description_. Defaults to (`"."`).
+    """
+
+
+if __name__ == "__main__":
+    create_project("test", "D:\Projects\.test")

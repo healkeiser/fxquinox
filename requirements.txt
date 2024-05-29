@@ -1,0 +1,2 @@
+fxgui>=2.2.4
+colorama>=0.4.6
