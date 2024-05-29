@@ -1,0 +1,15 @@
+{
+    "<project>": {
+        ".pipeline": {
+            "custom_modules": {
+                "README.md": ""
+            },
+            "workfiles_presets": {
+                "README.md": ""
+            }
+        },
+        "production": {
+            "shots": {}
+        }
+    }
+}

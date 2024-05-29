@@ -1,3 +1,9 @@
+# Test files
+_*.py
+
+# Houdini
+backup/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

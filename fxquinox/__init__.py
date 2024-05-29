@@ -1,6 +1,7 @@
-from . import core, entities
+from . import fxcore, fxentities, fxfiles
 
 __all__ = (
-    core,
-    entities,
+    fxcore,
+    fxentities,
+    fxfiles,
 )

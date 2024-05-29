@@ -1,0 +1,45 @@
+{
+	"path": [
+		"$FXQUINOX",
+		"FXQUINOX_PLUGIN"
+	],
+	"load_package_once": true,
+	"enable": true,
+	"version": "0.0.1",
+	"env": [
+		{
+			"FXQUINOX": [
+				{
+					"houdini_os == 'windows'": "$SERVER_ROOT/Projects/Code/fxquinox"
+				},
+				{
+					"houdini_os == 'linux'": ""
+				},
+				{
+					"houdini_os == 'macos'": ""
+				}
+			]
+		},
+		{
+			"FXQUINOX_PLUGIN": [
+				{
+					"houdini_os == 'windows'": "$SERVER_ROOT/Projects/Code/fxquinox/plugins/houdini"
+				},
+				{
+					"houdini_os == 'linux'": ""
+				},
+				{
+					"houdini_os == 'macos'": ""
+				}
+			]
+		},
+		{
+			"PYTHONPATH": [
+				"$FXQUINOX",
+				{
+					"method": "append"
+				}
+			]
+		}
+	]
+}
