@@ -1,0 +1,123 @@
+# Base for MkDocs.
+
+# Author: Valentin Beaumont
+# Mail: valentin.onze@gmail.com
+
+###### CODE ####################################################################
+
+site_name: fxquinox
+site_author: Valentin Beaumont
+copyright: Copyright &copy; 2021 - 2024 Valentin Beaumont
+repo_url: https://github.com/healkeiser/fxquinox
+repo_name: healkeiser/fxquinox
+edit_uri: edit/main/docs/
+
+###### Custom ##################################################################
+
+extra_css:
+  - stylesheets/extra.css
+
+###### Theme ###################################################################
+
+theme:
+  name: material
+  language: en
+  favicon: images/fxquinox_logo_background_light.svg
+  logo: images/fxquinox_logo_light.svg
+  icon:
+    repo: material/github
+  features:
+    - announce.dismiss
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.annotate
+    - content.tooltips
+    - content.tabs.link
+    - content.action.edit
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+###### Markdown extensions #####################################################
+
+markdown_extensions:
+  - footnotes
+  - admonition
+  - attr_list
+  - md_in_html
+  - def_list
+  - tables
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.b64
+  - pymdownx.smartsymbols
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+  - git-authors
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - git-committers:
+      repository: healkeiser/fxgui
+      branch: main
+      # token: !!python/object/apply:os.getenv ["GITHUB_API_KEY"]
+  - mkdocstrings:
+      enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
+      # custom_templates: templates
+      handlers:
+        python:
+          options:
+            # paths: [src]
+            heading_level: 2
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            separate_signature: true
+            parameter_headings: true
+            line_length: 80
+            show_signature_annotations: true
+            signature_crossrefs: true
+            docstring_style: google
+            docstring_section_style: table
+            show_if_no_docstring: false
+            show_docstring_attributes: true
+            annotations_path: brief
+            show_root_heading: false
+            show_root_full_path: false
+            show_source: false
+
+###### Navigation ##############################################################
+
+nav:
+  - Home: index.md
