@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1480</width>
+    <height>715</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QTabWidget" name="tab_widget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>331</width>
+     <height>691</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>1</number>
+   </property>
+   <widget class="QWidget" name="tab_assets">
+    <attribute name="title">
+     <string>Assets</string>
+    </attribute>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QFrame" name="frame_filter_assets">
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_icon_filter_assets">
+          <property name="maximumSize">
+           <size>
+            <width>18</width>
+            <height>18</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Icon</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="line_edit_filter_assets"/>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTreeWidget" name="tree_widget_assets">
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="tab_shots">
+    <attribute name="title">
+     <string>Shots</string>
+    </attribute>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QFrame" name="frame_filter_shots">
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_icon_filter_shots">
+          <property name="maximumSize">
+           <size>
+            <width>18</width>
+            <height>18</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Icon</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="line_edit_filter_shots"/>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTreeWidget" name="tree_widget_shots">
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="group_box_workfiles">
+   <property name="geometry">
+    <rect>
+     <x>780</x>
+     <y>30</y>
+     <width>691</width>
+     <height>671</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Workfiles</string>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_5">
+    <item>
+     <widget class="QTreeWidget" name="treeWidget">
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QGroupBox" name="group_box_info">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>520</y>
+     <width>421</width>
+     <height>181</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Info</string>
+   </property>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>111</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Frame Range</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QSplitter" name="splitter">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>30</y>
+     <width>421</width>
+     <height>491</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <widget class="QGroupBox" name="group_box_steps">
+    <property name="title">
+     <string>Steps</string>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <widget class="QListWidget" name="list_steps"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QGroupBox" name="group_box_tasks">
+    <property name="title">
+     <string>Tasks</string>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_4">
+     <item>
+      <widget class="QListWidget" name="list_tasks"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,7 +1,7 @@
 # Built-in
 import os
 import re
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 
 
 def replace_backward_slashes(path: str) -> str:

@@ -1,0 +1,11 @@
+{
+    "Plugins": [
+        {
+            "LibraryPath": "",
+            "Name": "usdFxquinox",
+            "ResourcePath": ".",
+            "Root": ".",
+            "Type": "resource"
+        }
+    ]
+}
