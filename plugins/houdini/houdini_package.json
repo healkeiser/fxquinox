@@ -40,6 +40,14 @@
 					"method": "append"
 				}
 			]
+		},
+		{
+			"PXR_PLUGIN_PATH": [
+				"$FXQUINOX/plugins/usd/usdFxquinox",
+				{
+					"method": "append"
+				}
+			]
 		}
 	]
 }
