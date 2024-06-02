@@ -8,7 +8,7 @@
 </p>
 
 > [!WARNING]  
-> This project is a WIP.
+> This project is a very early WIP.
 
 <div align="center">
 
