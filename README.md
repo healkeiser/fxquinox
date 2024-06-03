@@ -18,7 +18,7 @@
   <h3 align="center">fxquinox</h3>
 
   <p align="center">
-    USD centric pipeline for feature animation and VFX projects.
+    USD centric pipeline for feature animation and VFX projects
     <br/>
     <br/>
     <br/>
