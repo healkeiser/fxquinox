@@ -7,6 +7,9 @@
   <img src="https://img.shields.io/badge/-Linux-E95420?style=for-the-badge&logo=linux" alt="Compatible with Linux"/></a>
 </p>
 
+> [!WARNING]  
+> This project is a very early WIP.
+
 <div align="center">
 
   ![Logo](https://raw.githubusercontent.com/healkeiser/fxquinox/main/images/fxquinox_logo_background_dark.svg#gh-light-mode-only)
@@ -15,7 +18,7 @@
   <h3 align="center">fxquinox</h3>
 
   <p align="center">
-    USD centric pipeline for feature animation and VFX projects.
+    USD centric pipeline for feature animation and VFX projects
     <br/>
     <br/>
     <br/>
