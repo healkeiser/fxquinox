@@ -1,0 +1,163 @@
+#usda 1.0
+(
+    subLayers = [
+        @usd/schema.usda@
+    ]
+)
+
+over "GLOBAL" (
+    customData = {
+        string libraryName       = "usdFxquinox"
+        string libraryPath       = "."
+        string libraryPrefix     = "usdFxquinox"
+        bool skipCodeGeneration = true
+    }
+)
+{
+}
+
+class FxquinoxContextInfo "FxquinoxContextInfo" (
+    doc = """Holder for fxquinox-specific context information."""
+    inherits = </Typed>
+    customData = {
+        string className = "FxquinoxContextInfo"
+        }
+    )
+{
+    string fxquinox:project (
+        doc = """The project name."""
+    )
+
+    asset fxquinox:projectRoot (
+        doc = """The project root path."""
+    )
+
+    string fxquinox:entity (
+        doc = """The current context entity (asset or shot)."""
+    )
+
+    string fxquinox:assetType (
+        doc = """If the entity is an asset, the type of asset."""
+    )
+
+    string fxquinox:asset (
+        doc = """If the entity is an asset, the asset."""
+    )
+
+    string fxquinox:sequence (
+        doc = """If the entity is a shot, the sequence."""
+    )
+
+    string fxquinox:shot (
+        doc = """If the entity is a shot, the shot."""
+    )
+
+    string fxquinox:step (
+        doc = """The context pipeline step."""
+    )
+
+    string fxquinox:task (
+        doc = """The context pipeline task."""
+    )
+
+    string fxquinox:user (
+        doc = """The current username."""
+    )
+
+    string fxquinox:hostname (
+        doc = """The current hostname (machine name)."""
+    )
+}
+
+
+class FxquinoxRenderPass "FxquinoxRenderPass" (
+    doc = """Define a Fxquinox render pass."""
+    inherits = </Typed>
+    customData = {
+        string className     = "FxquinoxRenderPass"
+    }
+)
+{
+    uniform token fxquinox:passType (
+        doc = """A string used to categorize differently structured
+        or executed types of passes within a customized pipeline.
+
+        For example, when multiple DCC's (e.g. Houdini, Katana, Nuke)
+        each compute and contribute different Products to a final result,
+        it may be clearest and most flexible to create a separate
+        RenderPass for each.
+
+        """
+        )
+
+    uniform string[] fxquinox:command (
+        doc = """The command to run in order to generate
+        renders for this pass.  The job submission code can use
+        this to properly send tasks to the job scheduling software
+        that will generate products.
+
+        The command can contain variables that will be substituted
+        appropriately during submission, as seen in the example below
+        with {fxquinox:outputPicture}.
+
+        For example:
+        command[0] = "prman"
+        command[1] = "-progress"
+        command[2] = "-pixelvariance"
+        command[3] = "-0.15"
+        command[4] = "{fxquinox:outputPicture}" # the fxquinox:outputPicture property will be substituted
+
+        """
+    )
+
+    rel fxquinox:renderSource (
+        doc = """The source prim to render from.  If _fxquinox:outputPicture_ is not present,
+        the source is assumed to be a RenderSettings prim present in the current
+        Usd stage. If fxquinox:outputPicture is present, the source should be found in the
+        file there. This relationship might target a string attribute on this
+        or another prim that identifies the appropriate object in the external
+        container.
+
+        For example, for a Usd-backed pass, this would point to a RenderSettings
+        prim.  Houdini passes would point to a Rop.  Nuke passes would point to
+        a write node.
+        """
+    )
+
+    rel fxquinox:inputPasses (
+        doc = """The set of other Passes that this Pass depends on
+        in order to be constructed properly.  For example, a Pass A
+        may generate a texture, which is then used as an input to
+        Pass B.
+
+        By default, usdRender makes some assumptions about the
+        relationship between this prim and the prims listed in inputPasses.
+        Namely, when per-frame tasks are generated from these pass prims,
+        usdRender will assume a one-to-one relationship between tasks
+        that share their frame number.  Consider a pass named 'composite'
+        whose _inputPasses_ targets a Pass prim named 'beauty`.
+        By default, each frame for 'composite' will depend on the
+        same frame from 'beauty':
+        beauty.1 -> composite.1
+        beauty.2 -> composite.2
+        etc
+
+        The consumer of this RenderPass graph of inputs will need to resolve
+        the transitive dependencies.
+        """
+    )
+
+    uniform asset fxquinox:outputPicture (
+    )
+
+    uniform asset fxquinox:outpuRenderUSD (
+    )
+
+    uniform asset fxquinox:outputCacheUSD (
+    )
+
+    uniform bool fxquinox:denoise:enable = false (
+        doc = """When True, this FxquinoxRenderPass pass should be denoised."""
+    )
+}
+

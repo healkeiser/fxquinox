@@ -20,8 +20,8 @@
             },
             "LibraryPath": "",
             "Name": "usdFxquinox",
-            "ResourcePath": ".",
-            "Root": ".",
+            "ResourcePath": "resources",
+            "Root": "..",
             "Type": "resource"
         }
     ]
