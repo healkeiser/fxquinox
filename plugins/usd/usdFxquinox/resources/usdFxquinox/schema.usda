@@ -20,7 +20,7 @@ class FxquinoxContextInfo "FxquinoxContextInfo" (
     doc = """Holder for fxquinox-specific context information."""
     inherits = </Typed>
     customData = {
-        string className = "FxquinoxContextInfo"
+        string className = "ContextInfo"
         }
     )
 {
@@ -74,7 +74,7 @@ class FxquinoxRenderPass "FxquinoxRenderPass" (
     doc = """Define a Fxquinox render pass."""
     inherits = </Typed>
     customData = {
-        string className     = "FxquinoxRenderPass"
+        string className     = "RenderPass"
     }
 )
 {
