@@ -1,0 +1,19 @@
+{
+    "Plugins": [
+        {
+            "Info": {
+                "Types": {
+                    "CachedResolver": {
+                        "bases": ["ArResolver"],
+                        "implementsContexts" : true
+                    }
+                }
+            },
+            "LibraryPath": "../lib/cachedResolver.dll",
+            "Name": "cachedResolver",
+            "Root": ".",
+            "Type": "library"
+        }
+    ]
+}
+

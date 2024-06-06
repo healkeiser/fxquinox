@@ -1,53 +1,59 @@
 {
 	"path": [
-		"$FXQUINOX",
-		"FXQUINOX_PLUGIN"
+		"$FXQUINOX_ROOT",
+		"$FXQUINOX_HOUDINI_PLUGIN"
 	],
 	"load_package_once": true,
 	"enable": true,
 	"version": "0.0.1",
 	"env": [
 		{
-			"FXQUINOX": [
-				{
-					"houdini_os == 'windows'": "$SERVER_ROOT/Projects/Code/fxquinox"
-				},
-				{
-					"houdini_os == 'linux'": ""
-				},
-				{
-					"houdini_os == 'macos'": ""
-				}
-			]
+			"FXQUINOX_ROOT": "$SERVER_ROOT/Projects/Code/fxquinox"
 		},
 		{
-			"FXQUINOX_PLUGIN": [
-				{
-					"houdini_os == 'windows'": "$SERVER_ROOT/Projects/Code/fxquinox/plugins/houdini"
-				},
-				{
-					"houdini_os == 'linux'": ""
-				},
-				{
-					"houdini_os == 'macos'": ""
-				}
-			]
+			"FXQUINOX_PLUGINS": "$FXQUINOX_ROOT/plugins"
 		},
 		{
-			"PYTHONPATH": [
-				"$FXQUINOX",
-				{
-					"method": "append"
-				}
-			]
+			"FXQUINOX_HOUDINI_PLUGIN": "$FXQUINOX_PLUGINS/houdini"
 		},
 		{
-			"PXR_PLUGIN_PATH": [
-				"$FXQUINOX/plugins/usd/usdFxquinox",
-				{
-					"method": "append"
-				}
-			]
+			"FXQUINOX_USD_PLUGINS": "$FXQUINOX_PLUGINS/usd"
+		},
+		{
+			"USD_ASSET_RESOLVER": "$FXQUINOX_USD_PLUGINS/usdAssetResolver"
+		},
+		{
+			"RESOLVER_NAME": "cachedResolver"
+		},
+		{
+			"PATH": {
+				"value": "$USD_ASSET_RESOLVER/$RESOLVER_NAME/lib",
+				"method": "append"
+			}
+		},
+		{
+			"PXR_PLUGIN_PATH": {
+				"value": [
+					"$FXQUINOX_USD_PLUGINS/usdFxquinox/resources",
+					"$USD_ASSET_RESOLVER/$RESOLVER_NAME/resources"
+				],
+				"method": "append"
+			}
+		},
+		{
+			"PYTHONPATH": {
+				"value": [
+					"$FXQUINOX_ROOT",
+					"$USD_ASSET_RESOLVER/$RESOLVER_NAME/lib/python"
+				],
+				"method": "append"
+			}
+		},
+		{
+			"TF_DEBUG": "AR_RESOLVER_INIT"
+		},
+		{
+			"AR_CACHEDRESOLVER_ENV_EXPOSE_RELATIVE_PATH_IDENTIFIERS=1": 1
 		}
 	]
 }

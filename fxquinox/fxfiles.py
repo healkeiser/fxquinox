@@ -1,7 +1,19 @@
 # Built-in
 import os
 import re
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
+
+# Internal
+try:
+    from fxquinox import fxlog
+except ModuleNotFoundError:
+    import fxlog
+
+# Log
+_log = fxlog.get_logger(__name__)
+
+
+###### CODE ####################################################################
 
 
 def replace_backward_slashes(path: str) -> str:
@@ -74,7 +86,7 @@ def replace_in_json(data: Dict, replacements: Dict) -> Dict:
         return data
 
 
-def get_next_version(path: str, as_string: bool = False) -> int:
+def get_next_version(path: str, as_string: bool = False) -> Union[int, str]:
     """Determines the next version number based on the existing versioned files
     in the given directory.
 
@@ -89,7 +101,7 @@ def get_next_version(path: str, as_string: bool = False) -> int:
             a string with the 'v' prefix. Defaults to `False`.
 
     Returns:
-        int: The next version number to be used, incremented by one from the
+        Union[int, str]: The next version number to be used, incremented by one from the
             highest existing version. Returns 1 if no versioned files are found.
 
     Examples:
@@ -205,7 +217,10 @@ class FXWorkfileTemplate:
 
 
 if __name__ == "__main__":
-
-    template = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
-    template_a = FXWorkfileTemplate.from_string(str(template))
-    template_b = FXWorkfileTemplate.from_string("000_0020_LGT_main_v001")
+    _template = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
+    template_int = FXWorkfileTemplate.from_string(str(_template))
+    template_str = str(template_int)
+    _log.info(
+        f"Test: {template_int.sequence} {template_int.shot} {template_int.step} {template_int.task} {template_int.version}"
+    )
+    _log.info(f"Test: {template_str}")
