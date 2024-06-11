@@ -32,7 +32,7 @@
 			}
 		},
 		{
-			"PXR_PLUGIN_PATH": {
+			"PXR_PLUGINPATH_NAME": {
 				"value": [
 					"$FXQUINOX_USD_PLUGINS/usdFxquinox/resources",
 					"$USD_ASSET_RESOLVER/$RESOLVER_NAME/resources"
