@@ -34,3 +34,6 @@ setup(
     ],
     include_package_data=True,
 )
+
+# To install as an editable package:
+# python -m pip install -e .

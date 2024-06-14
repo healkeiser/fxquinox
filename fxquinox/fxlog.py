@@ -48,18 +48,3 @@ def get_logger(logger_name):
     custom_logger.propagate = False
 
     return custom_logger
-
-
-def main():
-    # Create different loggers
-    app_logger = get_logger("app_logger")
-    module_logger = get_logger("module_logger")
-    app_logger.debug("This is a debug message from the main application")
-    app_logger.info("This is an info message from the main application")
-    module_logger.warning("This is a warning message from a module")
-    module_logger.error("This is an error message from a module")
-    module_logger.critical("This is a critical message from a module")
-
-
-if __name__ == "__main__":
-    main()

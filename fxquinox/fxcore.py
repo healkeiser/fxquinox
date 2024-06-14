@@ -1,10 +1,19 @@
+"""The fxcore module provides a set of tools for managing and automating the creation of projects, sequences, shots,
+and assets within a digital production environment.
+It leverages a JSON-based project structure definition to ensure consistency across different projects.
+The module includes functionalities to create new projects with a predefined directory structure, as well as to
+add sequences, shots, and assets to existing projects. It is designed to be easily integrated into larger pipeline
+tools or used standalone for small to medium-sized projects.
+"""
+
 # Built-in
 import json
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
+import sys
 
 # Internal
-import fxlog, fxfiles
+from fxquinox import fxlog, fxfiles, _fxcli
 
 # Log
 _logger = fxlog.get_logger(__name__)
@@ -21,8 +30,7 @@ def _get_structure_dict(entity: str) -> dict:
         dict: The project structure dictionary.
 
     Note:
-        This function is decorated with lru_cache to avoid reading the file every time.
-
+        This function is decorated with `lru_cache` to avoid reading the file every time.
     """
 
     structure_path = Path(__file__).parent / "structures" / f"{entity}_structure.json"
@@ -34,9 +42,7 @@ def _get_structure_dict(entity: str) -> dict:
 
 
 def create_project(project_name: str, base_dir: str = ".") -> None:
-    """Creates a new project directory with the specified name.
-
-    This function creates a new directory with the given project name in the
+    """Creates a new directory with the given project name in the
     specified base directory. It also creates subdirectories for storing the
     project's source code, data, and documentation.
 
@@ -72,7 +78,7 @@ def create_project(project_name: str, base_dir: str = ".") -> None:
     )
 
     # If the project directory already exists, ask for confirmation
-    if base_dir_path.exists():
+    if project_dir.exists():
         confirmation = input(
             f"There's already a project '{project_name}' in '{base_dir}', do you want to continue? (y/N): "
         )
@@ -116,4 +122,7 @@ def create_asset(asset_name: str, base_dir: str = ".") -> None:
 
 
 if __name__ == "__main__":
-    create_project("test", "D:\Projects\.test")
+    _fxcli.main(
+        target_module=sys.modules[__name__],
+        description=__doc__ if __doc__ else __name__,
+    )

@@ -1,5 +1,5 @@
-# Test files
-_*.py
+# Test folder
+_tests/
 
 # Houdini
 backup/

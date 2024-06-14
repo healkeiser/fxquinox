@@ -4,10 +4,7 @@ import re
 from typing import Dict, Any, Optional, Union
 
 # Internal
-try:
-    from fxquinox import fxlog
-except ModuleNotFoundError:
-    import fxlog
+from fxquinox import fxlog
 
 # Log
 _log = fxlog.get_logger(__name__)
