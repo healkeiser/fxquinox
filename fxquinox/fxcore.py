@@ -6,9 +6,10 @@ from functools import lru_cache
 from pathlib import Path
 import sys
 import warnings
+from typing import Union
 
 # Internal
-from fxquinox import fxlog, fxfiles
+from fxquinox import fxlog, fxfiles, fxentities
 
 
 # Log
@@ -22,7 +23,9 @@ warnings.filterwarnings("ignore", message=".*found in sys.modules after import o
 # Globals
 _PROJECT = "project"
 _SEQUENCE = "sequence"
+_SHOTS_DIR = "shots"
 _SHOT = "shot"
+_ASSETS_DIR = "assets"
 _ASSET = "asset"
 
 
@@ -73,7 +76,7 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> N
 
     if entity_dir.exists():
         confirmation = input(
-            f"There's already a {entity_type} '{entity_name}' in '{base_dir}', do you want to continue? (y/N): "
+            f"There's already a {entity_type} '{entity_name}' in '{base_dir_path.resolve().as_posix()}', do you want to continue? (y/N): "
         )
         if confirmation.lower() != "y":
             _logger.info(f"{entity_type.capitalize()} creation cancelled")
@@ -81,12 +84,12 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> N
 
     try:
         fxfiles.create_structure_from_dict(structure_dict, str(base_dir_path))
-        _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{str(base_dir_path)}'")
+        _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{base_dir_path.resolve().as_posix()}'")
     except Exception as e:
         _logger.error(f"Failed to create {entity_type} '{entity_name}': {str(e)}")
 
 
-def _check_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> bool:
+def _check_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> Union[bool, dict]:
     """Checks if a the JSON sidecar exists for a given entity type in the
     specified base directory. If it exists, it checks if the entity type
     matches.
@@ -98,17 +101,27 @@ def _check_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> bo
             Defaults to the current directory.
 
     Returns:
-        bool: `True` if the entity exists and the type matches,
-            `False` otherwise.
+        Union[bool, dict]: A tuple containing a boolean indicating if the entity
+            is valid and a dictionary with the entity information.
     """
 
     info_file = Path(base_dir, f".{entity_name}_info.json")
     if not info_file.exists():
-        return False
+        _logger.warning(f"Info file '{info_file}' not found")
+        return False, {}
 
     entity_info = json.loads(info_file.read_text())
     if entity_info.get("entity_type") == entity_type:
-        return True
+        return True, entity_info
+
+
+###### Projects
+
+
+class InvalidProjectError(Exception):
+    """Exception raised when a project is not valid."""
+
+    pass
 
 
 def create_project(project_name: str, base_dir: str = ".") -> None:
@@ -123,16 +136,34 @@ def create_project(project_name: str, base_dir: str = ".") -> None:
     _create_entity(_PROJECT, project_name, base_dir)
 
 
-def check_project(project_name: str, base_dir: str = ".") -> None:
-    """Checks if a project directory structure exists.
+def check_project(project_name: str, base_dir: str = ".") -> Union[bool, dict]:
+    """Checks if a valid project directory structure exists.
 
     Args:
         project_name (str): The name of the project to check.
         base_dir (str): The base directory where the project should be located.
             Defaults to the current directory.
+
+    Returns:
+        bool: `True` if the project is valid, `False` otherwise.
     """
 
     return _check_entity(_PROJECT, project_name, base_dir)
+
+
+###### Sequences
+
+
+class InvalidSequenceError(Exception):
+    """Exception raised when a sequence is not valid."""
+
+    pass
+
+
+class InvalidSequencesDirectoryError(Exception):
+    """Exception raised when a sequences directory is not valid."""
+
+    pass
 
 
 def create_sequence(sequence_name: str, base_dir: str = ".") -> None:
@@ -145,21 +176,33 @@ def create_sequence(sequence_name: str, base_dir: str = ".") -> None:
             Defaults to the current directory.
     """
 
+    # Ensure right naming convention
     if len(sequence_name) != 3:
-        _logger.error("Sequence names should be exactly 4 characters long")
-        return
+        error_message = "Sequence names should be exactly 3 characters long"
+        _logger.error(error_message)
+        raise ValueError(error_message)
 
-    if not Path(base_dir).resolve().as_posix().endswith("production/shots"):
-        _logger.error(
-            "Sequence should be created under the '$FXQUINOX_PROJECT_ROOT/production/shots' directory",
-        )
-        return
+    # Check the parent entity sequence "shots" directory validity before
+    # creating the sequence
+    base_dir_path = Path(base_dir).resolve()
+    is_parent_sequences_directory, sequences_directory_info = check_shots_directory(base_dir_path)
 
-    _create_entity(_SEQUENCE, sequence_name, base_dir)
+    if not is_parent_sequences_directory:
+        error_message = f"'{base_dir_path}' is not a valid shots directory"
+        _logger.error(error_message)
+        raise InvalidSequencesDirectoryError(error_message)
+
+    # Create the sequence
+    _create_entity(_SEQUENCE, sequence_name, base_dir_path)
+
+    # Add the created sequence to the `shot_info` JSON file (holding sequences)
+    sequences_directory_info["shots"].append(sequence_name)
+    sequences_directory_info_path = base_dir_path / f".{sequences_directory_info['entity_type']}_info.json"
+    json.dump(sequences_directory_info, sequences_directory_info_path.open("w"), indent=4)
 
 
 def create_sequences(sequence_names: list[str], base_dir: str = ".") -> None:
-    """Creates a new sequence directory structure within a project.
+    """Creates new sequence directory structures within a project.
 
     Args:
         sequence_names (list): The names of the sequences to create.
@@ -172,17 +215,45 @@ def create_sequences(sequence_names: list[str], base_dir: str = ".") -> None:
         create_sequence(sequence_name, base_dir)
 
 
-def check_sequence(sequence_name: str, base_dir: str = ".") -> None:
-    """Checks if a sequence directory structure exists within a project.
+def check_sequence(sequence_name: str, base_dir: str = ".") -> Union[bool, dict]:
+    """Checks if a valid sequence directory structure exists within a project.
 
     Args:
         sequence_name (str): The name of the sequence to check.
         base_dir (str): The base directory where the sequence should be located,
             typically the "project/production/shots" directory.
             Defaults to the current directory.
+
+    Returns:
+        Union[bool, dict]: A tuple containing a boolean indicating if the sequence
+            is valid and a dictionary with the sequence information.
     """
 
     return _check_entity(_SEQUENCE, sequence_name, base_dir)
+
+
+# ? It could appear as this function should be in the shots section, but it's
+# ? here because the `shots` directory is the one holding the sequences.
+def check_shots_directory(base_dir: str = ".") -> bool:
+    """Checks if a valid "shots" (which holds the sequences) directory
+    structure exists within a project.
+
+    Args:
+        base_dir (str): The base directory where the "shots" directory should
+            be located, typically the "project/production" directory.
+            Defaults to the current directory.
+    """
+
+    return _check_entity(_SHOTS_DIR, _SHOTS_DIR, base_dir)
+
+
+###### Shots
+
+
+class InvalidShotError(Exception):
+    """Exception raised when a shot is not valid."""
+
+    pass
 
 
 def create_shot(shot_name: str, base_dir: str = ".") -> None:
@@ -193,39 +264,87 @@ def create_shot(shot_name: str, base_dir: str = ".") -> None:
         base_dir (str): The base directory where the shot will be created,
             typically the "project/production/shots/sequence" directory.
             Defaults to the current directory.
+
+    Examples:
+        Python
+        >>> create_shot("0010", "/path/to/sequence")
+
+        CLI
+        >>> fxcore.create_shot "0010" --base_dir "/path/to/sequence"
     """
 
+    # Ensure right naming convention
     if len(shot_name) != 4:
-        _logger.error("Shot names should be exactly 4 characters long")
-        return
+        error_message = "Shot names should be exactly 4 characters long"
+        _logger.error(error_message)
+        raise ValueError(error_message)
 
+    # Check the parent entity sequence validity before creating the shot
+    base_dir_path = Path(base_dir).resolve()
+    sequence_name = base_dir_path.name
+
+    is_parent_sequence, sequence_info = check_sequence(sequence_name, base_dir_path)
+
+    if not is_parent_sequence:
+        error_message = f"'{sequence_name}' in '{base_dir_path}' is not a sequence"
+        _logger.error(error_message)
+        raise InvalidSequenceError(error_message)
+
+    # Create the shot
+    _create_entity(_SHOT, shot_name, base_dir_path)
+
+    # Add the created shot to the `<sequence_name>_info` JSON file
+    sequence_info["shots"].append(shot_name)
+    sequence_info_path = base_dir_path / f".{sequence_info['sequence_name']}_info.json"
+    json.dump(sequence_info, sequence_info_path.open("w"), indent=4)
+
+
+def create_shots(shot_names: list[str], base_dir: str = ".") -> None:
+    """Creates new shot directory structures within a sequence.
+
+    This function checks the sequence validity once before creating all shots,
+    optimizing the process for bulk shot creation.
+
+    Args:
+        shot_names (list[str]): The names of the shots to create.
+        base_dir (str): The base directory where the shots will be created,
+            typically the "project/production/shots/sequence" directory.
+            Defaults to the current directory.
+
+    Examples:
+        Python
+        >>> create_shots(["0010", "0020"], "/path/to/sequence")
+
+        CLI
+        >>> fxcore.create_shots "0010" "0020" --base_dir "/path/to/sequence"
+    """
+
+    # Check the sequence validity once before creating all shots
     _parent_directory = Path(base_dir).parent.absolute()
     parent_directory = _parent_directory.resolve().as_posix()
     parent_name = _parent_directory.name
 
-    if not check_sequence(parent_name, parent_directory):
-        _logger.error(f"'{parent_name}' in '{parent_directory}' is not a sequence")
-        return
+    is_parent_sequence, _ = check_sequence(parent_name, parent_directory)
 
-    _create_entity(_SHOT, shot_name, parent_directory)
+    if not is_parent_sequence:
+        error_message = f"'{parent_name}' in '{parent_directory}' is not a sequence"
+        _logger.error(error_message)
+        raise InvalidSequenceError(error_message)
 
-
-def create_shots(shot_names: list[str], base_dir: str = ".") -> None:
-    """Creates a new shot directory structure within a sequence.
-
-    Args:
-        shot_names (list): The names of the shots to create.
-        base_dir (str): The base directory where the shot will be created,
-            typically the "project/production/shots/sequence" directory.
-            Defaults to the current directory.
-    """
-
+    # Proceed to create each shot if the sequence is valid
     for shot_name in shot_names:
-        create_shot(shot_name, base_dir)
+
+        # Ensure right naming convention
+        if len(shot_name) != 4:
+            error_message = "Shot names should be exactly 4 characters long"
+            _logger.error(error_message)
+            raise ValueError(error_message)
+
+        _create_entity(_SHOT, shot_name, parent_directory)
 
 
 def check_shot(shot_name: str, base_dir: str = ".") -> None:
-    """Checks if a shot directory structure exists within a sequence.
+    """Checks if a valid shot directory structure exists within a sequence.
 
     Args:
         shot_name (str): The name of the shot to check.
@@ -235,6 +354,21 @@ def check_shot(shot_name: str, base_dir: str = ".") -> None:
     """
 
     return _check_entity(_SHOT, shot_name, base_dir)
+
+
+###### Assets
+
+
+class InvalidAssetError(Exception):
+    """Exception raised when an asset is not valid."""
+
+    pass
+
+
+class InvalidAssetsDirectoryError(Exception):
+    """Exception raised when an assets directory is not valid."""
+
+    pass
 
 
 def create_asset(asset_name: str, base_dir: str = ".") -> None:
@@ -247,11 +381,26 @@ def create_asset(asset_name: str, base_dir: str = ".") -> None:
             Defaults to the current directory.
     """
 
+    # Check the parent entity assets directory validity before creating the asset
+    base_dir_path = Path(base_dir).resolve()
+    is_parent_assets_directory, assets_directory_info = check_assets_directory(base_dir_path)
+
+    if not is_parent_assets_directory:
+        error_message = f"'{base_dir_path}' is not a valid assets directory"
+        _logger.error(error_message)
+        raise InvalidAssetsDirectoryError(error_message)
+
+    # Create the asset
     _create_entity(_ASSET, asset_name, base_dir)
+
+    # Add the created asset to the `assets_info` JSON file
+    assets_directory_info["assets"].append(asset_name)
+    assets_directory_info_path = base_dir_path / f".{assets_directory_info['entity_type']}_info.json"
+    json.dump(assets_directory_info, assets_directory_info_path.open("w"), indent=4)
 
 
 def create_assets(asset_names: list[str], base_dir: str = ".") -> None:
-    """Creates a new asset directory structure within a project.
+    """Creates new asset directory structures within a project.
 
     Args:
         asset_names (list): The names of the assets to create.
@@ -264,17 +413,37 @@ def create_assets(asset_names: list[str], base_dir: str = ".") -> None:
         create_asset(asset_name, base_dir)
 
 
-def check_asset(asset_name: str, base_dir: str = ".") -> None:
-    """Checks if an asset directory structure exists within a project.
+def check_asset(asset_name: str, base_dir: str = ".") -> bool:
+    """Checks if a valid asset directory structure exists within a project.
 
     Args:
         asset_name (str): The name of the asset to check.
         base_dir (str): The base directory where the asset should be located,
             typically the "project/production/assets" directory.
             Defaults to the current directory.
+
+    Returns:
+        bool: `True` if the asset is valid, `False` otherwise.
     """
 
     return _check_entity(_ASSET, asset_name, base_dir)
+
+
+def check_assets_directory(base_dir: str = ".") -> Union[bool, dict]:
+    """Checks if a valid "assets" (which holds the assets) directory
+    structure exists within a project.
+
+    Args:
+        base_dir (str): The base directory where the "assets" directory should
+            be located, typically the "project/production" directory.
+            Defaults to the current directory.
+
+    Returns:
+        Union[bool, dict]: A tuple containing a boolean indicating if the assets
+            directory is valid and a dictionary with the assets directory information.
+    """
+
+    return _check_entity(_ASSETS_DIR, _ASSETS_DIR, base_dir)
 
 
 if __name__ == "__main__":

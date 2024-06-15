@@ -1,5 +1,5 @@
 {
     "<sequence>": {
-        ".<sequence>_info.json": "{\"entity_type\": \"sequence\", \"sequence_name\": \"<sequence>\", \"sequence_root\": \"<sequence_root>\"}"
+        ".<sequence>_info.json": "{\"entity_type\": \"sequence\", \"sequence_name\": \"<sequence>\", \"sequence_root\": \"<sequence_root>\", \"shots\": []}"
     }
 }

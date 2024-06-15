@@ -45,22 +45,23 @@ just_fix_windows_console()
 class FXFormatter(logging.Formatter):
     LEVEL_COLORS = {
         logging.DEBUG: Fore.BLUE,
-        logging.INFO: Fore.GREEN,
+        logging.INFO: Fore.WHITE,
         logging.WARNING: Fore.YELLOW,
         logging.ERROR: Fore.RED,
         logging.CRITICAL: Fore.MAGENTA,
     }
 
-    def __init__(self, color: Optional[bool] = False):
+    def __init__(self, color: Optional[bool] = False, separator: Optional[bool] = False):
+        separator_line = f"{'-' * 80}\n" if separator else ""
         if color:
             log_format = (
-                f"{'-' * 80}\n"
+                f"{separator_line}"
                 f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n"
                 f"{Style.BRIGHT}%(message)s{Style.RESET_ALL}"
             )
         else:
             log_format = (
-                f"{'-' * 80}\n" f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n" f"%(message)s"
+                f"{separator_line}" f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n" f"%(message)s"
             )
         super().__init__(log_format, datefmt="%Y-%m-%d %H:%M:%S")
         self.color = color
@@ -131,7 +132,7 @@ def get_logger(logger_name: str, force_color: Optional[bool] = None) -> logging.
     )
 
     # Set a non-colored formatter for the file handler
-    file_handler.setFormatter(FXFormatter(color=False))
+    file_handler.setFormatter(FXFormatter(color=False, separator=True))
 
     # Set the logging level for the file handler
     file_handler.setLevel(logging.DEBUG)

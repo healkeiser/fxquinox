@@ -10,8 +10,12 @@
             }
         },
         "production": {
-            "shots": {},
-            "assets": {}
+            "shots": {
+                ".shots_info.json": "{\"entity_type\": \"shots\", \"shots\": []}"
+            },
+            "assets": {
+                ".assets_info.json": "{\"entity_type\": \"assets\", \"assets\": []}"
+            }
         }
     }
 }
