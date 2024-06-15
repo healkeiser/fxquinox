@@ -11,6 +11,7 @@ from fxquinox import fxlog
 
 # Log
 _log = fxlog.get_logger(__name__)
+_log.setLevel(10)
 
 # Globals
 _EXTENSIONS = {
@@ -302,13 +303,15 @@ class FXWorkfileTemplate:
 
 
 if __name__ == "__main__":
+    # Workfile template
     _workfile = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
     _workfile = FXWorkfileTemplate.from_string(str(_workfile), False)
     _log.info(
-        f"{type(_workfile).__name__}:\n    {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}",
+        f"{type(_workfile).__name__}: {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}",
     )
 
+    # Project template
     _project = FXProjectTemplate.from_string("D:/Projects/_test_000")
     _log.info(
-        f"{type(_project).__name__}:\n    {str(_project)}, {_project.name}, {_project.root}, {_project.info}",
+        f"{type(_project).__name__}: {str(_project)}, {_project.name}, {_project.root}, {_project.info}",
     )

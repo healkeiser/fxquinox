@@ -1,18 +1,21 @@
 # Built-in
-import os
 import logging
+import os
+from pathlib import Path
 from typing import Optional
 
 # Third-party
 from colorama import just_fix_windows_console, Fore, Style
+
+# Internal
+from fxquinox import fxenvironment
 
 
 # Initialize colorama
 just_fix_windows_console()
 
 
-# Custom log formatter with explicit variable names
-class FXColoredFormatter(logging.Formatter):
+class FXFormatter(logging.Formatter):
     LEVEL_COLORS = {
         logging.DEBUG: Fore.BLUE,
         logging.INFO: Fore.GREEN,
@@ -21,73 +24,105 @@ class FXColoredFormatter(logging.Formatter):
         logging.CRITICAL: Fore.MAGENTA,
     }
 
-    def format(self, record):
-        level_color = self.LEVEL_COLORS.get(record.levelno, Fore.WHITE)
-        log_format = (
-            f"{'-' * 80}\n"
-            f"{level_color}%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n"
-            f"{Style.BRIGHT}%(message)s{Style.RESET_ALL}"
-        )
-        formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
-        return formatter.format(record)
+    def __init__(self, color: Optional[bool] = False):
+        if color:
+            log_format = (
+                f"{'-' * 80}\n"
+                f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n"
+                f"{Style.BRIGHT}%(message)s{Style.RESET_ALL}"
+            )
+        else:
+            log_format = (
+                f"{'-' * 80}\n" f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n" f"%(message)s"
+            )
+        super().__init__(log_format, datefmt="%Y-%m-%d %H:%M:%S")
+        self.color = color
 
+    def format(self, record: logging.LogRecord) -> str:
+        """Formats the log record based on the current settings.
 
-class FXFormatter(logging.Formatter):
-    def format(self, record):
-        log_format = (
-            f"{'-' * 80}\n" f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n" f"%(message)s"
-        )
-        formatter = logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S")
-        return formatter.format(record)
+        Args:
+            record (logging.LogRecord): The log record to format.
+
+        Returns:
+            str: The formatted log message.
+        """
+
+        original_levelname = record.levelname  # Store the original levelname
+        if self.color:
+            record.levelname = self.LEVEL_COLORS.get(record.levelno, Fore.WHITE) + record.levelname
+        formatted_message = super().format(record)
+        record.levelname = original_levelname  # Restore the original levelname
+        return formatted_message
 
 
 def get_logger(logger_name: str, force_color: Optional[bool] = None) -> logging.Logger:
-    """Creates and returns a custom logger with a specified name and an optional
-    forced color setting.
+    """Creates a custom logger with the specified name and returns it.
 
     Args:
-        logger_name (str): The name of the logger to create.
-        force_color (Optional[bool]): If set, forces the use of colored or
-            plain text formatting regardless of terminal support. `True` forces
-            colored formatting, `False` forces plain text, and `None` (default)
-            auto-detects based on terminal capabilities. Defaults to `None`.
+        logger_name (str): The name of the logger.
+        force_color (Optional[bool]): Whether to force color logging.
+            Defaults to `None`.
 
     Returns:
-        logging.Logger: The configured logger instance.
+        logging.Logger: The custom logger.
     """
 
-    # Create a custom logger
+    # Check if the logger with the specified name already exists in the logger dictionary
+    if logger_name in logging.Logger.manager.loggerDict:
+        # If it exists, return the existing logger
+        return logging.getLogger(logger_name)
+
+    # Create a new logger with the specified name
     custom_logger = logging.getLogger(logger_name)
-    custom_logger.setLevel(logging.DEBUG)
 
-    # Create console handler and set its level to debug
+    # Create a console handler to output logs to the console
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
 
-    # Determine formatter based on `force_color` argument and terminal support
-    if force_color is True:
-        formatter = FXColoredFormatter()
-    elif force_color is False:
-        formatter = FXFormatter()
-    else:
-        # Terminal color support
-        if (
+    # Determine if colored output is forced or supported by the terminal
+    if force_color or (
+        force_color is None
+        and (
             os.getenv("TERM")
             in ("xterm", "xterm-color", "xterm-256color", "screen", "screen-256color", "linux", "ansi")
             or "COLORTERM" in os.environ
-        ):
-            formatter = FXColoredFormatter()
-        else:
-            formatter = FXFormatter()
+        )
+    ):
+        # If color is supported or forced, use a colored formatter
+        formatter = FXFormatter(color=True)
+    else:
+        # Otherwise, use a standard formatter without color
+        formatter = FXFormatter()
 
-    # Add the chosen formatter to the console handler
+    # Set the formatter for the console handler
     console_handler.setFormatter(formatter)
 
-    # Add the console handler to the logger if it doesn't already have handlers
-    if not custom_logger.hasHandlers():
-        custom_logger.addHandler(console_handler)
+    # Define the directory path for log files
+    log_directory = Path(fxenvironment.FXQUINOX_APPDATA) / "logs"
 
-    # Prevent the logger from propagating to the root logger
+    # Create the log directory if it does not exist
+    if not log_directory.exists():
+        log_directory.mkdir(parents=True, exist_ok=True)
+
+    # Define the path for the log file
+    log_file_path = log_directory / f"{logger_name}.log"
+
+    # Create a file handler for logging with rotation at midnight (one file a day)
+    file_handler = logging.handlers.TimedRotatingFileHandler(
+        filename=log_file_path, when="midnight", interval=1, backupCount=30, encoding="utf-8"
+    )
+
+    # Set a non-colored formatter for the file handler
+    file_handler.setFormatter(FXFormatter(color=False))
+
+    # Set the logging level for the file handler
+    file_handler.setLevel(logging.DEBUG)
+
+    # Add the console and file handlers to the custom logger
+    custom_logger.addHandler(console_handler)
+    custom_logger.addHandler(file_handler)
+
+    # Prevent the custom logger from propagating logs to the root logger
     custom_logger.propagate = False
 
     return custom_logger
@@ -101,10 +136,9 @@ def set_log_level(level: int) -> None:
         level (int): The logging level to set. Use `logging.DEBUG`, `logging.INFO`, etc.
     """
 
-    for logger_name in logging.Logger.manager.loggerDict:
-        logger = logging.getLogger(logger_name)
-        if logger.handlers:
+    for logger_name, logger in logging.Logger.manager.loggerDict.items():
+        if isinstance(logger, logging.Logger) and logger.handlers:
             for handler in logger.handlers:
-                if isinstance(handler.formatter, (FXColoredFormatter, FXFormatter)):
+                if isinstance(handler.formatter, FXFormatter):
                     logger.setLevel(level)
                     handler.setLevel(level)
