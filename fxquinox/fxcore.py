@@ -1,22 +1,22 @@
-"""The fxcore module provides a set of tools for managing and automating the creation of projects, sequences, shots,
-and assets within a digital production environment.
-It leverages a JSON-based project structure definition to ensure consistency across different projects.
-The module includes functionalities to create new projects with a predefined directory structure, as well as to
-add sequences, shots, and assets to existing projects. It is designed to be easily integrated into larger pipeline
-tools or used standalone for small to medium-sized projects.
-"""
+"""The fxcore module provides a set of tools for managing and automating the creation of VFX entitites."""
 
 # Built-in
 import json
 from functools import lru_cache
 from pathlib import Path
 import sys
+import warnings
 
 # Internal
-from fxquinox import fxlog, fxfiles, _fxcli
+from fxquinox import fxlog, fxfiles
+
 
 # Log
 _logger = fxlog.get_logger(__name__)
+
+# Warnings
+# XXX: Need to check why the hell this is happening
+warnings.filterwarnings("ignore", message=".*found in sys.modules after import of package.*", category=RuntimeWarning)
 
 
 @lru_cache(maxsize=None)
@@ -41,88 +41,93 @@ def _get_structure_dict(entity: str) -> dict:
         return {}
 
 
-def create_project(project_name: str, base_dir: str = ".") -> None:
-    """Creates a new directory with the given project name in the
-    specified base directory. It also creates subdirectories for storing the
-    project's source code, data, and documentation.
+def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> None:
+    """Generic function to create a new directory for a given entity type in
+    the specified base directory.
 
     Args:
-        project_name (str): The name of the new project directory.
-        base_dir (str, optional): The base directory where the project directory
-            will be created. Defaults to the current working directory.
-
-    Returns:
-        None
-
-    Examples:
-        >>> create_project("my_project")
-        Project 'my_project' created in current directory.
-        >>> create_project("my_project", "/path/to/your/directory")
-        Project 'my_project' created in '/path/to/your/directory'.
+        entity_type (str): The type of entity to create.
+        entity_name (str): The name of the entity to create.
+        base_dir (str): The base directory in which to create the entity.
+            Defaults to the current directory.
     """
 
-    # Get the project directory to create
     base_dir_path = Path(base_dir)
-    project_dir = base_dir_path / project_name
+    entity_dir = base_dir_path / entity_name
+    structure_dict = _get_structure_dict(entity_type)
 
-    # Get the project structure dictionary
-    structure_dict = _get_structure_dict("project")
-
-    # Replace the placeholders in the structure dictionary
     structure_dict = fxfiles.replace_in_json(
         structure_dict,
         {
-            "<project>": project_name,
-            "<project_path>": fxfiles.replace_backward_slashes(str(project_dir)),
+            f"<{entity_type}>": entity_name,
+            "<project_root>": entity_dir.resolve().as_posix() if entity_type == "project" else None,
         },
     )
 
-    # If the project directory already exists, ask for confirmation
-    if project_dir.exists():
+    if entity_dir.exists():
         confirmation = input(
-            f"There's already a project '{project_name}' in '{base_dir}', do you want to continue? (y/N): "
+            f"There's already a {entity_type} '{entity_name}' in '{base_dir}', do you want to continue? (y/N): "
         )
         if confirmation.lower() != "y":
-            _logger.info("Project creation cancelled")
+            _logger.info(f"{entity_type.capitalize()} creation cancelled")
             return
 
-    # Create the project directory and its structure
     try:
         fxfiles.create_structure_from_dict(structure_dict, str(base_dir_path))
-        _logger.info(f"Project '{project_name}' created in '{str(base_dir_path)}'")
+        _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{str(base_dir_path)}'")
     except Exception as e:
-        _logger.error(f"Failed to create project '{project_name}': {str(e)}")
+        _logger.error(f"Failed to create {entity_type} '{entity_name}': {str(e)}")
+
+
+def create_project(project_name: str, base_dir: str = ".") -> None:
+    """Creates a new project directory structure.
+
+    Args:
+        project_name (str): The name of the project to create.
+        base_dir (str): The base directory where the project will be created.
+            Defaults to the current directory.
+    """
+
+    _create_entity("project", project_name, base_dir)
 
 
 def create_sequence(sequence_name: str, base_dir: str = ".") -> None:
-    """_summary_
+    """Creates a new sequence directory structure within a project.
 
     Args:
-        sequence_name (str): _description_
-        base_dir (str, optional): _description_. Defaults to ".".
+        sequence_name (str): The name of the sequence to create.
+        base_dir (str): The base directory where the sequence will be created,
+            typically the project directory. Defaults to the current directory.
     """
+
+    _create_entity("sequence", sequence_name, base_dir)
 
 
 def create_shot(shot_name: str, base_dir: str = ".") -> None:
-    """_summary_
+    """Creates a new shot directory structure within a sequence.
 
     Args:
-        shot_name (str): _description_
-        base_dir (str, optional): _description_. Defaults to (`"."`).
+        shot_name (str): The name of the shot to create.
+        base_dir (str): The base directory where the shot will be created,
+            typically the sequence directory. Defaults to the current directory.
     """
+
+    _create_entity("shot", shot_name, base_dir)
 
 
 def create_asset(asset_name: str, base_dir: str = ".") -> None:
-    """_summary_
+    """Creates a new asset directory structure within a project.
 
     Args:
-        asset_name (str): _description_
-        base_dir (str, optional): _description_. Defaults to (`"."`).
+        asset_name (str): The name of the asset to create.
+        base_dir (str): The base directory where the asset will be created,
+            typically the project directory. Defaults to the current directory.
     """
+
+    _create_entity("asset", asset_name, base_dir)
 
 
 if __name__ == "__main__":
-    _fxcli.main(
-        target_module=sys.modules[__name__],
-        description=__doc__ if __doc__ else __name__,
-    )
+    from fxquinox import _fxcli
+
+    _fxcli.main(target_module=sys.modules[__name__], description=__doc__ if __doc__ else __name__)

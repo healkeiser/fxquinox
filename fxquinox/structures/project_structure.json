@@ -1,11 +1,11 @@
 {
     "<project>": {
-        "<project>_info.json": "{\"project_name\": \"<project>\", \"project_path\": \"<project_path>\"}",
+        "<project>_info.json": "{\"project_name\": \"<project>\", \"project_root\": \"<project_root>\"}",
         ".pipeline": {
             "custom_modules": {
                 "README.md": ""
             },
-            "workfiles_presets": {
+            "workfile_presets": {
                 "README.md": ""
             }
         },

@@ -1,20 +1,31 @@
 # Built-in
 import os
+import json
+from pathlib import Path
 import re
 from typing import Dict, Any, Optional, Union
 
 # Internal
 from fxquinox import fxlog
 
+
 # Log
 _log = fxlog.get_logger(__name__)
 
+# Globals
+_EXTENSIONS = {
+    "maya": ["ma", "mb"],
+    "houdini": ["hip", "hipnc", "hiplc"],
+    "nuke": ["nk"],
+    "blender": ["blend"],
+    "substance": ["sbsar", "sbs"],
+    "photoshop": ["psd"],
+}
 
-###### CODE ####################################################################
 
-
-def replace_backward_slashes(path: str) -> str:
-    """Replaces backward slashes with forward slashes in a given path.
+def path_to_unix(path: str) -> str:
+    """Replaces backward slashes with forward slashes (Unix format) in a given
+    path.
 
     Args:
         path (str): The input path containing backward slashes.
@@ -23,7 +34,7 @@ def replace_backward_slashes(path: str) -> str:
         str: The path with all backward slashes replaced by forward slashes.
 
     Examples:
-        >>> replace_backward_slashes("C:\\Users\\User\\Documents")
+        >>> path_to_unix("C:\\Users\\User\\Documents")
         "C:/Users/User/Documents"
     """
 
@@ -94,12 +105,13 @@ def get_next_version(path: str, as_string: bool = False) -> Union[int, str]:
 
     Args:
         path (str): The path to the directory containing the versioned files.
-        as_string (bool, optional): If `True`, returns the next version number as
-            a string with the 'v' prefix. Defaults to `False`.
+        as_string (bool, optional): If `True`, returns the next version number
+        as a string with the 'v' prefix. Defaults to `False`.
 
     Returns:
-        Union[int, str]: The next version number to be used, incremented by one from the
-            highest existing version. Returns 1 if no versioned files are found.
+        Union[int, str]: The next version number to be used, incremented by one
+            from the highest existing version. Returns 1 if no versioned files
+            are found.
 
     Examples:
         >>> get_next_version("/path/to/your/directory")
@@ -148,6 +160,76 @@ def extract_version_integer_value(string: str) -> Optional[int]:
     return int(string[1:]) if string.startswith("v") else None
 
 
+class FXProjectTemplate:
+    """A class representing an FX project template.
+
+    Attributes:
+        name (str): The name of the project.
+        root (str): The root directory of the project.
+        info (dict): The project information.
+    """
+
+    def __init__(self, name: str, root: str, info: dict):
+        self.name = name
+        self.root = root
+        self.info = info
+
+    def __str__(self) -> str:
+        """Returns a string representation of the FX project template.
+
+        Returns:
+            str: The string representation of the FX project template.
+        """
+
+        return f"{self.name} ({self.root})"
+
+    @classmethod
+    def from_json(cls, json_data: dict) -> "FXProjectTemplate":
+        """Creates an FXProjectTemplate instance from a JSON object.
+
+        Args:
+            json_data (dict): The JSON data containing the project template
+                information.
+
+        Returns:
+            FXProjectTemplate: The FXProjectTemplate instance created from the
+                JSON data.
+
+        Examples:
+            >>> project_info = json.loads(
+            >>>     Path.joinpath(
+            >>>         Path("C:/path/to/project"), f"projectname_info.json"
+            >>>     ).read_text()
+            >>> )
+            >>> project = FXProjectTemplate.from_json(project_info)
+        """
+
+        return cls(json_data["name"], json_data["root"], json_data["info"])
+
+    @classmethod
+    def from_string(cls, input_string: str) -> "FXProjectTemplate":
+        """Creates an FXProjectTemplate instance from a string.
+
+        Args:
+            input_string (str): The string containing information to create the
+            instance.
+
+        Returns:
+            FXProjectTemplate: The FXProjectTemplate instance created from
+                the input string.
+
+        Examples:
+            >>> project = FXProjectTemplate.from_string("C:/path/to/project")
+            >>> print(project.name, project.root)
+            "Project Name", "C:/path/to/project"
+        """
+
+        name = Path(input_string).name
+        root = Path(input_string).resolve().as_posix()
+        structure = json.loads(Path.joinpath(Path(input_string), f"{name}_info.json").read_text())
+        return cls(name, root, structure)
+
+
 class FXWorkfileTemplate:
     """A class representing an FX workfile template.
 
@@ -176,7 +258,8 @@ class FXWorkfileTemplate:
         return self.generate_filename()
 
     def generate_filename(self) -> str:
-        """Generates a filename based on the attributes of the FX workfile template.
+        """Generates a filename based on the attributes of the FX workfile
+        template.
 
         Returns:
             str: The generated filename.
@@ -185,14 +268,18 @@ class FXWorkfileTemplate:
         return f"{self.sequence}_{self.shot}_{self.step}_{self.task}_{self.version}"
 
     @classmethod
-    def from_string(cls, input_string: str) -> "FXWorkfileTemplate":
+    def from_string(cls, input_string: str, return_int: bool = True) -> "FXWorkfileTemplate":
         """Creates an FXWorkfileTemplate instance from a string.
 
         Args:
-            input_string (str): The string containing information to create the instance.
+            input_string (str): The string containing information to create the
+            instance.
+            return_int (bool, optional): If `True`, returns the sequence, shot
+                and version as integers.
 
         Returns:
-            FXWorkfileTemplate: The FXWorkfileTemplate instance created from the input string.
+            FXWorkfileTemplate: The FXWorkfileTemplate instance created from
+                the input string.
 
         Raises:
             ValueError: If the input string format is invalid.
@@ -207,17 +294,21 @@ class FXWorkfileTemplate:
 
         if len(parts) == 5:
             sequence, shot, step, task, version = parts
-            version = int(version.lstrip("v"))
-            return cls(int(sequence), int(shot), step, task, version)
+            if return_int:
+                return cls(int(sequence), int(shot), step, task, int(version.lstrip("v")))
+            return cls(sequence, shot, step, task, version)
         else:
             raise ValueError("Invalid input string format")
 
 
 if __name__ == "__main__":
-    _template = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
-    template_int = FXWorkfileTemplate.from_string(str(_template))
-    template_str = str(template_int)
+    _workfile = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
+    _workfile = FXWorkfileTemplate.from_string(str(_workfile), False)
     _log.info(
-        f"Test: {template_int.sequence} {template_int.shot} {template_int.step} {template_int.task} {template_int.version}"
+        f"{type(_workfile).__name__}:\n    {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}",
     )
-    _log.info(f"Test: {template_str}")
+
+    _project = FXProjectTemplate.from_string("D:/Projects/_test_000")
+    _log.info(
+        f"{type(_project).__name__}:\n    {str(_project)}, {_project.name}, {_project.root}, {_project.info}",
+    )
