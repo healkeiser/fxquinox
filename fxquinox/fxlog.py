@@ -1,5 +1,6 @@
 # Built-in
 import logging
+import logging.handlers
 import os
 from pathlib import Path
 from typing import Optional
@@ -130,10 +131,10 @@ def get_logger(logger_name: str, force_color: Optional[bool] = None) -> logging.
 
 def set_log_level(level: int) -> None:
     """Sets the logging level for all instances of loggers created by the
-    `FXColoredFormatter` or `FXFormatter` class.
+    `FXFormatter` class.
 
     Args:
-        level (int): The logging level to set. Use `logging.DEBUG`, `logging.INFO`, etc.
+        level (int): The logging level to set.
     """
 
     for logger_name, logger in logging.Logger.manager.loggerDict.items():
