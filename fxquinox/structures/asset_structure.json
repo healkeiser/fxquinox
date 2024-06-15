@@ -1,5 +1,6 @@
 {
     "<asset>": {
+        ".<asset>_info.json": "{\"entity_type\": \"asset\", \"asset_name\": \"<asset>\", \"asset_root\": \"<asset_root>\"}",
         "exports": {},
         "playblasts": {},
         "renders": {},

@@ -1,6 +1,6 @@
 {
     "<project>": {
-        "<project>_info.json": "{\"project_name\": \"<project>\", \"project_root\": \"<project_root>\"}",
+        ".<project>_info.json": "{\"entity_type\": \"project\", \"project_name\": \"<project>\", \"project_root\": \"<project_root>\"}",
         ".pipeline": {
             "custom_modules": {
                 "README.md": ""
