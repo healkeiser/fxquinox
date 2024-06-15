@@ -14,6 +14,7 @@ Examples:
 # Built-in
 import argparse
 import inspect
+import json
 import re
 from types import ModuleType
 
@@ -25,57 +26,57 @@ from colorama import just_fix_windows_console, Fore, Style
 just_fix_windows_console()
 
 
-def _parse_docstring(docstring: str) -> dict:
-    """Parses the docstring to find parameter descriptions.
+def _parse_docstring(docstring):
+    """Parses a docstring into its components: description, arguments, and
+        return type, supporting multiline descriptions.
 
     Args:
-        docstring (str): The docstring from which to extract parameter descriptions.
+        docstring (str): The docstring to parse.
 
     Returns:
-        dict: A dictionary where keys are parameter names and values are their descriptions.
-
-    Note:
-        The docstring should respect the Google style. For example:
-        ```text
-        Description of the function.
-
-        Args:
-            arg1 (type): Description of arg1.
-            arg2 (type): Description of arg2.
-
-        Returns:
-            type: The return value.
-        ```
-
-    Warning:
-        Each block of the dosctring needs to be seperated by a blank line, otherwise the parsing will fail.
-
-    Examples:
-        >>> docstring = func.__doc__
-        >>> _parse_docstring(docstring)
-        {"arg1": "Description of arg1.", "arg2": "Description of arg2."}
+        dict: A dictionary with 'description', 'args', and 'returns' keys.
     """
 
-    # Check if the docstring is `None` or empty
-    if not docstring:
-        return {}
+    parsed = {"description": "", "args": {}, "returns": None}
 
-    # Isolate the `Args` section of the docstring
-    args_section_match = re.search(r"Args:\n\s*(.*?)(?=\n\s*\n)", docstring, re.DOTALL)
-    if not args_section_match:
-        return {}
+    # Split the docstring into lines and strip leading/trailing whitespace
+    lines = [line.strip() for line in docstring.split("\n")]
 
-    args_section = args_section_match.group(1)
+    current_section = "description"
+    current_arg = None
 
-    # Split arguments and extract names and descriptions
-    arg_descriptions = {}
-    arg_lines = re.finditer(r"(\w+)\s*\(.*?\):\s*(.*?)\s*(?=\w+\s*\(|$)", args_section, re.DOTALL)
-    for match in arg_lines:
-        arg_name = match.group(1)
-        arg_description = match.group(2).replace("\n", " ").strip()
-        arg_descriptions[arg_name] = arg_description
+    for line in lines:
+        if line.startswith("Args:"):
+            current_section = "args"
+            continue
+        elif line.startswith("Returns:"):
+            current_section = "returns"
+            continue
 
-    return arg_descriptions
+        if current_section == "description":
+            parsed["description"] += " " + line if parsed["description"] else line
+        elif current_section == "args":
+            arg_match = re.match(r"^(\w+) \((\w+)\): (.+)$", line)
+            if arg_match:
+                current_arg = arg_match.group(1)
+                arg_type = arg_match.group(2)
+                arg_desc = arg_match.group(3)
+                parsed["args"][current_arg] = {"type": arg_type, "description": arg_desc}
+            elif current_arg:
+                # Append to the last argument's description if it's a multiline description
+                parsed["args"][current_arg]["description"] += " " + line
+        elif current_section == "returns":
+            if "type" not in parsed["returns"]:  # First line after "Returns:" is the return info
+                returns_match = re.match(r"^(\w+): (.+)$", line)
+                if returns_match:
+                    return_type = returns_match.group(1)
+                    return_desc = returns_match.group(2)
+                    parsed["returns"] = {"type": return_type, "description": return_desc}
+            else:
+                # Append to the return description if it's a multiline description
+                parsed["returns"]["description"] += " " + line
+
+    return parsed
 
 
 def _auto_generate_parser(target_module: ModuleType, description: str) -> argparse.ArgumentParser:
@@ -101,7 +102,7 @@ def _auto_generate_parser(target_module: ModuleType, description: str) -> argpar
         >>>     parser.print_help()
     """
 
-    parser = argparse.ArgumentParser(description=f"{Fore.YELLOW}{description}{Style.RESET_ALL}", add_help=False)
+    parser = argparse.ArgumentParser(description=f"{Fore.GREEN}{description}{Style.RESET_ALL}", add_help=False)
 
     # Custom help message for parser (tool)
     parser.add_argument(
@@ -109,9 +110,9 @@ def _auto_generate_parser(target_module: ModuleType, description: str) -> argpar
         "--help",
         action="help",
         default=argparse.SUPPRESS,
-        help=f"{Fore.YELLOW}Show this help message and exit with the information on how to use this program.{Style.RESET_ALL}",
+        help=f"{Fore.CYAN}Show this help message and exit with the information on how to use this program.{Style.RESET_ALL}",
     )
-    subparsers = parser.add_subparsers(dest="command", help="Commands")
+    subparsers = parser.add_subparsers(dest="command", title="Functions")
 
     # Retrieve all functions in the target module
     functions = inspect.getmembers(target_module, inspect.isfunction)
@@ -122,12 +123,16 @@ def _auto_generate_parser(target_module: ModuleType, description: str) -> argpar
             if name == "lru_cache" or hasattr(func, "cache_info"):
                 continue
 
-            # Use the first paragraph of the docstring as the command description
-            func_help = func.__doc__.split("\n\n")[0] if func.__doc__ else "No description available."
-            subparser = subparsers.add_parser(name, help=f"{Fore.YELLOW}{func_help}{Style.RESET_ALL}", add_help=False)
-
             # Parse the docstring for argument descriptions
-            arg_descriptions = _parse_docstring(func.__doc__)
+            parsed_docstring = _parse_docstring(func.__doc__ if func.__doc__ else "")
+
+            # Use the first paragraph of the docstring as the command description
+            docstring_description = parsed_docstring["description"]
+            subparser = subparsers.add_parser(
+                name, help=f"{Fore.YELLOW}{docstring_description}{Style.RESET_ALL}", add_help=False
+            )
+
+            # print(json.dumps(parsed_docstring, indent=4, sort_keys=True))
             params = inspect.signature(func).parameters
 
             # Custom help option for subparser (commands)
@@ -136,25 +141,57 @@ def _auto_generate_parser(target_module: ModuleType, description: str) -> argpar
                 "--help",
                 action="help",
                 default=argparse.SUPPRESS,
-                help=f"{Fore.YELLOW}Show this help message and exit with the information on how to use this command.{Style.RESET_ALL}",
+                help=f"{Fore.CYAN}Show this help message and exit with the information on how to use this command.{Style.RESET_ALL}",
             )
 
             for param_name, param in params.items():
+
                 # Use the parsed docstring description if available, otherwise use a generic message
-                arg_help = arg_descriptions.get(param_name, f"The {param_name}")
+                arg_help = parsed_docstring["args"].get(param_name, {}).get("description", f"The {param_name}")
 
-                # Required argument
-                if param.default is param.empty:
-                    subparser.add_argument(param_name, type=str, help=f"{Fore.YELLOW}{arg_help}{Style.RESET_ALL}")
+                # Check if the parameter is expected to be a list of strings
+                if param.annotation == list[str]:
 
-                # Optional argument
+                    def list_str(value):
+                        return value.split(",")
+
+                    # Required list argument
+                    if param.default is param.empty:
+                        subparser.add_argument(
+                            param_name,
+                            type=list_str,
+                            help=f"{Fore.YELLOW} ({param.annotation.__name__}) {arg_help}{Style.RESET_ALL}",
+                        )
+
+                    # Optional list argument
+                    else:
+                        subparser.add_argument(
+                            f"-{''.join(part[0] for part in param_name.split('_') if part)}",
+                            f"--{param_name}",
+                            type=list_str,
+                            default=param.default,
+                            help=f"{Fore.CYAN}{arg_help} (default: {param.default}){Style.RESET_ALL}",
+                        )
+
+                # Handle non-list types
                 else:
-                    subparser.add_argument(
-                        f"--{param_name}",
-                        type=str,
-                        default=param.default,
-                        help=f"{Fore.YELLOW}{arg_help} (default: {param.default}){Style.RESET_ALL}",
-                    )
+                    # Required argument
+                    if param.default is param.empty:
+                        subparser.add_argument(
+                            param_name,
+                            type=param.annotation,
+                            help=f"{Fore.YELLOW} ({param.annotation.__name__}) {arg_help}{Style.RESET_ALL}",
+                        )
+
+                    # Optional argument
+                    else:
+                        subparser.add_argument(
+                            f"-{''.join(part[0] for part in param_name.split('_') if part)}",
+                            f"--{param_name}",
+                            type=param.annotation,
+                            default=param.default,
+                            help=f"{Fore.CYAN}{arg_help} (default: {param.default}){Style.RESET_ALL}",
+                        )
     return parser
 
 

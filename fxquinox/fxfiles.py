@@ -11,7 +11,7 @@ from fxquinox import fxlog
 
 # Log
 _log = fxlog.get_logger(__name__)
-_log.setLevel(10)
+_log.setLevel(fxlog.DEBUG)
 
 # Globals
 _EXTENSIONS = {
@@ -296,7 +296,7 @@ class FXWorkfileTemplate:
         if len(parts) == 5:
             sequence, shot, step, task, version = parts
             if return_int:
-                return cls(int(sequence), int(shot), step, task, int(version.lstrip("v")))
+                return cls(int(sequence), int(shot), step, task, extract_version_integer_value(version))
             return cls(sequence, shot, step, task, version)
         else:
             raise ValueError("Invalid input string format")
@@ -307,7 +307,11 @@ if __name__ == "__main__":
     _workfile = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
     _workfile = FXWorkfileTemplate.from_string(str(_workfile), False)
     _log.info(
-        f"{type(_workfile).__name__}: {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}",
+        f"{type(_workfile).__name__} (str): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
+    )
+    _workfile = FXWorkfileTemplate.from_string(str(_workfile), True)
+    _log.info(
+        f"{type(_workfile).__name__} (int): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
     )
 
     # Project template

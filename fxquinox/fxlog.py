@@ -11,6 +11,32 @@ from colorama import just_fix_windows_console, Fore, Style
 # Internal
 from fxquinox import fxenvironment
 
+# Metadata
+__all__ = [
+    # Globals
+    "CRITICAL",
+    "FATAL",
+    "ERROR",
+    "WARNING",
+    "WARN",
+    "INFO",
+    "DEBUG",
+    "NOTSET",
+    # Functions
+    "get_logger",
+    "set_log_level",
+]
+
+
+# Globals
+CRITICAL = 50
+FATAL = CRITICAL
+ERROR = 40
+WARNING = 30
+WARN = WARNING
+INFO = 20
+DEBUG = 10
+NOTSET = 0
 
 # Initialize colorama
 just_fix_windows_console()
@@ -80,19 +106,10 @@ def get_logger(logger_name: str, force_color: Optional[bool] = None) -> logging.
     # Create a console handler to output logs to the console
     console_handler = logging.StreamHandler()
 
-    # Determine if colored output is forced or supported by the terminal
-    if force_color or (
-        force_color is None
-        and (
-            os.getenv("TERM")
-            in ("xterm", "xterm-color", "xterm-256color", "screen", "screen-256color", "linux", "ansi")
-            or "COLORTERM" in os.environ
-        )
-    ):
-        # If color is supported or forced, use a colored formatter
+    # Determine if colored output is forced
+    if force_color or force_color is None:
         formatter = FXFormatter(color=True)
     else:
-        # Otherwise, use a standard formatter without color
         formatter = FXFormatter()
 
     # Set the formatter for the console handler

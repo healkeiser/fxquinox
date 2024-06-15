@@ -13,6 +13,7 @@ from fxquinox import fxlog, fxfiles
 
 # Log
 _logger = fxlog.get_logger(__name__)
+_logger.setLevel(fxlog.DEBUG)
 
 # Warnings
 # XXX: Need to check why the hell this is happening
@@ -60,7 +61,7 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> N
         structure_dict,
         {
             f"<{entity_type}>": entity_name,
-            "<project_root>": entity_dir.resolve().as_posix() if entity_type == "project" else None,
+            "<project_root>": entity_dir.resolve().as_posix() if entity_type == "project" else "",
         },
     )
 
@@ -97,8 +98,19 @@ def create_sequence(sequence_name: str, base_dir: str = ".") -> None:
     Args:
         sequence_name (str): The name of the sequence to create.
         base_dir (str): The base directory where the sequence will be created,
-            typically the project directory. Defaults to the current directory.
+            typically the "project/production/shots" directory.
+            Defaults to the current directory.
     """
+
+    if len(sequence_name) != 3:
+        _logger.error("Sequence names should be exactly 4 characters long")
+        return
+
+    if not base_dir.endswith("production/shots"):
+        _logger.error(
+            "Sequence should be created under the '$FXQUINOX_PROJECT_ROOT/production/shots' directory",
+        )
+        return
 
     _create_entity("sequence", sequence_name, base_dir)
 
@@ -109,10 +121,29 @@ def create_shot(shot_name: str, base_dir: str = ".") -> None:
     Args:
         shot_name (str): The name of the shot to create.
         base_dir (str): The base directory where the shot will be created,
-            typically the sequence directory. Defaults to the current directory.
+            typically the "project/production/shots/sequence" directory.
+            Defaults to the current directory.
     """
 
+    if len(shot_name) != 4:
+        _logger.error("Shot names should be exactly 4 characters long")
+        return
+
     _create_entity("shot", shot_name, base_dir)
+
+
+def create_shots(shot_names: list[str], base_dir: str = ".") -> None:
+    """Creates a new shot directory structure within a sequence.
+
+    Args:
+        shot_names (list): The names of the shots to create.
+        base_dir (str): The base directory where the shot will be created,
+            typically the "project/production/shots/sequence" directory.
+            Defaults to the current directory.
+    """
+
+    for shot_name in shot_names:
+        create_shot(shot_name, base_dir)
 
 
 def create_asset(asset_name: str, base_dir: str = ".") -> None:
@@ -121,7 +152,8 @@ def create_asset(asset_name: str, base_dir: str = ".") -> None:
     Args:
         asset_name (str): The name of the asset to create.
         base_dir (str): The base directory where the asset will be created,
-            typically the project directory. Defaults to the current directory.
+            typically the "project/production/assets" directory.
+            Defaults to the current directory.
     """
 
     _create_entity("asset", asset_name, base_dir)
