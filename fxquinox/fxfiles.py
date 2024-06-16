@@ -2,8 +2,9 @@
 import os
 import json
 from pathlib import Path
+import platform
 import re
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List, Tuple
 
 # Internal
 from fxquinox import fxlog
@@ -42,30 +43,50 @@ def path_to_unix(path: str) -> str:
     return path.replace("\\", "/")
 
 
-def create_structure_from_dict(directory_structure: Dict[str, Any], parent_path: str = ".") -> None:
+def create_structure_from_dict(
+    directory_structure: Dict[str, Any], parent_path: str = ".", folders: List[str] = None, files: List[str] = None
+) -> Tuple[List[str], List[str]]:
     """Recursively creates folders and files based on the provided directory
-    structure.
+    structure and returns lists of created folders and files.
 
     Args:
         directory_structure (dict): The directory structure in JSON format.
         parent_path (str, optional): The parent path where the directory
             structure should be created. Defaults to current directory (`"."`).
+        folders (List[str], optional): List of created folders. Used for recursion.
+        files (List[str], optional): List of created files. Used for recursion.
+
+    Returns:
+        Tuple[List[str], List[str]]: A tuple containing two lists - the first
+            with folders and the second with files created.
 
     Examples:
         >>> with open("directory_structure_with_files.json", "r") as file:
         >>>     directory_structure = json.load(file)
-        >>> create_folders_and_files(directory_structure)
+        >>> folders, files = create_structure_from_dict(directory_structure)
+        >>> print(f"Created folders: {folders}")
+        >>> print(f"Created files: {files}")
 
     """
+
+    if folders is None:
+        folders = []
+    if files is None:
+        files = []
 
     for name, content in directory_structure.items():
         path = os.path.join(parent_path, name)
         if isinstance(content, dict):
-            os.makedirs(path, exist_ok=True)
-            create_structure_from_dict(content, path)
+            if not os.path.exists(path):
+                os.makedirs(path, exist_ok=True)
+                folders.append(path)
+            create_structure_from_dict(content, path, folders, files)
         else:
             with open(path, "w") as file:
                 file.write(content)
+            files.append(path)
+
+    return folders, files
 
 
 def replace_in_json(data: Dict, replacements: Dict) -> Dict:
@@ -93,6 +114,119 @@ def replace_in_json(data: Dict, replacements: Dict) -> Dict:
     else:
         # Return other data types unchanged
         return data
+
+
+def set_metadata(file_path: str, metadata_name: str, metadata_value: str) -> Optional[str]:
+    if platform.system() == "Windows":
+        # Windows: Use NTFS streams for metadata
+        stream_name = file_path + ":" + metadata_name
+        with open(stream_name, "w") as stream:
+            stream.write(metadata_value)
+    else:
+        # Unix-like: Use extended attributes
+        # Ensure metadata_name is prefixed with 'user.'
+        if not metadata_name.startswith("user."):
+            metadata_name = "user." + metadata_name
+        os.setxattr(file_path, metadata_name.encode(), metadata_value.encode())
+
+
+def set_multiple_metadata(file_path: str, metadata: Dict[str, str]) -> None:
+    """Set multiple metadata entries for a file.
+
+    Args:
+        file_path (str): Path to the file.
+        metadata (Dict[str, str]): Dictionary of metadata names and values to set.
+    """
+
+    for metadata_name, metadata_value in metadata.items():
+        if platform.system() == "Windows":
+            # Windows: Use NTFS streams for metadata
+            stream_name = file_path + ":" + metadata_name
+            with open(stream_name, "w") as stream:
+                stream.write(metadata_value)
+        else:
+            # Unix-like: Use extended attributes
+            # Ensure metadata_name is prefixed with 'user.'
+            if not metadata_name.startswith("user."):
+                metadata_name = "user." + metadata_name
+            os.setxattr(file_path, metadata_name.encode(), metadata_value.encode())
+
+
+def get_metadata(file_path: str, metadata_name: str) -> Optional[str]:
+    if platform.system() == "Windows":
+        # Windows: Retrieve metadata from NTFS stream
+        stream_name = file_path + ":" + metadata_name
+        try:
+            with open(stream_name, "r") as stream:
+                return stream.read()
+        except FileNotFoundError:
+            return None  # Stream not found
+    else:
+        # Unix-like: Retrieve extended attribute
+        # Ensure metadata_name is prefixed with 'user.'
+        if not metadata_name.startswith("user."):
+            metadata_name = "user." + metadata_name
+        try:
+            return os.getxattr(file_path, metadata_name.encode()).decode()
+        except FileNotFoundError:
+            return None  # Attribute not found
+
+
+def get_multiple_metadata(file_path: str, metadata_names: List[str]) -> Dict[str, Optional[str]]:
+    """Retrieve multiple metadata entries for a file.
+
+    Args:
+        file_path (str): Path to the file.
+        metadata_names (List[str]): List of metadata names to retrieve.
+
+    Returns:
+        Dictionary of metadata names and their values. If a metadata entry is
+        not found, its value is `None`.
+    """
+    metadatas = {}
+    for metadata_name in metadata_names:
+        if platform.system() == "Windows":
+            # Windows: Retrieve metadata from NTFS stream
+            stream_name = file_path + ":" + metadata_name
+            try:
+                with open(stream_name, "r") as stream:
+                    metadatas[metadata_name] = stream.read()
+            except FileNotFoundError:
+                metadatas[metadata_name] = None  # Stream not found
+        else:
+            # Unix-like: Retrieve extended attribute
+            # Ensure metadata_name is prefixed with 'user.'
+            if not metadata_name.startswith("user."):
+                metadata_name = "user." + metadata_name
+            try:
+                metadatas[metadata_name] = os.getxattr(file_path, metadata_name.encode()).decode()
+            except FileNotFoundError:
+                metadatas[metadata_name] = None  # Attribute not found
+    return metadatas
+
+
+def delete_metadata(file_path: str, metadata_name) -> None:
+    if platform.system() == "Windows":
+        # Windows: Delete NTFS stream by opening and closing it in write mode
+        stream_name = file_path + ":" + metadata_name
+        open(stream_name, "w").close()
+    else:
+        # Unix-like: Remove extended attribute
+        if not metadata_name.startswith("user."):
+            metadata_name = "user." + metadata_name
+        os.removexattr(file_path, metadata_name.encode())
+
+
+def clear_metadata(file_path: str) -> None:
+    if platform.system() == "Windows":
+        # Windows: Clearing all metadata is complex due to lack of direct support
+        # This function will not handle clearing all metadata on Windows
+        pass
+    else:
+        # Unix-like: List and remove all extended attributes
+        attrs = os.listxattr(file_path)
+        for attr in attrs:
+            os.removexattr(file_path, attr)
 
 
 def get_next_version(path: str, as_string: bool = False) -> Union[int, str]:

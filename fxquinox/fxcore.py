@@ -1,15 +1,20 @@
 """The fxcore module provides a set of tools for managing and automating the creation of VFX entitites."""
 
+# TODO: Change the whole JSON sidecar method for metadata database
+
+# TODO: Actually simpler would be to use `os.setxattr("/path/to/file", "user.keyname", b"value")`
+# TODO: and then `os.getxattr("/path/to/file", "user.keyname")` to get the value
+
 # Built-in
 import json
 from functools import lru_cache
 from pathlib import Path
 import sys
 import warnings
-from typing import Union
+from typing import Union, Dict
 
 # Internal
-from fxquinox import fxlog, fxfiles, fxentities
+from fxquinox import fxlog, fxfiles, fxdatabase, fxenvironment
 
 
 # Log
@@ -30,7 +35,7 @@ _ASSET = "asset"
 
 
 @lru_cache(maxsize=None)
-def _get_structure_dict(entity: str) -> dict:
+def _get_structure_dict(entity: str) -> Dict:
     """Reads the project structure from the JSON file and returns it.
 
     Args:
@@ -82,14 +87,23 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> N
             _logger.info(f"{entity_type.capitalize()} creation cancelled")
             return
 
+    # Create the entity directory structure
+    folders, files = [], []
+
     try:
-        fxfiles.create_structure_from_dict(structure_dict, str(base_dir_path))
+        folders, files = fxfiles.create_structure_from_dict(structure_dict, str(base_dir_path))
         _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{base_dir_path.resolve().as_posix()}'")
     except Exception as e:
         _logger.error(f"Failed to create {entity_type} '{entity_name}': {str(e)}")
 
+    # Add folder metadata to the database
+    for folder, file in zip(folders, files):
+        fxdatabase.upsert_folder_metadata(
+            fxenvironment.FXQUINOX_METADATA_DB, folder, "fxquinox", "Store shot files", entity_type
+        )
 
-def _check_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> Union[bool, dict]:
+
+def _check_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> Union[bool, Dict]:
     """Checks if a the JSON sidecar exists for a given entity type in the
     specified base directory. If it exists, it checks if the entity type
     matches.
@@ -101,7 +115,7 @@ def _check_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> Un
             Defaults to the current directory.
 
     Returns:
-        Union[bool, dict]: A tuple containing a boolean indicating if the entity
+        Union[bool, Dict]: A tuple containing a boolean indicating if the entity
             is valid and a dictionary with the entity information.
     """
 
@@ -136,7 +150,7 @@ def create_project(project_name: str, base_dir: str = ".") -> None:
     _create_entity(_PROJECT, project_name, base_dir)
 
 
-def check_project(project_name: str, base_dir: str = ".") -> Union[bool, dict]:
+def check_project(project_name: str, base_dir: str = ".") -> Union[bool, Dict]:
     """Checks if a valid project directory structure exists.
 
     Args:
@@ -215,7 +229,7 @@ def create_sequences(sequence_names: list[str], base_dir: str = ".") -> None:
         create_sequence(sequence_name, base_dir)
 
 
-def check_sequence(sequence_name: str, base_dir: str = ".") -> Union[bool, dict]:
+def check_sequence(sequence_name: str, base_dir: str = ".") -> Union[bool, Dict]:
     """Checks if a valid sequence directory structure exists within a project.
 
     Args:
@@ -343,7 +357,7 @@ def create_shots(shot_names: list[str], base_dir: str = ".") -> None:
         _create_entity(_SHOT, shot_name, parent_directory)
 
 
-def check_shot(shot_name: str, base_dir: str = ".") -> None:
+def check_shot(shot_name: str, base_dir: str = ".") -> Union[bool, Dict]:
     """Checks if a valid shot directory structure exists within a sequence.
 
     Args:
@@ -351,6 +365,10 @@ def check_shot(shot_name: str, base_dir: str = ".") -> None:
         base_dir (str): The base directory where the shot should be located,
             typically the "project/production/shots/sequence" directory.
             Defaults to the current directory.
+
+    Returns:
+        Union[bool, dict]: A tuple containing a boolean indicating if the shot
+            is valid and a dictionary with the shot information.
     """
 
     return _check_entity(_SHOT, shot_name, base_dir)
@@ -413,7 +431,7 @@ def create_assets(asset_names: list[str], base_dir: str = ".") -> None:
         create_asset(asset_name, base_dir)
 
 
-def check_asset(asset_name: str, base_dir: str = ".") -> bool:
+def check_asset(asset_name: str, base_dir: str = ".") -> Union[bool, Dict]:
     """Checks if a valid asset directory structure exists within a project.
 
     Args:
@@ -423,13 +441,13 @@ def check_asset(asset_name: str, base_dir: str = ".") -> bool:
             Defaults to the current directory.
 
     Returns:
-        bool: `True` if the asset is valid, `False` otherwise.
+        Union[bool, Dict]: A tuple containing a boolean indicating if the asset
     """
 
     return _check_entity(_ASSET, asset_name, base_dir)
 
 
-def check_assets_directory(base_dir: str = ".") -> Union[bool, dict]:
+def check_assets_directory(base_dir: str = ".") -> Union[bool, Dict]:
     """Checks if a valid "assets" (which holds the assets) directory
     structure exists within a project.
 
@@ -439,7 +457,7 @@ def check_assets_directory(base_dir: str = ".") -> Union[bool, dict]:
             Defaults to the current directory.
 
     Returns:
-        Union[bool, dict]: A tuple containing a boolean indicating if the assets
+        Union[bool, Dict]: A tuple containing a boolean indicating if the assets
             directory is valid and a dictionary with the assets directory information.
     """
 

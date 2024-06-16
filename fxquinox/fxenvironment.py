@@ -61,6 +61,23 @@ FXQUINOX_APPDATA = os.environ["FXQUINOX_APPDATA"] = _appdata_path
 
 FXQUINOX_LOGS = os.environ["FXQUINOX_LOGS"] = Path(FXQUINOX_APPDATA, "logs").resolve().as_posix()
 
+# Files to create
+FXQUINOX_METADATA_DB = Path(FXQUINOX_APPDATA).resolve() / "database" / "metadata.db"
+
+
+def setup_environment() -> None:
+    """Initialize the environment variables for the package."""
+
+    # Create the directories
+    for path in [FXQUINOX_HOME, FXQUINOX_TEMP, FXQUINOX_APPDATA, FXQUINOX_LOGS]:
+        # print(f"Creating directory: {Fore.WHITE}{path}{Style.RESET_ALL}")
+        os.makedirs(path, exist_ok=True)
+
+    for files in [FXQUINOX_METADATA_DB]:
+        # print(f"Creating file: {Fore.WHITE}{files}{Style.RESET_ALL}")
+        files.parent.mkdir(parents=True, exist_ok=True)
+        files.touch(exist_ok=True)
+
 
 def _test() -> None:
     """Tests the environment variables."""
@@ -76,3 +93,4 @@ def _test() -> None:
 
 if __name__ == "__main__":
     _test()
+    setup_environment()

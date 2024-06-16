@@ -8,3 +8,6 @@ __all__ = (
     "fxfiles",
     "fxlog",
 )
+
+# Set up the environment
+fxenvironment.setup_environment()
