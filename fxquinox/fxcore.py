@@ -6,6 +6,7 @@
 # TODO: and then `os.getxattr("/path/to/file", "user.keyname")` to get the value
 
 # Built-in
+import os
 import json
 from functools import lru_cache
 from pathlib import Path
@@ -13,8 +14,21 @@ import sys
 import warnings
 from typing import Union, Dict
 
+# Third-party
+import yaml
+
 # Internal
-from fxquinox import fxlog, fxfiles, fxdatabase, fxenvironment
+from fxquinox import fxlog, fxfiles
+
+
+def long_function_name_test_logger():
+    _logger.warning("Warning")
+    _logger.warning("Warning")
+    _logger.warning("Warning")
+    _logger.warning("Warning")
+    _logger.info("Info")
+    _logger.error("Error")
+    _logger.critical("Critical")
 
 
 # Log
@@ -35,25 +49,34 @@ _ASSET = "asset"
 
 
 @lru_cache(maxsize=None)
-def _get_structure_dict(entity: str) -> Dict:
-    """Reads the project structure from the JSON file and returns it.
+def _get_structure_dict(entity: str, file_type: str = "yaml") -> Dict:
+    """Reads the project structure from the JSON or YAML file and returns it.
 
     Args:
         entity (str): The entity type for which the structure is needed.
+        file_type (str): The type of file to read the structure from.
+            Can be either "json" or "yaml". Defaults to "yaml".
 
     Returns:
         dict: The project structure dictionary.
 
+    Raises:
+        FileNotFoundError: If the structure file is not found.
+
     Note:
-        This function is decorated with `lru_cache` to avoid reading the file every time.
+        This function is decorated with `lru_cache` to avoid reading the file
+        every time.
     """
 
-    structure_path = Path(__file__).parent / "structures" / f"{entity}_structure.json"
+    structure_path = Path(__file__).parent / "structures" / f"{entity}_structure.{file_type}"
     if structure_path.exists():
+        if file_type == "yaml":
+            return yaml.safe_load(structure_path.read_text())
         return json.loads(structure_path.read_text())
     else:
-        _logger.error(f"Structure file '{structure_path}' not found")
-        return {}
+        error_message = f"Structure file '{structure_path}' not found"
+        _logger.error(error_message)
+        raise FileNotFoundError(error_message)
 
 
 def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> None:
@@ -71,62 +94,52 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> N
     entity_dir = base_dir_path / entity_name
 
     structure_dict = _get_structure_dict(entity_type)
-    structure_dict = fxfiles.replace_in_json(
+    structure_dict = fxfiles.replace_placeholders_in_dict(
         structure_dict,
         {
-            f"<{entity_type}>": entity_name,
-            f"<{entity_type}_root>": entity_dir.resolve().as_posix(),
+            entity_type.upper(): entity_name,
+            f"{entity_type.upper()}_ROOT": entity_dir.resolve().as_posix(),
         },
     )
 
+    _base_dir_path = base_dir_path.resolve().as_posix()
+
     if entity_dir.exists():
         confirmation = input(
-            f"There's already a {entity_type} '{entity_name}' in '{base_dir_path.resolve().as_posix()}', do you want to continue? (y/N): "
+            f"There's already a {entity_type} '{entity_name}' in '{_base_dir_path}', do you want to continue? (y/N): "
         )
         if confirmation.lower() != "y":
             _logger.info(f"{entity_type.capitalize()} creation cancelled")
             return
 
-    # Create the entity directory structure
-    folders, files = [], []
-
     try:
-        folders, files = fxfiles.create_structure_from_dict(structure_dict, str(base_dir_path))
-        _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{base_dir_path.resolve().as_posix()}'")
+        fxfiles.create_structure_from_dict(structure_dict, _base_dir_path)
+        _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{_base_dir_path}'")
     except Exception as e:
-        _logger.error(f"Failed to create {entity_type} '{entity_name}': {str(e)}")
-
-    # Add folder metadata to the database
-    for folder, file in zip(folders, files):
-        fxdatabase.upsert_folder_metadata(
-            fxenvironment.FXQUINOX_METADATA_DB, folder, "fxquinox", "Store shot files", entity_type
-        )
+        _logger.error(f"Failed to create {entity_type} '{entity_name}': {repr(e)}")
 
 
-def _check_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> Union[bool, Dict]:
-    """Checks if a the JSON sidecar exists for a given entity type in the
-    specified base directory. If it exists, it checks if the entity type
-    matches.
+def _check_entity(entity_type: str, base_dir: str = ".") -> bool:
+    """Checks if the given folder of file has the correct entity type by
+    checking its metadata.
 
     Args:
         entity_type (str): The type of entity to check.
-        entity_name (str): The name of the entity to check.
         base_dir (str): The base directory in which to check the entity.
             Defaults to the current directory.
 
     Returns:
-        Union[bool, Dict]: A tuple containing a boolean indicating if the entity
-            is valid and a dictionary with the entity information.
+        bool: `True` if the entity is valid, `False` otherwise.
     """
 
-    info_file = Path(base_dir, f".{entity_name}_info.json")
-    if not info_file.exists():
-        _logger.warning(f"Info file '{info_file}' not found")
-        return False, {}
+    entity_path = Path(base_dir).resolve().as_posix()
+    metadata_entity = fxfiles.get_metadata(entity_path, "entity")
+    _logger.debug(f"Directory: '{entity_path}'")
+    _logger.debug(f"Metadata entity: '{metadata_entity}'")
 
-    entity_info = json.loads(info_file.read_text())
-    if entity_info.get("entity_type") == entity_type:
-        return True, entity_info
+    if not metadata_entity == entity_type:
+        return False
+    return True
 
 
 ###### Projects
@@ -199,20 +212,14 @@ def create_sequence(sequence_name: str, base_dir: str = ".") -> None:
     # Check the parent entity sequence "shots" directory validity before
     # creating the sequence
     base_dir_path = Path(base_dir).resolve()
-    is_parent_sequences_directory, sequences_directory_info = check_shots_directory(base_dir_path)
 
-    if not is_parent_sequences_directory:
+    if not _check_shots_directory(base_dir_path):
         error_message = f"'{base_dir_path}' is not a valid shots directory"
         _logger.error(error_message)
         raise InvalidSequencesDirectoryError(error_message)
 
     # Create the sequence
     _create_entity(_SEQUENCE, sequence_name, base_dir_path)
-
-    # Add the created sequence to the `shot_info` JSON file (holding sequences)
-    sequences_directory_info["shots"].append(sequence_name)
-    sequences_directory_info_path = base_dir_path / f".{sequences_directory_info['entity_type']}_info.json"
-    json.dump(sequences_directory_info, sequences_directory_info_path.open("w"), indent=4)
 
 
 def create_sequences(sequence_names: list[str], base_dir: str = ".") -> None:
@@ -225,8 +232,18 @@ def create_sequences(sequence_names: list[str], base_dir: str = ".") -> None:
             Defaults to the current directory.
     """
 
+    # Check the parent entity sequence "shots" directory validity before
+    # creating the sequence
+    base_dir_path = Path(base_dir).resolve()
+
+    if not _check_shots_directory(base_dir_path):
+        error_message = f"'{base_dir_path}' is not a valid shots directory"
+        _logger.error(error_message)
+        raise InvalidSequencesDirectoryError(error_message)
+
+    # Create the sequences
     for sequence_name in sequence_names:
-        create_sequence(sequence_name, base_dir)
+        _create_entity(_SEQUENCE, sequence_name, base_dir_path)
 
 
 def check_sequence(sequence_name: str, base_dir: str = ".") -> Union[bool, Dict]:
@@ -248,7 +265,7 @@ def check_sequence(sequence_name: str, base_dir: str = ".") -> Union[bool, Dict]
 
 # ? It could appear as this function should be in the shots section, but it's
 # ? here because the `shots` directory is the one holding the sequences.
-def check_shots_directory(base_dir: str = ".") -> bool:
+def _check_shots_directory(base_dir: str = ".") -> bool:
     """Checks if a valid "shots" (which holds the sequences) directory
     structure exists within a project.
 
@@ -258,7 +275,7 @@ def check_shots_directory(base_dir: str = ".") -> bool:
             Defaults to the current directory.
     """
 
-    return _check_entity(_SHOTS_DIR, _SHOTS_DIR, base_dir)
+    return _check_entity(_SHOTS_DIR, Path(base_dir).resolve().as_posix())
 
 
 ###### Shots
@@ -465,6 +482,27 @@ def check_assets_directory(base_dir: str = ".") -> Union[bool, Dict]:
 
 
 if __name__ == "__main__":
-    from fxquinox import _fxcli
+    # from fxquinox import _fxcli
 
-    _fxcli.main(target_module=sys.modules[__name__], description=__doc__ if __doc__ else __name__)
+    # _fxcli.main(target_module=sys.modules[__name__], description=__doc__ if __doc__ else __name__)
+
+    # Test
+    # create_project("fxquinox", "D:/Projects")
+    _check_entity(_SHOTS_DIR, "D:/Projects/fxquinox/production/shots")
+
+    def _check_log():
+        _logger.info("Checking length")
+
+    long_function_name_test_logger()
+    _check_log()
+
+    # create_sequence("010", "D:/Projects/fxquinox/production/shots")
+
+    # print(fxfiles.get_metadata("D:/Projects/fxquinox/production/shots", "entity"))
+
+    # fxfiles.create_structure_from_dict(structure, "D:/Projects/fxquinox")
+
+    # Check metadata
+    # metadata = fxfiles.get_metadata("D:/Projects/fxquinox", "entity")
+    # print(metadata)
+    pass

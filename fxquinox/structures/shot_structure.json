@@ -1,9 +1,0 @@
-{
-    "<shot>": {
-        ".<shot>_info.json": "{\"entity_type\": \"shot\", \"shot_name\": \"<shot>\", \"shot_root\": \"<shot_root>\", \"cut_in\": \"<cut_in>\", \"cut_out\": \"<cut_out>\", \"handle_in\": \"<handle_in>\", \"handle_out\": \"<handle_out>\"}",
-        "exports": {},
-        "playblasts": {},
-        "renders": {},
-        "workfiles": {}
-    }
-}

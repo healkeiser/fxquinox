@@ -43,7 +43,10 @@ def path_to_unix(path: str) -> str:
     return path.replace("\\", "/")
 
 
-def create_structure_from_dict(
+###### ! Old
+
+
+def _create_structure_from_dict(
     directory_structure: Dict[str, Any], parent_path: str = ".", folders: List[str] = None, files: List[str] = None
 ) -> Tuple[List[str], List[str]]:
     """Recursively creates folders and files based on the provided directory
@@ -63,7 +66,7 @@ def create_structure_from_dict(
     Examples:
         >>> with open("directory_structure_with_files.json", "r") as file:
         >>>     directory_structure = json.load(file)
-        >>> folders, files = create_structure_from_dict(directory_structure)
+        >>> folders, files = _create_structure_from_dict(directory_structure)
         >>> print(f"Created folders: {folders}")
         >>> print(f"Created files: {files}")
 
@@ -80,7 +83,7 @@ def create_structure_from_dict(
             if not os.path.exists(path):
                 os.makedirs(path, exist_ok=True)
                 folders.append(path)
-            create_structure_from_dict(content, path, folders, files)
+            _create_structure_from_dict(content, path, folders, files)
         else:
             with open(path, "w") as file:
                 file.write(content)
@@ -89,7 +92,7 @@ def create_structure_from_dict(
     return folders, files
 
 
-def replace_in_json(data: Dict, replacements: Dict) -> Dict:
+def _replace_placeholders_in_dict(data: Dict, replacements: Dict) -> Dict:
     """Replaces placeholders in a JSON object with values from a dictionary.
 
     Args:
@@ -107,13 +110,113 @@ def replace_in_json(data: Dict, replacements: Dict) -> Dict:
         return data
     elif isinstance(data, dict):
         # Recursively replace in dictionaries
-        return {replace_in_json(k, replacements): replace_in_json(v, replacements) for k, v in data.items()}
+        return {
+            _replace_placeholders_in_dict(k, replacements): _replace_placeholders_in_dict(v, replacements)
+            for k, v in data.items()
+        }
     elif isinstance(data, list):
         # Recursively replace in lists
-        return [replace_in_json(item, replacements) for item in data]
+        return [_replace_placeholders_in_dict(item, replacements) for item in data]
     else:
         # Return other data types unchanged
         return data
+
+
+###### ' New
+
+
+def create_structure_from_dict(structure_dict: dict, base_dir: str = ".") -> None:
+    """Creates the directory structure based on the provided dict structure.
+
+    Args:
+        structure_dict (dict): The dictionary containing the structure.
+        base_dir (str): The base directory where the structure will be created.
+    """
+
+    for root_name, root_item in structure_dict.items():
+        root_path = Path(base_dir) / root_name
+        if root_item["type"] == "folder":
+            root_path.mkdir(parents=True, exist_ok=True)
+            print(f"Created folder: {root_path}")
+            set_multiple_metadata(str(root_path), root_item.get("metadata", {}))
+            if "children" in root_item:
+                for child in root_item["children"]:
+                    create_child_from_dict(child, str(root_path))
+
+
+def create_child_from_dict(child_dict: dict, parent_dir: str) -> None:
+    """Recursively creates child folders and files based on the provided dict
+    structure.
+
+    Args:
+        child_dict (dict): The dictionary containing the child structure.
+        parent_dir (str): The parent directory where the child will be created.
+    """
+
+    child_path = Path(parent_dir) / child_dict["name"]
+
+    # Folder
+    if child_dict["type"] == "folder":
+        child_path.mkdir(parents=True, exist_ok=True)
+        print(f"Created folder: {child_path}")
+        set_multiple_metadata(str(child_path), child_dict.get("metadata", {}))
+        if "children" in child_dict:
+            for child in child_dict["children"]:
+                create_child_from_dict(child, str(child_path))
+
+    # File
+    elif child_dict["type"] == "file":
+        child_path.write_text(child_dict.get("content", ""))
+        print(f"Created file: {child_path}")
+        set_multiple_metadata(str(child_path), child_dict.get("metadata", {}))
+
+
+def replace_placeholders_in_dict(data: Dict, replacements: Dict) -> Dict:
+    """Recursively replaces placeholders in a dictionary with values from another dictionary.
+
+    Args:
+        data (Dict): The dictionary to process.
+        replacements (Dict): The dictionary containing placeholder-replacement pairs.
+
+    Returns:
+        Dict: The dictionary with placeholders replaced by values.
+    """
+
+    if isinstance(data, dict):
+        new_dict = {}
+        for k, v in data.items():
+            new_key = replace_placeholders_in_string(k, replacements)
+            new_value = replace_placeholders_in_dict(v, replacements)
+            new_dict[new_key] = new_value
+        return new_dict
+    elif isinstance(data, list):
+        return [replace_placeholders_in_dict(item, replacements) for item in data]
+    elif isinstance(data, str):
+        return replace_placeholders_in_string(data, replacements)
+    else:
+        return data
+
+
+def replace_placeholders_in_string(s: str, replacements: Dict) -> str:
+    """Replaces placeholders in a string with values from a dictionary.
+
+    Note:
+        Placeholders are in the format `$placeholder$`.
+
+    Args:
+        s (str): The string to process.
+        replacements (Dict): The dictionary containing placeholder-replacement pairs.
+
+    Returns:
+        str: The string with placeholders replaced by values.
+    """
+
+    for key, value in replacements.items():
+        s = s.replace(f"${key}$", value)
+    return s
+
+
+###### Metadata
 
 
 def set_metadata(file_path: str, metadata_name: str, metadata_value: str) -> Optional[str]:

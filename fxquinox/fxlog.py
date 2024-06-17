@@ -1,4 +1,5 @@
 # Built-in
+from datetime import datetime
 import logging
 import logging.handlers
 import os
@@ -43,108 +44,102 @@ just_fix_windows_console()
 
 
 class FXFormatter(logging.Formatter):
-    LEVEL_COLORS = {
-        logging.DEBUG: Fore.BLUE,
-        logging.INFO: Fore.WHITE,
-        logging.WARNING: Fore.YELLOW,
-        logging.ERROR: Fore.RED,
-        logging.CRITICAL: Fore.MAGENTA,
-    }
+    def __init__(self, fmt=None, datefmt=None, style="{", color=False, separator=False):
+        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
+        self.LEVEL_COLORS = {
+            logging.DEBUG: Fore.CYAN,
+            logging.INFO: Fore.GREEN,
+            logging.WARNING: Fore.YELLOW,
+            logging.ERROR: Fore.RED,
+            logging.CRITICAL: Fore.MAGENTA,
+        }
+        self.color = color
+        self.separator = separator
 
-    def __init__(self, color: Optional[bool] = False, separator: Optional[bool] = False):
-        separator_line = f"{'-' * 80}\n" if separator else ""
-        if color:
-            log_format = (
-                f"{separator_line}"
-                f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n"
-                f"{Style.BRIGHT}%(message)s{Style.RESET_ALL}"
+    def format(self, record):
+        # Define widths for various parts of the log message
+        width_funcName = 35
+        width_name = 15
+        width_levelname = 8
+
+        # Format line number with padding
+        record.lineno = f"{record.lineno:<4}"
+
+        # Handle separator if enabled
+        if self.separator:
+            separator = "-" * (85 + len(record.getMessage())) + "\n"
+        else:
+            separator = ""
+
+        # Construct the log format string based on whether color is enabled
+        if self.color:
+            log_fmt = (
+                f"{separator}{{asctime}} | {{name:>{width_name}s}} | {{lineno}} | "
+                f"{Fore.YELLOW}{{funcName:<{width_funcName}s}}{Style.RESET_ALL} "
+                f" | {Style.BRIGHT}{self.LEVEL_COLORS.get(record.levelno, Fore.WHITE)}"
+                f"{{levelname:>{width_levelname}s}}{Style.RESET_ALL} | {{message}}"
             )
         else:
-            log_format = (
-                f"{separator_line}" f"%(levelname)s | %(asctime)s | %(name)s | %(filename)s:%(lineno)d\n" f"%(message)s"
+            log_fmt = (
+                f"{separator}{{asctime}} | {{name:>{width_name}s}} | {{lineno}} | "
+                f"{{funcName:<{width_funcName}s}} | "
+                f"{{levelname:>{width_levelname}s}} | {{message}}"
             )
-        super().__init__(log_format, datefmt="%Y-%m-%d %H:%M:%S")
-        self.color = color
 
-    def format(self, record: logging.LogRecord) -> str:
-        """Formats the log record based on the current settings.
-
-        Args:
-            record (logging.LogRecord): The log record to format.
-
-        Returns:
-            str: The formatted log message.
-        """
-
-        original_levelname = record.levelname  # Store the original levelname
-        if self.color:
-            record.levelname = self.LEVEL_COLORS.get(record.levelno, Fore.WHITE) + record.levelname
-        formatted_message = super().format(record)
-        record.levelname = original_levelname  # Restore the original levelname
-        return formatted_message
+        # Create a new formatter with the constructed format string
+        formatter = logging.Formatter(log_fmt, style="{", datefmt="%H:%S")
+        return formatter.format(record)
 
 
-def get_logger(logger_name: str, force_color: Optional[bool] = None) -> logging.Logger:
+class FXTimedRotatingFileHandler(logging.handlers.TimedRotatingFileHandler):
+    def rotation_filename(self, default_name: str) -> str:
+        name, ext = os.path.splitext(default_name)
+        return f"{name}.{self.suffix}{ext}"
+
+
+def get_logger(logger_name: str, color: bool = True, separator: bool = True) -> logging.Logger:
     """Creates a custom logger with the specified name and returns it.
 
     Args:
         logger_name (str): The name of the logger.
-        force_color (Optional[bool]): Whether to force color logging.
-            Defaults to `None`.
+        color (bool): Whether to enable color logging. Defaults to `True`.
+        separator (bool): Whether to enable a separator between log messages.
+            Defaults to `False`.
 
     Returns:
         logging.Logger: The custom logger.
     """
 
-    # Check if the logger with the specified name already exists in the logger dictionary
+    # Check if the logger with the specified name already exists in the logger
+    # dictionary
     if logger_name in logging.Logger.manager.loggerDict:
-        # If it exists, return the existing logger
         return logging.getLogger(logger_name)
 
-    # Create a new logger with the specified name
-    custom_logger = logging.getLogger(logger_name)
+    # Formatter
+    formatter = FXFormatter(color=color, separator=separator)
+    logger = logging.getLogger(logger_name)
 
-    # Create a console handler to output logs to the console
+    # Console
     console_handler = logging.StreamHandler()
-
-    # Determine if colored output is forced
-    if force_color or force_color is None:
-        formatter = FXFormatter(color=True)
-    else:
-        formatter = FXFormatter()
-
-    # Set the formatter for the console handler
     console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.DEBUG)
 
-    # Define the directory path for log files
+    # Save logs
     log_directory = Path(fxenvironment.FXQUINOX_APPDATA) / "logs"
-
-    # Create the log directory if it does not exist
-    if not log_directory.exists():
-        log_directory.mkdir(parents=True, exist_ok=True)
-
-    # Define the path for the log file
-    log_file_path = log_directory / f"{logger_name}.log"
+    log_directory.mkdir(parents=True, exist_ok=True)
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    log_file_path = log_directory / f"{logger_name}.{current_date}.log"
 
     # Create a file handler for logging with rotation at midnight (one file a day)
-    file_handler = logging.handlers.TimedRotatingFileHandler(
-        filename=log_file_path, when="midnight", interval=1, backupCount=30, encoding="utf-8"
-    )
-
-    # Set a non-colored formatter for the file handler
+    file_handler = FXTimedRotatingFileHandler(log_file_path, "midnight", 1, 30, "utf-8")
     file_handler.setFormatter(FXFormatter(color=False, separator=True))
-
-    # Set the logging level for the file handler
     file_handler.setLevel(logging.DEBUG)
 
-    # Add the console and file handlers to the custom logger
-    custom_logger.addHandler(console_handler)
-    custom_logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+    logger.propagate = False
 
-    # Prevent the custom logger from propagating logs to the root logger
-    custom_logger.propagate = False
-
-    return custom_logger
+    return logger
 
 
 def set_log_level(level: int) -> None:

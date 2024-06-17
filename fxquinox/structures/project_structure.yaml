@@ -1,0 +1,84 @@
+# Folder
+$PROJECT$:
+  type: folder
+  metadata:
+    creator: "fxquinox"
+    entity: "project"
+    description: "Project root folder"
+  children:
+    # Folder
+    - name: .$PROJECT$_info.json
+      type: file
+      metadata:
+        creator: "fxquinox"
+        entity: "metadata"
+        description: "Project configuration"
+      content: >
+        {
+          "entity_type": "project",
+          "project_name": "$PROJECT$",
+          "project_root": "$PROJECT_ROOT$"
+        }
+
+    # Folder
+    - name: .pipeline
+      type: folder
+      metadata:
+        creator: "fxquinox"
+        entity: "pipeline"
+        description: "Pipeline configurations and custom modules"
+      children:
+        # Folder
+        - name: custom_modules
+          type: folder
+          metadata:
+            creator: "fxquinox"
+            entity: "custom_modules"
+            description: "Custom modules for pipeline"
+          children:
+            # File
+            - name: README.md
+              type: file
+              metadata:
+                creator: "fxquinox"
+                entity: "help"
+                summary: "Documentation for custom modules"
+              content: ""
+        # Folder
+        - name: workfile_presets
+          type: folder
+          metadata:
+            creator: "fxquinox"
+            entity: "workfile_presets"
+            description: "Preset configurations for workfiles"
+          children:
+            # File
+            - name: README.md
+              type: file
+              metadata:
+                creator: "fxquinox"
+                summary: "Documentation for workfile presets"
+              content: ""
+    # Folder
+    - name: production
+      type: folder
+      metadata:
+        creator: "fxquinox"
+        entity: "production"
+        description: "Sequences, shots and assets used in production"
+      children:
+        # Folder
+        - name: shots
+          type: folder
+          metadata:
+            creator: "fxquinox"
+            entity: "shots"
+            description: "Sequences and shots used in production"
+
+        # Folder
+        - name: assets
+          type: folder
+          metadata:
+            creator: "fxquinox"
+            entity: "assets"
+            description: "Assets used in production"

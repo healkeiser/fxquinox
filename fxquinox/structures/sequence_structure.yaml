@@ -1,0 +1,21 @@
+# Folder
+$SEQUENCE$:
+  type: folder
+  metadata:
+    creator: "fxquinox"
+    entity: "asset"
+    description: "Sequence root folder"
+  children:
+    # File
+    - name: .$SEQUENCE$_info.json
+      type: file
+      metadata:
+        creator: "fxquinox"
+        entity: "metadata"
+        description: "Project configuration"
+      content: >
+        {
+          "entity_type": "sequence",
+          "sequence_name": "$SEQUENCE$",
+          "sequence_root": "$SEQUENCE_ROOT$"
+        }

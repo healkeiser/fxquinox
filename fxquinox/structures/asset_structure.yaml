@@ -1,0 +1,53 @@
+# Folder
+$ASSET$:
+  type: folder
+  metadata:
+    creator: "fxquinox"
+    entity: "asset"
+    description: "Asset root folder"
+  children:
+    # File
+    - name: .$ASSET$_info.json
+      type: file
+      metadata:
+        creator: "fxquinox"
+        entity: "metadata"
+        description: "Project configuration"
+      content: >
+        {
+          "entity_type": "asset",
+          "asset_name": "$ASSET$",
+          "asset_root": "$ASSET_ROOT$"
+        }
+
+    # Folder
+    - name: exports
+      type: folder
+      metadata:
+        creator: "fxquinox"
+        entity: "exports"
+        description: ""
+
+    # Folder
+    - name: playblasts
+      type: folder
+      metadata:
+        creator: "fxquinox"
+        entity: "playblasts"
+        description: ""
+
+    # Folder
+    - name: renders
+      type: folder
+      metadata:
+        creator: "fxquinox"
+        entity: "renders"
+        description: ""
+
+    # Folder
+    - name: workfiles
+      type: folder
+      metadata:
+        creator: "fxquinox"
+        entity: "workfiles"
+        description: ""
