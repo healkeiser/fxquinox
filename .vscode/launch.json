@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "env": {
+                "FXQUINOX_DEBUG": "1"
+            }
+        }
+    ]
+}

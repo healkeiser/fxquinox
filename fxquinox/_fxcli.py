@@ -196,7 +196,7 @@ def _auto_generate_parser(
     )
 
     # Create subparsers for each command, allowing the CLI to handle different functions
-    subparsers = parser.add_subparsers(dest="command", title="Commands")
+    subparsers = parser.add_subparsers(dest="commands", title="commands")
 
     # Retrieve all functions from the target module that are not private (do not start with "_")
     functions = inspect.getmembers(target_module, inspect.isfunction)
@@ -332,8 +332,8 @@ def main(
 
     parser = _auto_generate_parser(target_module, description, exclude_functions)
     args = parser.parse_args()
-    if args.command:
-        func = getattr(target_module, args.command)
+    if args.commands:
+        func = getattr(target_module, args.commands)
         func_params = inspect.signature(func).parameters
         func_args = {k: v for k, v in vars(args).items() if k in func_params}
         func(**func_args)

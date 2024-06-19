@@ -12,7 +12,7 @@ $SHOT$:
       metadata:
         creator: "fxquinox"
         entity: "metadata"
-        description: "Project configuration"
+        description: "Shot information"
       content: >
         {
           "entity_type": "shot",
@@ -47,6 +47,22 @@ $SHOT$:
         creator: "fxquinox"
         entity: "renders"
         description: ""
+        children:
+          # Folder
+          - name: 2d_renders
+            type: folder
+            metadata:
+              creator: "fxquinox"
+              entity: "2d_renders"
+              description: "2D renders for the shot"
+
+          # Folder
+          - name: 3d_renders
+            type: folder
+            metadata:
+              creator: "fxquinox"
+              entity: "movies"
+              description: "3D renders for the shot"
 
     # Folder
     - name: workfiles
@@ -54,4 +70,5 @@ $SHOT$:
       metadata:
         creator: "fxquinox"
         entity: "workfiles"
-        description: ""
+        description: "Workfiles for the shot"
+        # Children will hold the workfiles under `STEP/TASK` structure

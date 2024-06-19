@@ -1,0 +1,60 @@
+steps:
+  #
+  - name_short: RND
+    name_long: Research
+    tasks:
+      - name: Research
+
+  #
+  - name_short: MOD
+    name_long: Modeling
+    tasks:
+      - name: Modeling
+
+  #
+  - name_short: TEX
+    name_long: Texturing
+    tasks:
+      - name: Texturing
+
+  #
+  - name_short: LDV
+    name_long: Lookdev
+    tasks:
+      - name: Lookdev
+
+  #
+  - name_short: RIG
+    name_long: Rigging
+    tasks:
+      - name: Rigging
+
+  #
+  - name_short: ANI
+    name_long: Animation
+    tasks:
+      - name: Animation
+
+  #
+  - name_short: FX
+    name_long: Effects
+    tasks:
+      - name: Effects
+
+  #
+  - name_short: LGT
+    name_long: Lighting
+    tasks:
+      - name: Lighting
+
+  #
+  - name_short: CMP
+    name_long: Compositing
+    tasks:
+      - name: Compositing
+
+  #
+  - name_short: EDI
+    name_long: Editing
+    tasks:
+      - name: Editing

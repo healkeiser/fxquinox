@@ -1,34 +1,19 @@
 """The fxcore module provides a set of tools for managing and automating the creation of VFX entitites."""
 
-# TODO: Change the whole JSON sidecar method for metadata database
-
-# TODO: Actually simpler would be to use `os.setxattr("/path/to/file", "user.keyname", b"value")`
-# TODO: and then `os.getxattr("/path/to/file", "user.keyname")` to get the value
-
 # Built-in
-import os
-import json
 from functools import lru_cache
+import json
+import os
 from pathlib import Path
 import sys
-import warnings
 from typing import Union, Dict
+import warnings
 
 # Third-party
 import yaml
 
 # Internal
 from fxquinox import fxlog, fxfiles
-
-
-def long_function_name_test_logger():
-    _logger.warning("Warning")
-    _logger.warning("Warning")
-    _logger.warning("Warning")
-    _logger.warning("Warning")
-    _logger.info("Info")
-    _logger.error("Error")
-    _logger.critical("Critical")
 
 
 # Log
@@ -46,6 +31,8 @@ _SHOTS_DIR = "shots"
 _SHOT = "shot"
 _ASSETS_DIR = "assets"
 _ASSET = "asset"
+
+# TODO: Revisit the whole check process with the 'entity' metadata
 
 
 @lru_cache(maxsize=None)
@@ -119,20 +106,19 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> N
         _logger.error(f"Failed to create {entity_type} '{entity_name}': {repr(e)}")
 
 
-def _check_entity(entity_type: str, base_dir: str = ".") -> bool:
+def _check_entity(entity_type: str, entity_path: str = ".") -> bool:
     """Checks if the given folder of file has the correct entity type by
     checking its metadata.
 
     Args:
         entity_type (str): The type of entity to check.
-        base_dir (str): The base directory in which to check the entity.
-            Defaults to the current directory.
+        entity_path (str): The entity path. Defaults to the current directory.
 
     Returns:
         bool: `True` if the entity is valid, `False` otherwise.
     """
 
-    entity_path = Path(base_dir).resolve().as_posix()
+    entity_path = Path(entity_path).resolve().as_posix()
     metadata_entity = fxfiles.get_metadata(entity_path, "entity")
     _logger.debug(f"Directory: '{entity_path}'")
     _logger.debug(f"Metadata entity: '{metadata_entity}'")
@@ -161,21 +147,6 @@ def create_project(project_name: str, base_dir: str = ".") -> None:
     """
 
     _create_entity(_PROJECT, project_name, base_dir)
-
-
-def check_project(project_name: str, base_dir: str = ".") -> Union[bool, Dict]:
-    """Checks if a valid project directory structure exists.
-
-    Args:
-        project_name (str): The name of the project to check.
-        base_dir (str): The base directory where the project should be located.
-            Defaults to the current directory.
-
-    Returns:
-        bool: `True` if the project is valid, `False` otherwise.
-    """
-
-    return _check_entity(_PROJECT, project_name, base_dir)
 
 
 ###### Sequences
@@ -250,7 +221,6 @@ def check_sequence(sequence_name: str, base_dir: str = ".") -> Union[bool, Dict]
     """Checks if a valid sequence directory structure exists within a project.
 
     Args:
-        sequence_name (str): The name of the sequence to check.
         base_dir (str): The base directory where the sequence should be located,
             typically the "project/production/shots" directory.
             Defaults to the current directory.
@@ -260,7 +230,7 @@ def check_sequence(sequence_name: str, base_dir: str = ".") -> Union[bool, Dict]
             is valid and a dictionary with the sequence information.
     """
 
-    return _check_entity(_SEQUENCE, sequence_name, base_dir)
+    return _check_entity(_SEQUENCE, base_dir)
 
 
 # ? It could appear as this function should be in the shots section, but it's
@@ -481,28 +451,14 @@ def check_assets_directory(base_dir: str = ".") -> Union[bool, Dict]:
     return _check_entity(_ASSETS_DIR, _ASSETS_DIR, base_dir)
 
 
+###### Runtime
+
+
 if __name__ == "__main__":
-    # from fxquinox import _fxcli
+    # Debug
+    if os.getenv("FXQUINOX_DEBUG") == "1":
+        _logger.info("Running in debug mode")
+    else:
+        from fxquinox import _fxcli
 
-    # _fxcli.main(target_module=sys.modules[__name__], description=__doc__ if __doc__ else __name__)
-
-    # Test
-    # create_project("fxquinox", "D:/Projects")
-    _check_entity(_SHOTS_DIR, "D:/Projects/fxquinox/production/shots")
-
-    def _check_log():
-        _logger.info("Checking length")
-
-    long_function_name_test_logger()
-    _check_log()
-
-    # create_sequence("010", "D:/Projects/fxquinox/production/shots")
-
-    # print(fxfiles.get_metadata("D:/Projects/fxquinox/production/shots", "entity"))
-
-    # fxfiles.create_structure_from_dict(structure, "D:/Projects/fxquinox")
-
-    # Check metadata
-    # metadata = fxfiles.get_metadata("D:/Projects/fxquinox", "entity")
-    # print(metadata)
-    pass
+        _fxcli.main(target_module=sys.modules[__name__], description=__doc__ if __doc__ else __name__)

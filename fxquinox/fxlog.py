@@ -4,7 +4,6 @@ import logging
 import logging.handlers
 import os
 from pathlib import Path
-from typing import Optional
 
 # Third-party
 from colorama import just_fix_windows_console, Fore, Style
@@ -38,6 +37,8 @@ WARN = WARNING
 INFO = 20
 DEBUG = 10
 NOTSET = 0
+
+_LOG_DIRECTORY = Path(fxenvironment.FXQUINOX_LOGS)
 
 # Initialize colorama
 just_fix_windows_console()
@@ -97,7 +98,7 @@ class FXTimedRotatingFileHandler(logging.handlers.TimedRotatingFileHandler):
         return f"{name}.{self.suffix}{ext}"
 
 
-def get_logger(logger_name: str, color: bool = True, separator: bool = True) -> logging.Logger:
+def get_logger(logger_name: str, color: bool = True, separator: bool = False) -> logging.Logger:
     """Creates a custom logger with the specified name and returns it.
 
     Args:
@@ -125,10 +126,9 @@ def get_logger(logger_name: str, color: bool = True, separator: bool = True) -> 
     console_handler.setLevel(logging.DEBUG)
 
     # Save logs
-    log_directory = Path(fxenvironment.FXQUINOX_APPDATA) / "logs"
-    log_directory.mkdir(parents=True, exist_ok=True)
+    _LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
     current_date = datetime.now().strftime("%Y-%m-%d")
-    log_file_path = log_directory / f"{logger_name}.{current_date}.log"
+    log_file_path = _LOG_DIRECTORY / f"{logger_name}.{current_date}.log"
 
     # Create a file handler for logging with rotation at midnight (one file a day)
     file_handler = FXTimedRotatingFileHandler(log_file_path, "midnight", 1, 30, "utf-8")
@@ -156,3 +156,11 @@ def set_log_level(level: int) -> None:
                 if isinstance(handler.formatter, FXFormatter):
                     logger.setLevel(level)
                     handler.setLevel(level)
+
+
+def clear_logs() -> None:
+    """Clears the fxquinox log files."""
+
+    for log_file in _LOG_DIRECTORY.iterdir():
+        if log_file.is_file():
+            log_file.unlink()
