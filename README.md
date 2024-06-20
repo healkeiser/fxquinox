@@ -19,9 +19,11 @@
 
   <p align="center">
     USD centric pipeline for feature animation and VFX projects
-    <br/>
-    <br/>
-    <br/>
+    <br />
+    <br />
+    <a href="https://healkeiser.github.io/fxquinox"><strong>Documentation</strong></a>
+    <br />
+    <br />
   </p>
 
 </div>
