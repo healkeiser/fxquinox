@@ -11,8 +11,8 @@ from fxquinox import fxlog
 
 
 # Log
-_log = fxlog.get_logger(__name__)
-_log.setLevel(fxlog.DEBUG)
+_logger = fxlog.get_logger(__name__)
+_logger.setLevel(fxlog.DEBUG)
 
 # Globals
 _EXTENSIONS = {
@@ -137,7 +137,7 @@ def create_structure_from_dict(structure_dict: dict, base_dir: str = ".") -> Non
         root_path = Path(base_dir) / root_name
         if root_item["type"] == "folder":
             root_path.mkdir(parents=True, exist_ok=True)
-            print(f"Created folder: {root_path}")
+            _logger.debug(f"Created folder: '{Path(root_path).as_posix()}'")
             set_multiple_metadata(str(root_path), root_item.get("metadata", {}))
             if "children" in root_item:
                 for child in root_item["children"]:
@@ -158,7 +158,7 @@ def create_child_from_dict(child_dict: dict, parent_dir: str) -> None:
     # Folder
     if child_dict["type"] == "folder":
         child_path.mkdir(parents=True, exist_ok=True)
-        print(f"Created folder: {child_path}")
+        _logger.debug(f"Created folder: '{Path(child_path).as_posix()}'")
         set_multiple_metadata(str(child_path), child_dict.get("metadata", {}))
         if "children" in child_dict:
             for child in child_dict["children"]:
@@ -167,7 +167,7 @@ def create_child_from_dict(child_dict: dict, parent_dir: str) -> None:
     # File
     elif child_dict["type"] == "file":
         child_path.write_text(child_dict.get("content", ""))
-        print(f"Created file: {child_path}")
+        _logger.debug(f"Created file: '{Path(child_path).as_posix()}'")
         set_multiple_metadata(str(child_path), child_dict.get("metadata", {}))
 
 
@@ -220,6 +220,10 @@ def replace_placeholders_in_string(s: str, replacements: Dict) -> str:
 
 
 def set_metadata(file_path: str, metadata_name: str, metadata_value: str) -> Optional[str]:
+    # Convert non-string values to JSON strings
+    if not isinstance(metadata_value, str):
+        metadata_value = json.dumps(metadata_value)
+
     if platform.system() == "Windows":
         # Windows: Use NTFS streams for metadata
         stream_name = file_path + ":" + metadata_name
@@ -242,6 +246,10 @@ def set_multiple_metadata(file_path: str, metadata: Dict[str, str]) -> None:
     """
 
     for metadata_name, metadata_value in metadata.items():
+        # Convert non-string values to JSON strings
+        if not isinstance(metadata_value, str):
+            metadata_value = json.dumps(metadata_value)
+
         if platform.system() == "Windows":
             # Windows: Use NTFS streams for metadata
             stream_name = file_path + ":" + metadata_name
@@ -543,16 +551,16 @@ if __name__ == "__main__":
     # Workfile template
     _workfile = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
     _workfile = FXWorkfileTemplate.from_string(str(_workfile), False)
-    _log.info(
+    _logger.info(
         f"{type(_workfile).__name__} (str): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
     )
     _workfile = FXWorkfileTemplate.from_string(str(_workfile), True)
-    _log.info(
+    _logger.info(
         f"{type(_workfile).__name__} (int): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
     )
 
     # Project template
     _project = FXProjectTemplate.from_string("D:/Projects/_test_000")
-    _log.info(
+    _logger.info(
         f"{type(_project).__name__}: {str(_project)}, {_project.name}, {_project.root}, {_project.info}",
     )

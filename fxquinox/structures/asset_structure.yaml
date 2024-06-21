@@ -13,7 +13,7 @@ $ASSET$:
         creator: "fxquinox"
         entity: "metadata"
         description: "Asset information"
-      content: >
+      content: |
         {
           "entity_type": "asset",
           "asset_name": "$ASSET$",

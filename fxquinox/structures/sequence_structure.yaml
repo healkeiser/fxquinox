@@ -3,7 +3,7 @@ $SEQUENCE$:
   type: folder
   metadata:
     creator: "fxquinox"
-    entity: "asset"
+    entity: "sequence"
     description: "Sequence root folder"
   children:
     # File
@@ -13,7 +13,7 @@ $SEQUENCE$:
         creator: "fxquinox"
         entity: "metadata"
         description: "Project configuration"
-      content: >
+      content: |
         {
           "entity_type": "sequence",
           "sequence_name": "$SEQUENCE$",

@@ -1,7 +1,7 @@
 {
     "python.envFile": "${workspaceFolder}/.env",
     "terminal.integrated.env.windows": {
-        "PYTHONPATH": "${workspaceFolder}"
+        "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}"
     },
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#323232",

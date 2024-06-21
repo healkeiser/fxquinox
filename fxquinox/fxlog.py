@@ -59,8 +59,8 @@ class FXFormatter(logging.Formatter):
 
     def format(self, record):
         # Define widths for various parts of the log message
-        width_funcName = 35
-        width_name = 15
+        # width_funcName = 35
+        width_name = 25
         width_levelname = 8
 
         # Format line number with padding
@@ -75,15 +75,17 @@ class FXFormatter(logging.Formatter):
         # Construct the log format string based on whether color is enabled
         if self.color:
             log_fmt = (
-                f"{separator}{{asctime}} | {{name:>{width_name}s}} | {{lineno}} | "
-                f"{Fore.YELLOW}{{funcName:<{width_funcName}s}}{Style.RESET_ALL} "
-                f" | {Style.BRIGHT}{self.LEVEL_COLORS.get(record.levelno, Fore.WHITE)}"
+                f"{separator}{{asctime}} | {{name:^{width_name}s}} | "
+                f"{Fore.YELLOW}{{lineno}}{Style.RESET_ALL} | "
+                # f"{Fore.YELLOW}{{funcName:<{width_funcName}s}}{Style.RESET_ALL} |  "
+                f"{Style.BRIGHT}{self.LEVEL_COLORS.get(record.levelno, Fore.WHITE)}"
                 f"{{levelname:>{width_levelname}s}}{Style.RESET_ALL} | {{message}}"
             )
         else:
             log_fmt = (
-                f"{separator}{{asctime}} | {{name:>{width_name}s}} | {{lineno}} | "
-                f"{{funcName:<{width_funcName}s}} | "
+                f"{separator}{{asctime}} | {{name:^{width_name}s}} | "
+                f"{Fore.YELLOW}{{lineno}}{Style.RESET_ALL} | "
+                # f"{{funcName:<{width_funcName}s}} | "
                 f"{{levelname:>{width_levelname}s}} | {{message}}"
             )
 

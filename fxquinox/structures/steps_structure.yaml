@@ -24,6 +24,12 @@ steps:
       - name: Lookdev
 
   #
+  - name_short: LAY
+    name_long: Layout
+    tasks:
+      - name: Layout
+
+  #
   - name_short: RIG
     name_long: Rigging
     tasks:
@@ -34,6 +40,12 @@ steps:
     name_long: Animation
     tasks:
       - name: Animation
+
+  #
+  - name_short: CFX
+    name_long: CharacterEffects
+    tasks:
+      - name: CharacterEffects
 
   #
   - name_short: FX

@@ -255,7 +255,6 @@ def _auto_generate_parser(
                     # Optional list argument
                     else:
                         subparser.add_argument(
-                            f"-{''.join(part[0] for part in argument_name.split('_') if part)}",
                             f"--{argument_name}",
                             type=list_str,
                             default=argument.default,
@@ -276,7 +275,6 @@ def _auto_generate_parser(
                     # Optional argument
                     else:
                         subparser.add_argument(
-                            f"-{''.join(part[0] for part in argument_name.split('_') if part)}",
                             f"--{argument_name}",
                             type=argument.annotation,
                             default=argument.default,

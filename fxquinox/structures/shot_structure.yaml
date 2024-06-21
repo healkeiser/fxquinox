@@ -13,7 +13,7 @@ $SHOT$:
         creator: "fxquinox"
         entity: "metadata"
         description: "Shot information"
-      content: >
+      content: |
         {
           "entity_type": "shot",
           "shot_name": "$SHOT$",
@@ -30,7 +30,7 @@ $SHOT$:
       metadata:
         creator: "fxquinox"
         entity: "exports"
-        description: ""
+        description: "Export (caches, etc.) of the shot"
 
     # Folder
     - name: playblasts
@@ -38,7 +38,7 @@ $SHOT$:
       metadata:
         creator: "fxquinox"
         entity: "playblasts"
-        description: ""
+        description: "Playblasts (viewport renders) of the shot"
 
     # Folder
     - name: renders
@@ -46,7 +46,7 @@ $SHOT$:
       metadata:
         creator: "fxquinox"
         entity: "renders"
-        description: ""
+        description: "2D and 3D renders of the shot"
         children:
           # Folder
           - name: 2d_renders
@@ -54,7 +54,7 @@ $SHOT$:
             metadata:
               creator: "fxquinox"
               entity: "2d_renders"
-              description: "2D renders for the shot"
+              description: "2D renders of the shot"
 
           # Folder
           - name: 3d_renders
@@ -62,7 +62,7 @@ $SHOT$:
             metadata:
               creator: "fxquinox"
               entity: "movies"
-              description: "3D renders for the shot"
+              description: "3D renders of the shot"
 
     # Folder
     - name: workfiles
@@ -70,5 +70,5 @@ $SHOT$:
       metadata:
         creator: "fxquinox"
         entity: "workfiles"
-        description: "Workfiles for the shot"
+        description: "Workfiles of the shot"
         # Children will hold the workfiles under `STEP/TASK` structure
