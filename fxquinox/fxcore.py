@@ -1,20 +1,27 @@
-"""The fxcore module provides a set of tools for managing and automating the creation of VFX entitites."""
+"""The fxcore module provides a set of tools for managing and automating the creation of VFX entities."""
 
 # Built-in
 from functools import lru_cache
 import json
 import os
 from pathlib import Path
-import sys
-from typing import Union, Dict
+import re
+from typing import Union, Dict, Optional
 import warnings
 
 # Third-party
+from fxgui import fxwidgets, fxicons
+from qtpy.QtWidgets import QWidget
 import yaml
 
 # Internal
 from fxquinox import fxlog, fxfiles
 
+# Reload
+from importlib import reload
+
+reload(fxwidgets)
+reload(fxicons)
 
 # Log
 _logger = fxlog.get_logger(__name__)
@@ -450,6 +457,91 @@ def _check_assets_directory(base_dir: str = ".") -> Union[bool, Dict]:
     return _check_entity(_ASSETS_DIR, base_dir)
 
 
+###### UI
+
+
+class FXProjectBrowser(fxwidgets.FXMainWindow):
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        icon: Optional[str] = None,
+        title: Optional[str] = None,
+        size: Optional[int] = None,
+        documentation: Optional[str] = None,
+        project: Optional[str] = None,
+        version: Optional[str] = None,
+        company: Optional[str] = None,
+        accent_color: str = "#039492",
+        ui_file: Optional[str] = None,
+    ):
+        super().__init__(
+            parent,
+            icon,
+            title,
+            size,
+            documentation,
+            project,
+            version,
+            company,
+            accent_color,
+            ui_file,
+        )
+
+        # Methods
+        self._rename_ui()
+        self._create_icons()
+        self._modify_ui()
+
+    def _rename_ui(self):
+        """_summary_"""
+
+        self.label_project = self.ui.label_project
+        self.line_project = self.ui.line_project
+        #
+        self.tab_assets_shots = self.ui.tab_assets_shots
+        self.tab_assets = self.ui.tab_assets
+        self.label_icon_filter_assets = self.ui.label_icon_filter_assets
+        self.line_edit_filter_assets = self.ui.frame_filter_assets
+        self.tree_widget_assets = self.ui.tree_widget_assets
+        #
+        self.tab_shots = self.ui.tab_shots
+        self.label_icon_filter_shots = self.ui.label_icon_filter_shots
+        self.line_edit_filter_shots = self.ui.line_edit_filter_shots
+        self.tree_widget_shots = self.ui.tree_widget_shots
+
+    def _create_icons(self):
+        """_summary_"""
+
+        self.icon_search = fxicons.get_pixmap("search", 18)
+
+    def _modify_ui(self):
+        """Modifies the UI elements."""
+
+        # Icons
+        self.label_icon_filter_assets.setPixmap(self.icon_search)
+        self.label_icon_filter_shots.setPixmap(self.icon_search)
+
+
+def run_project_browser():
+    """Runs the project browser UI."""
+
+    ui_file = (Path(__file__).parent / "ui" / "project_browser.ui").as_posix()
+
+    app = fxwidgets.FXApplication()
+    window = FXProjectBrowser(
+        parent=None,
+        icon=None,
+        title="FX Project Browser",
+        size=(1500, 900),
+        project="fxquinox",
+        version="0.0.1",
+        company="fxquinox",
+        ui_file=ui_file,
+    )
+    window.show()
+    app.exec_()
+
+
 ###### Runtime
 
 # os.environ["FXQUINOX_DEBUG"] = "1"
@@ -459,6 +551,10 @@ if __name__ == "__main__":
     if os.getenv("FXQUINOX_DEBUG") == "1":
         _logger.info("Running in debug mode")
     else:
-        from fxquinox import _fxcli
+        # CLI
+        # from fxquinox import _fxcli
 
-        _fxcli.main(target_module=sys.modules[__name__], description=__doc__ if __doc__ else __name__)
+        # _fxcli.main(target_module=sys.modules[__name__], description=__doc__ if __doc__ else __name__)
+
+        # UI
+        run_project_browser()

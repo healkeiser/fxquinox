@@ -48,7 +48,7 @@ def _parse_docstring(docstring: str) -> dict:
         The docstring should follow the Google style guide for docstrings.
 
     Warning:
-        Each docstring block should be separeted by an empty line.
+        Each docstring block should be separated by an empty line.
 
     Examples:
         >>> docstring = '''
@@ -218,7 +218,7 @@ def _auto_generate_parser(
             )
 
             # Retrieve the function's parameters for further processing
-            agruments = inspect.signature(func).parameters
+            arguments = inspect.signature(func).parameters
 
             # Add a custom help option to each subparser (command) with a styled help message
             subparser.add_argument(
@@ -230,7 +230,7 @@ def _auto_generate_parser(
             )
 
             # Iterate over the function's parameters to add them as arguments to the subparser
-            for argument_name, argument in agruments.items():
+            for argument_name, argument in arguments.items():
                 # Use the description from the parsed docstring if available, otherwise use a
                 # generic description
                 argument_help = (

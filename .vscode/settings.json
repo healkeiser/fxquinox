@@ -22,5 +22,18 @@
         "titleBar.inactiveBackground": "#19191999",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "peacock.color": "#191919"
+    "peacock.color": "#191919",
+    "cSpell.words": [
+        "pixmap",
+        "docstrings",
+        "_fxcli",
+        "fxcore",
+        "fxenvironment",
+        "fxfiles",
+        "fxgui",
+        "fxicons",
+        "fxlog",
+        "fxquinox",
+        "fxwidgets",
+    ]
 }
