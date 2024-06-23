@@ -76,6 +76,39 @@ $PROJECT$:
                 description: "Documentation for project configurations"
               content: ""
             # File:
+            - name: apps.yaml
+              type: file
+              metadata:
+                creator: "fxquinox"
+                entity: "apps"
+                description: "Applications configuration"
+              content: |
+                apps:
+                  #
+                  - houdini:
+                      version: 20.0.547
+                      executable: C:/Program Files/Side Effects Software/Houdini $VERSION$/bin/houdini.exe
+                      commands: ["-n"]
+                      # icon: C:/Program Files/Side Effects Software/Houdini $VERSION$/houdini_icon.png
+                      # executable: /opt/hfs$VERSION$/bin/houdini
+                      # icon: /opt/hfs$VERSION$/houdini_icon.png
+
+                  #
+                  - maya:
+                      version: 2024
+                      executable: C:/Program Files/Autodesk/Maya$VERSION$/bin/maya.exe
+                      # executable: /usr/autodesk/maya$VERSION$/bin/maya
+                      # icon: /usr/autodesk/maya$VERSION$/maya_icon.png
+
+                  #
+                  - nuke:
+                      version: 15.0v4
+                      executable: C:/Program Files/Nuke$VERSION$/nuke15.0.exe
+                      commands: ["--nc"]
+                      # executable: /usr/foundry/nuke$VERSION$/bin/nuke
+                      # icon: /usr/foundry/nuke$VERSION$/NukeXApp.ico
+
+            # File:
             - name: steps.yaml
               type: file
               metadata:

@@ -1,6 +1,4 @@
 # Built-in
-import os
-from pathlib import Path
 import sqlite3
 from typing import Dict, Optional
 
@@ -80,13 +78,4 @@ def get_folder_metadata(db_path: str, folder_path: str) -> Optional[Dict]:
 
 
 if __name__ == "__main__":
-
-    folder_path = "D:/Projects/fxquinox/production/shots/000"
-    creator = "fxquinox"
-    purpose = "Store shot files"
-    entity = "sequence"
-
-    initialize_db(fxenvironment.FXQUINOX_METADATA_DB)
-    upsert_folder_metadata(fxenvironment.FXQUINOX_METADATA_DB, folder_path, creator, purpose, entity)
-    metadata = get_folder_metadata(fxenvironment.FXQUINOX_METADATA_DB, folder_path)
-    print(type(metadata))
+    pass

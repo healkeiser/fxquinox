@@ -1,4 +1,7 @@
-"""The fxcore module provides a set of tools for managing and automating the creation of VFX entities."""
+"""The fxcore module provides a set of tools for managing and automating the
+creation of VFX entities.
+CLI counterpart of the `fxquinox.fxcore` module.
+"""
 
 # Built-in
 import sys
@@ -12,6 +15,10 @@ from fxquinox.fxcore import (
     create_shots,
     create_asset,
     create_assets,
+    #
+    set_project,
+    get_project,
+    #
     run_launcher,
 )
 

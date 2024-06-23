@@ -39,15 +39,22 @@ class FXSequence(FXEntity):
     """Represents a Sequence in a Project.
 
     Attributes:
-        parent (Optional[Union[Project, Episode]]): The parent of the Sequence, which can be either a Project or an
-            Episode. Defaults to `None`.
-        episode (Optional[Episode]): The Episode that the Sequence belongs to. Defaults to `None`.
-        assets (List[Asset], optional): The list of Assets in the Sequence. Defaults to an empty list.
-        shots (List[Shot], optional): The list of Shots in the Sequence. Defaults to an empty list.
-        publishes (List[Publish], optional): The list of Publishes in the Sequence. Defaults to an empty list.
-        versions (List[Version], optional): The list of Versions in the Sequence. Defaults to an empty list.
-        steps (List[Step], optional): The list of Steps in the Sequence. Defaults to an empty list.
-        tasks (List[Task], optional): The list of Tasks in the Sequence. Defaults to an empty list.
+        parent (Optional[Union[Project, Episode]]): The parent of the Sequence,
+            which can be either a Project or an Episode. Defaults to `None`.
+        episode (Optional[Episode]): The Episode that the Sequence belongs to.
+            Defaults to `None`.
+        assets (List[Asset], optional): The list of Assets in the Sequence.
+            Defaults to an empty list.
+        shots (List[Shot], optional): The list of Shots in the Sequence.
+            Defaults to an empty list.
+        publishes (List[Publish], optional): The list of Publishes in the
+            Sequence. Defaults to an empty list.
+        versions (List[Version], optional): The list of Versions in the
+            Sequence. Defaults to an empty list.
+        steps (List[Step], optional): The list of Steps in the Sequence.
+            Defaults to an empty list.
+        tasks (List[Task], optional): The list of Tasks in the Sequence.
+            Defaults to an empty list.
     """
 
     # Optional
@@ -66,15 +73,22 @@ class FXShot:
     """Represents a Shot in a Sequence.
 
     Attributes:
-        parent (Optional[Union[Project, Episode]]): The parent of the Shot, which can be either a Project or an Episode.
+        parent (Optional[Union[Project, Episode]]): The parent of the Shot,
+            which can be either a Project or an Episode. Defaults to `None`.
+        sequence (Optional[Sequence]): The Sequence that the Shot belongs to.
             Defaults to `None`.
-        sequence (Optional[Sequence]): The Sequence that the Shot belongs to. Defaults to `None`.
-        episode (Optional[Episode]): The Episode that the Shot belongs to. Defaults to `None`.
-        assets (List[Asset], optional): The list of Assets in the Shot. Defaults to an empty list.
-        cut_in (int, optional): The cut-in frame number of the Shot. Defaults to 1001.
-        cut_out (int, optional): The cut-out frame number of the Shot. Defaults to 1100.
-        handle_in (int, optional): The handle-in frame number of the Shot. Defaults to 901.
-        handle_out (int, optional): The handle-out frame number of the Shot. Defaults to 1200.
+        episode (Optional[Episode]): The Episode that the Shot belongs to.
+            Defaults to `None`.
+        assets (List[Asset], optional): The list of Assets in the Shot.
+            Defaults to an empty list.
+        cut_in (int, optional): The cut-in frame number of the Shot.
+            Defaults to 1001.
+        cut_out (int, optional): The cut-out frame number of the Shot.
+            Defaults to 1100.
+        handle_in (int, optional): The handle-in frame number of the Shot.
+            Defaults to 901.
+        handle_out (int, optional): The handle-out frame number of the Shot.
+            Defaults to 1200.
     """
 
     # Optional
