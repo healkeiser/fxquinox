@@ -32,7 +32,7 @@
     │               ├── 📁 workfiles/
     │               │   └── 📁 $STEP/
     │               │       └── 📁 $TASK/
-    │               │           └── $WORKFILE.hip
+    │               │           └── 📄 $WORKFILE.hip
     │               └── 📄 .$SHOT_info.json
     └── 📄 .$PROJECT_info.json
 ```

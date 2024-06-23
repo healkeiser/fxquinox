@@ -4,6 +4,7 @@ $PROJECT$:
   metadata:
     creator: "fxquinox"
     entity: "project"
+    name: "$PROJECT$"
     description: "Project root folder"
   children:
     # Folder

@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/-Linux-E95420?style=for-the-badge&logo=linux" alt="Compatible with Linux"/></a>
 </p>
 
-> [!WARNING]  
+> [!WARNING]
 > This project is a very early WIP.
 
 <div align="center">
@@ -27,3 +27,48 @@
   </p>
 
 </div>
+
+
+
+<!-- TABLE OF CONTENTS -->
+## Table of Contents
+<!--ts-->
+- [Table of Contents](#table-of-contents)
+- [About](#about)
+- [Acknowledgments](#acknowledgments)
+- [Contact](#contact)
+<!--te-->
+
+
+
+<!-- ABOUT -->
+## About
+USD centric pipeline for feature animation and VFX projects.
+
+
+
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+
+* [Luca Scheller | USD Survival Guide](https://github.com/LucaScheller/VFX-UsdSurvivalGuide)
+* [NVidia | USD Scene Construction Utils](https://github.com/NVIDIA-Omniverse/usd_scene_construction_utils)
+
+
+
+<!-- CONTACT -->
+## Contact
+
+Project Link: [fxquinox](https://github.com/healkeiser/fxquinox)
+
+<p align='left'>
+  <a href="https://www.linkedin.com/in/valentin-beaumont">
+  <img src="https://img.shields.io/badge/-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin" alt="LinkedIn"/></a>
+  <a href="https://www.behance.net/el1ven">
+  <img src="https://img.shields.io/badge/-Behance-313131?style=for-the-badge&logo=behance" alt="Behance"/></a>
+  <a href="https://twitter.com/valentinbeaumon">
+  <img src="https://img.shields.io/badge/-Twitter-E1E8ED?style=for-the-badge&logo=twitter" alt="Twitter"/></a>
+  <a href="https://www.instagram.com/val.beaumontart">
+  <img src="https://img.shields.io/badge/-Instagram-85255b?style=for-the-badge&logo=instagram" alt="Instagram"/></a>
+</p>
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/healkeiser)

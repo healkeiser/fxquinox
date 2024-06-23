@@ -20,7 +20,7 @@ from fxquinox import fxlog
 
 
 # Log
-_logger = fxlog.get_logger(__name__)
+_logger = fxlog.get_logger("fxquinix.fxusd")
 _logger.setLevel(fxlog.DEBUG)
 
 

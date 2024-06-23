@@ -84,7 +84,7 @@ class FXFormatter(logging.Formatter):
         else:
             log_fmt = (
                 f"{separator}{{asctime}} | {{name:^{width_name}s}} | "
-                f"{Fore.YELLOW}{{lineno}}{Style.RESET_ALL} | "
+                f"{{lineno}} | "
                 # f"{{funcName:<{width_funcName}s}} | "
                 f"{{levelname:>{width_levelname}s}} | {{message}}"
             )
@@ -134,7 +134,7 @@ def get_logger(logger_name: str, color: bool = True, separator: bool = False) ->
 
     # Create a file handler for logging with rotation at midnight (one file a day)
     file_handler = FXTimedRotatingFileHandler(log_file_path, "midnight", 1, 30, "utf-8")
-    file_handler.setFormatter(FXFormatter(color=False, separator=True))
+    file_handler.setFormatter(FXFormatter(color=False, separator=False))
     file_handler.setLevel(logging.DEBUG)
 
     logger.addHandler(console_handler)
