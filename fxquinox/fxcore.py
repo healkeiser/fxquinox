@@ -542,6 +542,24 @@ def _check_assets_directory(base_dir: str = ".") -> bool:
 ###### UI
 
 
+class FXExecutableRunnerThread(QThread):
+    """A QThread subclass to run an executable in a separate thread."""
+
+    # Define a signal to emit upon completion, if needed
+    finished = Signal()
+
+    def __init__(self, executable, commands=None, parent=None):
+        super(FXExecutableRunnerThread, self).__init__(parent)
+        self.executable = executable
+        self.commands = commands
+
+    def run(self):
+        call = [self.executable] + self.commands if self.commands else [self.executable]
+        _logger.debug(f"Call: {call}")
+        subprocess.call(call, shell=True)
+        self.finished.emit()
+
+
 class FXLauncher(fxwidgets.FXSystemTray):
     """The Fxuinox main launcher UI class.
 
@@ -567,11 +585,12 @@ class FXLauncher(fxwidgets.FXSystemTray):
         # Attributes
         self.project = project
         self.colors = fxstyle.load_colors_from_jsonc()
+        self.runner_threads = []
 
         # Methods
         self.__create_actions()
         self._create_label()
-        self._create_app_launcher()
+        self._create_app_launcher(project_name=self.project)
         self.__handle_connections()
         self._update_label(project_name=self.project)
         self._toggle_action_state(project_name=self.project)
@@ -641,7 +660,7 @@ class FXLauncher(fxwidgets.FXSystemTray):
 
         container_widget = QWidget()
         layout = QVBoxLayout(container_widget)
-        self.label = QLabel(self.project if self.project else "No project set")
+        self.label = QLabel(self.project)
         layout.addWidget(self.label)
         layout.setContentsMargins(10, 10, 10, 10)
         label_action = QWidgetAction(self.tray_menu)
@@ -649,17 +668,34 @@ class FXLauncher(fxwidgets.FXSystemTray):
         self.tray_menu.insertAction(self.set_project_action, label_action)
         self._set_label_style()
 
-    def _create_app_launcher(self) -> None:
-        """Creates the application launcher as a grid."""
-
+    def _create_app_launcher(self, project_root: str = None, project_name: str = None) -> None:
+        """Creates the application launcher as a grid and adds a QLineEdit for additional arguments."""
         container_widget = QWidget()
         container_widget.setObjectName("app_launcher_container")
         container_widget.setStyleSheet(
             "#app_launcher_container { background-color: #131212; border-top: 1px solid #424242; border-bottom: 1px solid #424242}"
         )
-        self.grid_layout = QGridLayout(container_widget)
-        self.grid_layout.setContentsMargins(10, 10, 10, 10)
-        self.grid_layout.setSpacing(10)
+        layout = QVBoxLayout(container_widget)  # Use QVBoxLayout to stack grid and line edit
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+
+        # Grid layout for apps
+        self.grid_layout = QGridLayout()
+        layout.addLayout(self.grid_layout)
+
+        # Container for the line edit and clear button
+        args_layout = QHBoxLayout()
+
+        # Line edit for additional arguments
+        self.additional_args_line_edit = QLineEdit()
+        self.additional_args_line_edit.setPlaceholderText("Additional arguments...")
+        args_layout.addWidget(self.additional_args_line_edit)
+
+        # Clear button for the line edit
+        clear_button = QPushButton("Clear")
+        clear_button.clicked.connect(self.additional_args_line_edit.clear)
+        args_layout.addWidget(clear_button)
+        layout.addLayout(args_layout)
 
         # Add the container widget to the tray menu
         self.list_apps_action = QWidgetAction(self.tray_menu)
@@ -667,11 +703,9 @@ class FXLauncher(fxwidgets.FXSystemTray):
         self.tray_menu.insertAction(self.open_project_browser_action, self.list_apps_action)
 
         # Load apps
-        self._load_and_display_apps()
+        self._load_and_display_apps(project_root, project_name)
 
     def _load_and_display_apps(self, project_root: str = None, project_name: str = None) -> None:
-
-        # TODO: Need to refresh when setting a new project without the need to restart the app
         # Clear existing widgets from the grid layout
         for i in reversed(range(self.grid_layout.count())):
             widget_to_remove = self.grid_layout.itemAt(i).widget()
@@ -681,14 +715,12 @@ class FXLauncher(fxwidgets.FXSystemTray):
         # Load apps from YAML file
         project_root, _, _, _ = get_project()
         apps_config_path = Path(project_root) / ".pipeline" / "project_config" / "apps.yaml"
-        _logger.debug(f"Apps config path: '{apps_config_path.as_posix()}'")
 
         if not apps_config_path.exists():
             return
 
         apps_config = yaml.safe_load(apps_config_path.read_text())
         icons_path = Path(__file__).parents[1] / "images" / "icons" / "apps"
-        _logger.debug(f"Apps config:\n{apps_config}")
 
         row, col = 0, 0
         button_size = QSize(96, 96)
@@ -696,14 +728,9 @@ class FXLauncher(fxwidgets.FXSystemTray):
         # Parse the `apps.yaml` file and add buttons for each app found
         for app_info in apps_config["apps"]:
             for app, details in app_info.items():
-                _logger.debug(f"App: {app}")
-                _logger.debug(f"Details: {details}")
                 version = details["version"]
                 executable = details["executable"].replace("$VERSION$", str(version))
                 commands = details.get("commands", [])
-
-                _logger.debug(f"Executable: '{executable}'")
-
                 icon_file = icons_path / f"{app.lower().replace(' ', '_')}.svg"
 
                 # Create the button
@@ -727,13 +754,32 @@ class FXLauncher(fxwidgets.FXSystemTray):
             commands (list): The list of commands to pass to the executable.
         """
 
-        executable_path = Path(executable)
-        if not executable_path.exists():
-            _logger.error(f"Executable '{executable_path}' not found")
+        additional_args = self.additional_args_line_edit.text().strip().split()
+        if commands is None:
+            commands = additional_args
+        else:
+            commands.extend(additional_args)
 
-        call = [executable, ", ".join(commands) if commands else ""]
-        _logger.debug(f"Call: {call}")
-        subprocess.call(call, shell=True)
+        runner_thread = FXExecutableRunnerThread(executable, commands)
+        self.runner_threads.append(runner_thread)
+        # Delete thread on completion
+        runner_thread.finished.connect(lambda rt=runner_thread: self._on_thread_finished(rt))
+        runner_thread.start()
+
+    def _on_thread_finished(self, thread: FXExecutableRunnerThread) -> None:
+        """Slot to handle thread finished signal. Attempt to remove the thread
+        from the tracking list.
+
+        Args:
+            thread (FXExecutableRunnerThread): The thread that has finished.
+        """
+
+        thread.wait()  # Optional: Wait for the thread to fully finish if needed
+        if thread in self.runner_threads:
+            self.runner_threads.remove(thread)
+        else:
+            _logger.debug(f"Thread not found in list: '{thread}'")
+        _logger.debug(f"Thread finished: '{thread}'")
 
     def _update_label(self, project_root: str = None, project_name: str = None) -> None:
         """Updates the label text with the current project name."""
@@ -761,6 +807,14 @@ class FXLauncher(fxwidgets.FXSystemTray):
             self.open_project_browser_action.setEnabled(False)
             self.open_project_directory_action.setEnabled(False)
             self.list_apps_action.setEnabled(False)
+
+    def closeEvent(self, event) -> None:
+        """Overrides the close event to handle the system tray close event."""
+
+        _logger.info(f"Closed")
+        self.setParent(None)
+        fxwidgets.FXApplication.instance().quit()
+        QApplication.instance().quit()
 
 
 class _FXTempWidget(QWidget):
@@ -922,10 +976,10 @@ def get_project() -> Tuple[Optional[str], Optional[str], Optional[str], Optional
         and os.getenv("FXQUINOX_PROJECT_SHOTS")
     ):
         _logger.info(f"Using environment variables")
-        _logger.info(f"   $FQUINOX_PROJECT_ROOT: '{os.getenv('FXQUINOX_PROJECT_ROOT')}'")
-        _logger.info(f"  $FXQUINOX_PROJECT_NAME: '{os.getenv('FXQUINOX_PROJECT_NAME')}'")
+        _logger.info(f"$FQUINOX_PROJECT_ROOT: '{os.getenv('FXQUINOX_PROJECT_ROOT')}'")
+        _logger.info(f"$FXQUINOX_PROJECT_NAME: '{os.getenv('FXQUINOX_PROJECT_NAME')}'")
         _logger.info(f"$FXQUINOX_PROJECT_ASSETS: '{os.getenv('FXQUINOX_PROJECT_ASSETS')}'")
-        _logger.info(f" $FXQUINOX_PROJECT_SHOTS: '{os.getenv('FXQUINOX_PROJECT_SHOTS')}'")
+        _logger.info(f"$FXQUINOX_PROJECT_SHOTS: '{os.getenv('FXQUINOX_PROJECT_SHOTS')}'")
 
         return (
             os.getenv("FXQUINOX_PROJECT_ROOT"),
@@ -979,10 +1033,10 @@ def get_project() -> Tuple[Optional[str], Optional[str], Optional[str], Optional
     os.environ["FXQUINOX_PROJECT_SHOTS"] = str(project_shots)
 
     _logger.info(f"Using environment file")
-    _logger.info(f"  Project root: '{project_root}'")
-    _logger.info(f"  Project name: '{project_name}'")
+    _logger.info(f"Project root: '{project_root}'")
+    _logger.info(f"Project name: '{project_name}'")
     _logger.info(f"Project assets: '{project_assets}'")
-    _logger.info(f" Project shots: '{project_shots}'")
+    _logger.info(f"Project shots: '{project_shots}'")
 
     return project_root, project_name, project_assets, project_shots
 
@@ -1065,15 +1119,16 @@ def set_project(
         content = "\n".join(lines)
         file_path.write_text(content)
 
-        # Emit signal to update the launcher label
-        if launcher:
-            launcher.project_changed.emit(project_path, project_name)
-
         # Update the environment variables
         os.environ["FXQUINOX_PROJECT_ROOT"] = project_path
         os.environ["FXQUINOX_PROJECT_NAME"] = project_name
         os.environ["FXQUINOX_PROJECT_ASSETS"] = f"{project_path}/production/assets"
         os.environ["FXQUINOX_PROJECT_SHOTS"] = f"{project_path}/production/shots"
+
+        # Emit signal to update the launcher label
+        if launcher:
+            launcher.project_changed.emit(project_path, project_name)
+
         _logger.info(f"Project path set to '{project_path}'")
         return project_path, project_name
 
