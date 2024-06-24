@@ -1742,7 +1742,7 @@ def run_project_browser(parent: QWidget = None, quit_on_last_window_closed: bool
     project_name = project_info.get("FXQUINOX_PROJECT_NAME", None)
 
     ui_file = base_path / "ui" / "project_browser.ui"
-    icon_path = images_path / "fxquinox_logo_dark.svg"
+    icon_path = images_path / "fxquinox_logo_background_light.svg"
 
     window = FXProjectBrowserWindow(
         parent=parent if isinstance(parent, QWidget) else None,
