@@ -7,6 +7,7 @@ from functools import lru_cache
 import json
 import os
 from pathlib import Path
+from turtle import color
 import psutil
 import sys
 import subprocess
@@ -70,7 +71,7 @@ def _get_structure_dict(entity: str, file_type: str = "yaml") -> Dict:
         raise FileNotFoundError(error_message)
 
 
-def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> Optional[str]:
+def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".", parent: QWidget = None) -> Optional[str]:
     """Generic function to create a new directory for a given entity type in
     the specified base directory.
 
@@ -79,6 +80,7 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> O
         entity_name (str): The name of the entity to create.
         base_dir (str): The base directory in which to create the entity.
             Defaults to the current directory.
+        parent (QWidget): The parent widget for the message box.
 
     Returns:
         Optional[str]: The name of the entity if created, `None` otherwise.
@@ -99,18 +101,29 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> O
     _base_dir_path = base_dir_path.resolve().as_posix()
 
     if Path(entity_dir).exists():
-        while True:
-            confirmation = input(
-                f"There's already a {entity_type} '{entity_name}' in "
-                f"'{_base_dir_path}', do you want to continue? (y/n): "
+        if parent:
+            confirmation = QMessageBox.question(
+                parent,
+                f"Create {entity_type.capitalize()}",
+                f"There's already a {entity_type} '{entity_name}' in '{_base_dir_path}', do you want to continue?",
+                QMessageBox.Yes | QMessageBox.No,
             )
-            if confirmation.lower() == "y":
-                break
-            elif confirmation.lower() == "n":
+            if confirmation == QMessageBox.No:
                 _logger.info(f"{entity_type.capitalize()} creation cancelled")
                 return None
-            else:
-                _logger.warning("Please enter 'y' to continue or 'n' to cancel")
+        else:
+            while True:
+                confirmation = input(
+                    f"There's already a {entity_type} '{entity_name}' in "
+                    f"'{_base_dir_path}', do you want to continue? (y/n): "
+                )
+                if confirmation.lower() == "y":
+                    break
+                elif confirmation.lower() == "n":
+                    _logger.info(f"{entity_type.capitalize()} creation cancelled")
+                    return None
+                else:
+                    _logger.warning("Please enter 'y' to continue or 'n' to cancel")
 
     fxfiles.create_structure_from_dict(structure_dict, _base_dir_path)
     _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{_base_dir_path}'")
@@ -320,7 +333,7 @@ class InvalidShotError(Exception):
     pass
 
 
-def create_shot(shot_name: str, base_dir: str = ".") -> Optional[str]:
+def create_shot(shot_name: str, base_dir: str = ".", parent: QWidget = None) -> Optional[str]:
     """Creates a new shot directory structure within a sequence.
 
     Args:
@@ -328,6 +341,8 @@ def create_shot(shot_name: str, base_dir: str = ".") -> Optional[str]:
         base_dir (str): The base directory where the shot will be created,
             typically the "project/production/shots/sequence" directory.
             Defaults to the current directory.
+        parent (QWidget): The parent widget for the message box. Only
+            applicable in a GUI environment.
 
     Returns:
         Optional[str]: The name of the shot if created, `None` otherwise.
@@ -356,7 +371,7 @@ def create_shot(shot_name: str, base_dir: str = ".") -> Optional[str]:
         raise InvalidSequenceError(error_message)
 
     # Create the shot
-    return _create_entity(_SHOT, shot_name, base_dir_path)
+    return _create_entity(_SHOT, shot_name, base_dir_path, parent)
 
 
 def create_shots(shot_names: list[str], base_dir: str = ".") -> Optional[list[str]]:
@@ -1209,9 +1224,10 @@ class FXCreateShotWidget(QWidget):
         self._create_ui()
         self._rename_ui()
         self._modify_ui()
+        self._handle_connections()
         self._populate_sequences()
 
-        _logger.info("Initialized Create Shots")
+        _logger.info("Initialized create shots")
 
     def _create_ui(self):
         """_summary_"""
@@ -1225,13 +1241,22 @@ class FXCreateShotWidget(QWidget):
     def _rename_ui(self):
         """_summary_"""
 
-        self.label_icon_sequence = self.ui.label_icon_sequence
-        self.combo_box_sequence = self.ui.combo_box_sequence
-        self.label_icon_shot = self.ui.label_icon_shot
-        self.line_edit_shot = self.ui.line_edit_shot
-        self.label_icon_frame_range = self.ui.label_icon_frame_range
-        self.spin_box_cut_in = self.ui.spin_box_cut_in
-        self.spin_box_cut_out = self.ui.spin_box_cut_out
+        self.label_icon_sequence: QLabel = self.ui.label_icon_sequence
+        self.combo_box_sequence: QComboBox = self.ui.combo_box_sequence
+        self.label_icon_shot: QLabel = self.ui.label_icon_shot
+        self.line_edit_shot: QLineEdit = self.ui.line_edit_shot
+        self.label_icon_frame_range: QLabel = self.ui.label_icon_frame_range
+        self.spin_box_cut_in: QSpinBox = self.ui.spin_box_cut_in
+        self.spin_box_cut_out: QSpinBox = self.ui.spin_box_cut_out
+        self.group_box_metadata: QGroupBox = self.ui.group_box_metadata
+        self.button_add_metadata: QPushButton = self.ui.button_add_metadata
+        self.frame_metadata: QFrame = self.ui.frame_metadata
+        self.button_box: QDialogButtonBox = self.ui.button_box
+
+    def _handle_connections(self):
+        """_summary_"""
+
+        self.button_add_metadata.clicked.connect(self._add_metadata_line)
 
     def _modify_ui(self):
         """_summary_"""
@@ -1239,6 +1264,25 @@ class FXCreateShotWidget(QWidget):
         self.label_icon_sequence.setPixmap(fxicons.get_pixmap("camera_roll", 18))
         self.label_icon_shot.setPixmap(fxicons.get_pixmap("image", 18))
         self.label_icon_frame_range.setPixmap(fxicons.get_pixmap("alarm", 18))
+        self.button_add_metadata.setIcon(fxicons.get_icon("add"))
+
+        # Contains some slots connections, to avoid iterating multiple times
+        # over the buttons
+        for button in self.button_box.buttons():
+            role = self.button_box.buttonRole(button)
+            if role == QDialogButtonBox.AcceptRole:
+                button.setIcon(fxicons.get_icon("check", color="#8fc550"))
+                button.setText("Create")
+                # Create shot
+                button.clicked.connect(self._create_shot)
+            elif role == QDialogButtonBox.RejectRole:
+                button.setIcon(fxicons.get_icon("close", color="#ec0811"))
+                # Close
+                button.clicked.connect(self.close)
+            elif role == QDialogButtonBox.ResetRole:
+                button.setIcon(fxicons.get_icon("refresh"))
+                # Reset connection
+                button.clicked.connect(self._reset_ui_values)
 
     def _populate_sequences(self):
         """_summary_"""
@@ -1249,6 +1293,110 @@ class FXCreateShotWidget(QWidget):
 
         sequences = [sequence.name for sequence in shots_dir.iterdir() if sequence.is_dir()]
         self.combo_box_sequence.addItems(sequences)
+
+    def _add_metadata_line(self):
+        """Adds a new line for entering metadata key-value pairs."""
+
+        # Create widgets
+        key_edit = QLineEdit()
+        value_edit = QLineEdit()
+        delete_button = QPushButton()
+        delete_button.setIcon(fxicons.get_icon("delete"))
+        key_edit.setPlaceholderText("Key...")
+        value_edit.setPlaceholderText("Value...")
+
+        # Set object names for later reference
+        key_edit.setObjectName("line_edit_key_metadata")
+        value_edit.setObjectName("line_edit_value_metadata")
+        delete_button.setObjectName("button_delete_metadata")
+
+        # Layout to hold the new line widgets
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(key_edit)
+        layout.addWidget(value_edit)
+        layout.addWidget(delete_button)
+
+        # Container widget
+        container = QWidget()
+        container.setLayout(layout)
+
+        # Add the container to your main layout
+        layout_metadata = QVBoxLayout()
+        layout_metadata.setContentsMargins(0, 0, 0, 0)
+        self.frame_metadata.setLayout(layout_metadata)
+        self.frame_metadata.layout().addWidget(container)
+
+        # Connect the delete button's clicked signal
+        delete_button.clicked.connect(lambda: self._delete_metadata_line(container))
+
+    def _delete_metadata_line(self, container):
+        """Deletes a specified metadata line."""
+
+        # Remove the container from the layout and delete it
+        self.group_box_metadata.layout().removeWidget(container)
+        container.deleteLater()
+
+    def _reset_ui_values(self):
+        """Resets the values of all UI elements to their default states."""
+
+        # Reset QLineEdit and QSpinBox widgets
+        self.line_edit_shot.setText("")
+        self.spin_box_cut_in.setValue(1001)
+        self.spin_box_cut_out.setValue(1100)
+
+        # Clear QComboBox selection
+        self.combo_box_sequence.setCurrentIndex(0)
+
+        # Remove all dynamically added metadata lines
+        layout_metadata = self.frame_metadata.layout()
+        while layout_metadata.count():
+            item = layout_metadata.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+    def _create_shot(self):
+        """Creates a shot based on the entered values."""
+
+        # Get the values from the UI elements
+        sequence = self.combo_box_sequence.currentText()
+        shot = self.line_edit_shot.text()
+        cut_in = self.spin_box_cut_in.value()
+        cut_out = self.spin_box_cut_out.value()
+
+        # Create the shot
+        sequence_dir = Path(self._project_root) / "production" / "shots" / sequence
+        shot_dir = sequence_dir / shot
+        shot = create_shot(shot, sequence_dir, self)
+        if not shot:
+            self.close()
+            return
+
+        # Get the metadata key-value pairs
+        metadata = {}
+        layout_metadata = self.frame_metadata.layout()
+
+        for i in range(layout_metadata.count()):
+            item = layout_metadata.itemAt(i)
+            if item.widget():
+                key = item.widget().findChild(QLineEdit, "line_edit_key_metadata").text()
+                value = item.widget().findChild(QLineEdit, "line_edit_value_metadata").text()
+                metadata[key] = value
+
+        # Add cut in and cut out to the metadata dictionary
+        metadata["cut_in"] = cut_in
+        metadata["cut_out"] = cut_out
+
+        # Add metadata to the shot folder
+        if metadata:
+            shot_dir_str = str(shot_dir)
+            for key, value in metadata.items():
+                if key and value:
+                    _logger.debug(f"Adding metadata: '{key}' - '{value}'")
+                    fxfiles.set_metadata(shot_dir_str, key, value)
+
+        # Close on completion
+        self.close()
 
 
 class FXCreateProjectWindow(fxwidgets.FXMainWindow):
@@ -1623,5 +1771,5 @@ if __name__ == "__main__":
         _logger.info("Running in debug mode")
     # Production
     else:
-        # run_project_browser(parent=None, quit_on_last_window_closed=True)
-        run_launcher(parent=None, show_splashscreen=True)
+        run_project_browser(parent=None, quit_on_last_window_closed=True)
+        # run_launcher(parent=None, show_splashscreen=True)

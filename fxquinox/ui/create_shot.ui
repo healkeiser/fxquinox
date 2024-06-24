@@ -6,74 +6,23 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>646</width>
-    <height>304</height>
+    <width>1066</width>
+    <height>623</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="1" colspan="2">
+    <widget class="QComboBox" name="combo_box_sequence">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label_icon_sequence">
-     <property name="maximumSize">
-      <size>
-       <width>18</width>
-       <height>18</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Icon</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1" colspan="2">
-    <widget class="QComboBox" name="combo_box_sequence"/>
-   </item>
-   <item row="4" column="0" colspan="3">
-    <widget class="QGroupBox" name="group_box_metadata">
-     <property name="title">
-      <string>Metadata</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>524</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="button_add_metadata">
-        <property name="text">
-         <string>Add</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="2">
-       <spacer name="verticalSpacer">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>418</width>
-          <height>134</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_icon_shot">
      <property name="maximumSize">
       <size>
        <width>18</width>
@@ -93,7 +42,24 @@
     </widget>
    </item>
    <item row="1" column="1" colspan="2">
-    <widget class="QLineEdit" name="line_edit_shot"/>
+    <widget class="QLineEdit" name="line_edit_shot">
+     <property name="placeholderText">
+      <string>Shot...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_icon_shot">
+     <property name="maximumSize">
+      <size>
+       <width>18</width>
+       <height>18</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>Icon</string>
+     </property>
+    </widget>
    </item>
    <item row="3" column="1">
     <widget class="QSpinBox" name="spin_box_cut_in">
@@ -102,6 +68,16 @@
      </property>
      <property name="value">
       <number>1001</number>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QSpinBox" name="spin_box_cut_out">
+     <property name="maximum">
+      <number>999999999</number>
+     </property>
+     <property name="value">
+      <number>1100</number>
      </property>
     </widget>
    </item>
@@ -118,13 +94,55 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="2">
-    <widget class="QSpinBox" name="spin_box_cut_out">
-     <property name="maximum">
-      <number>999999999</number>
+   <item row="4" column="0" colspan="3">
+    <widget class="QGroupBox" name="group_box_metadata">
+     <property name="title">
+      <string>Metadata</string>
      </property>
-     <property name="value">
-      <number>1100</number>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="1">
+       <widget class="QPushButton" name="button_add_metadata">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Expanding</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>524</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QFrame" name="frame_metadata">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Plain</enum>
+        </property>
+        <property name="lineWidth">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="3">
+    <widget class="QDialogButtonBox" name="button_box">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok|QDialogButtonBox::Reset</set>
      </property>
     </widget>
    </item>
