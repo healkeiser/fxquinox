@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    This file defines the main menu available in Houdini menu bar.
+    Add comment here
+-->
+
+<mainMenu>
+
+    <menuBar>
+
+        <!-- ======================== Main Menu ============================ -->
+
+        <subMenu id="fxquinox::sub.MainMenuCommon">
+            <insertBefore>help_menu</insertBefore>
+            <label>Fxquinox</label>
+
+            <!-- ======================== Open Directory Menu ============== -->
+
+            <titleItem>
+                <label>Environment</label>
+            </titleItem>
+
+            <subMenu id="fxquinox::sub.open_directory">
+                <label>Open Parent Directory</label>
+
+                <scriptItem id="h.fxquinox::open_job_folder">
+                    <labelExpression>
+                        path = hou.getenv("PATH_JOB")
+                        return "Job... [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.showInFileBrowser(hou.getenv("PATH_JOB"))
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <scriptItem id="h.fxquinox::open_sequence_folder">
+                    <labelExpression>
+                        path = hou.getenv("PATH_SEQUENCE")
+                        return "Sequence... [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.showInFileBrowser(hou.getenv("PATH_SEQUENCE"))
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <scriptItem id="h.fxquinox::open_shot_folder">
+                    <labelExpression>
+                        path = hou.getenv("PATH_SHOT")
+                        return "Shot... [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.showInFileBrowser(hou.getenv("PATH_SHOT"))
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <separatorItem />
+
+                <scriptItem id="h.fxquinox::open_renders_folder">
+                    <labelExpression>
+                        path = hou.getenv("PATH_RENDERS")
+                        return "Renders... [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.showInFileBrowser(hou.getenv("PATH_RENDERS"))
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <separatorItem />
+
+                <titleItem>
+                    <label>Utilities</label>
+                </titleItem>
+
+                <scriptItem id="h.fxquinox::open_logs_folder">
+                    <labelExpression>
+                        from fxquinox import fxlog
+                        path = environment.FXQUINOX_LOGS
+                        return "Logs... [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+from fxquinox import environment
+path = environment.FXQUINOX_LOGS
+hou.ui.showInFileBrowser(path)
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+            </subMenu>
+
+            <!-- ======================== Copy Menu ======================== -->
+
+            <subMenu id="fxquinox::sub.copy_path">
+                <label>Copy Path</label>
+
+                <titleItem>
+                    <label>Houdini</label>
+                </titleItem>
+
+                <scriptItem id="h.fxquinox::copy_hip_path">
+                    <labelExpression>
+                        path = hou.hipFile.path()
+                        return "Hip [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.copyTextToClipboard(hou.hipFile.path())
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <separatorItem />
+
+                <titleItem>
+                    <label>Environment</label>
+                </titleItem>
+
+                <scriptItem id="h.fxquinox::copy_job_path">
+                    <labelExpression>
+                        path = hou.getenv("PATH_JOB")
+                        return "Job [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.copyTextToClipboard(hou.getenv("PATH_JOB"))
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <scriptItem id="h.fxquinox::copy_sequence_path">
+                    <labelExpression>
+                        path = hou.getenv("PATH_SEQUENCE")
+                        return "Sequence [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.copyTextToClipboard(hou.getenv("PATH_SEQUENCE"))
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <scriptItem id="h.fxquinox::copy_shot_path">
+                    <labelExpression>
+                        path = hou.getenv("PATH_SHOT")
+                        return "Shot [{}]".format(path)
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+hou.ui.copyTextToClipboard(hou.getenv("PATH_SHOT"))
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+            </subMenu>
+
+            <separatorItem />
+
+            <!-- ======================== Logger Menu ====================== -->
+
+            <subMenu id="fxquinox::sub.logger">
+                <label>Log Verbosity</label>
+
+                <scriptItem id="h.fxquinox::flush_logs">
+                    <labelExpression>
+                        import os
+                        from fxquinox import environment
+                        log_path = environment.FXQUINOX_LOGS
+                        return "Log Files [{}]".format(len([file for file in os.listdir(log_path)]))
+                    </labelExpression>
+                    <scriptCode>
+                        <![CDATA[
+from fxquinox import fxlog;fxlog.clear_logs()
+                ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <separatorItem />
+
+                <scriptMenuStripRadio>
+                    <variableName>FXQUINOX_LOG_VERBOSITY</variableName>
+
+                    <scriptRadioItem id="h.log_debug">
+                        <label>Debug</label>
+                        <variableValue>10</variableValue>
+                        <scriptCode>
+                            <![CDATA[
+from fxquinox import fxlog;fxlog.set_log_level(10)
+                    ]]>
+                        </scriptCode>
+                    </scriptRadioItem>
+
+                    <scriptRadioItem id="h.log_info">
+                        <label>Info</label>
+                        <variableValue>20</variableValue>
+                        <scriptCode>
+                            <![CDATA[
+from fxquinox import fxlog;fxlog.set_log_level(20)
+                    ]]>
+                        </scriptCode>
+                    </scriptRadioItem>
+
+                    <scriptRadioItem id="h.log_warning">
+                        <label>Warning</label>
+                        <variableValue>30</variableValue>
+                        <scriptCode>
+                            <![CDATA[
+from fxquinox import fxlog;fxlog.set_log_level(30)
+                    ]]>
+                        </scriptCode>
+                    </scriptRadioItem>
+
+                    <scriptRadioItem id="h.log_error">
+                        <label>Error</label>
+                        <variableValue>40</variableValue>
+                        <scriptCode>
+                            <![CDATA[
+from fxquinox import fxlog;fxlog.set_log_level(40)
+                    ]]>
+                        </scriptCode>
+                    </scriptRadioItem>
+                </scriptMenuStripRadio>
+
+            </subMenu>
+
+            <separatorItem />
+
+            <!-- ======================== Help Menu ======================== -->
+
+            <subMenu id="fxquinox::sub.help">
+                <label>Help</label>
+
+                <scriptItem id="h.fxquinox::documentation">
+                    <label>Documentation</label>
+                    <scriptCode>
+                        <![CDATA[
+from webbrowser import open_new_tab;open_new_tab("https://healkeiser.github.io/fxquinox")
+                    ]]>
+                    </scriptCode>
+                </scriptItem>
+
+                <separatorItem />
+
+                <scriptItem id="h.fxquinox::discord">
+                    <label>Discord</label>
+                    <scriptCode>
+                        <![CDATA[
+from webbrowser import open_new_tab;open_new_tab("https://discord.gg/gBrZFGn6wp")
+                    ]]>
+                    </scriptCode>
+                </scriptItem>
+
+            </subMenu>
+
+            <separatorItem />
+
+            <!-- ======================== End ============================== -->
+
+        </subMenu>
+
+        <!-- ======================== End Main Menu ======================== -->
+
+    </menuBar>
+
+</mainMenu>

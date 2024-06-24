@@ -7,6 +7,7 @@ from functools import lru_cache
 import json
 import os
 from pathlib import Path
+import psutil
 import sys
 import subprocess
 import textwrap
@@ -22,6 +23,7 @@ import yaml
 
 # Internal
 from fxquinox import fxenvironment, fxlog, fxfiles
+import fxquinox
 
 
 # Log
@@ -108,7 +110,7 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".") -> O
                 _logger.info(f"{entity_type.capitalize()} creation cancelled")
                 return None
             else:
-                _logger.warning("Please enter 'y' to continue or 'N' to cancel")
+                _logger.warning("Please enter 'y' to continue or 'n' to cancel")
 
     fxfiles.create_structure_from_dict(structure_dict, _base_dir_path)
     _logger.info(f"{entity_type.capitalize()} '{entity_name}' created in '{_base_dir_path}'")
@@ -382,7 +384,7 @@ def create_shots(shot_names: list[str], base_dir: str = ".") -> Optional[list[st
     base_dir_path = Path(base_dir).resolve()
     sequence_name = base_dir_path.name
 
-    if not check_sequence(sequence_name, base_dir_path):
+    if not check_sequence(base_dir_path):
         error_message = f"'{sequence_name}' in '{base_dir_path.as_posix()}' is not a sequence"
         _logger.error(error_message)
         raise InvalidSequenceError(error_message)
@@ -536,10 +538,32 @@ def _check_assets_directory(base_dir: str = ".") -> bool:
 ###### Steps
 # TODO: Implement the steps
 
+
+def create_step(step_name: str, base_dir: str = ".") -> Optional[str]:
+    pass
+
+
 ###### Tasks
 # TODO: Implement the tasks
 
+
+def create_task(task_name: str, base_dir: str = ".") -> Optional[str]:
+    pass
+
+
 ###### UI
+
+
+class _FXTempWidget(QWidget):
+    """A temporary widget that will be linked to display the splashscreen, as
+    we can't `splashcreen.finish()` without a QWidget."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setGeometry(0, 0, 0, 0)
+        self.hide()
+        self.close()
 
 
 class FXExecutableRunnerThread(QThread):
@@ -554,13 +578,40 @@ class FXExecutableRunnerThread(QThread):
         self.commands = commands
 
     def run(self):
-        call = [self.executable] + self.commands if self.commands else [self.executable]
+        if self.executable:
+            call = ['"' + self.executable + '"'] + self.commands if self.commands else ['"' + self.executable + '"']
+        else:
+            # If executable is empty, ensure commands is not `None` or empty
+            # before proceeding
+            if self.commands:
+                call = self.commands
+            else:
+                _logger.error("No executable or commands provided to run")
+                self.finished.emit()
+                return
+
         _logger.debug(f"Call: {call}")
-        subprocess.call(call, shell=True)
+
+        if sys.platform == "win32":
+            # On Windows, use `start cmd.exe /k` to open a new command prompt
+            # that stays open
+            cmd = "start cmd.exe /k " + " ".join(call)
+            subprocess.Popen(cmd, shell=True)
+        else:
+            # On Unix-like systems, we might need to specify a terminal
+            # emulator.
+            # For example, using `xterm`:
+            # >>> cmd = ["xterm", "-e"] + call
+            # >>> subprocess.Popen(cmd)
+            # Or we can simply run the command in a new shell without keeping
+            # the terminal open:
+            _logger.debug(f"Call: {call}")
+            subprocess.Popen(call, shell=True)
+
         self.finished.emit()
 
 
-class FXLauncher(fxwidgets.FXSystemTray):
+class FXLauncherSystemTray(fxwidgets.FXSystemTray):
     """The Fxuinox main launcher UI class.
 
     Args:
@@ -584,6 +635,9 @@ class FXLauncher(fxwidgets.FXSystemTray):
 
         # Attributes
         self.project = project
+
+        _logger.debug(f"Launcher project: '{self.project}'")
+
         self.colors = fxstyle.load_colors_from_jsonc()
         self.runner_threads = []
 
@@ -605,10 +659,17 @@ class FXLauncher(fxwidgets.FXSystemTray):
     def __create_actions(self) -> None:
         """Creates the actions for the system tray."""
 
+        self.create_project_action = fxguiutils.create_action(
+            self.tray_menu,
+            "Create Project...",
+            fxicons.get_icon("movie_filter"),
+            lambda: set_project(launcher=self),
+        )
+
         self.set_project_action = fxguiutils.create_action(
             self.tray_menu,
             "Set Project",
-            fxicons.get_icon("movie_filter"),
+            fxicons.get_icon("movie"),
             lambda: set_project(launcher=self),
         )
 
@@ -713,36 +774,58 @@ class FXLauncher(fxwidgets.FXSystemTray):
             widget_to_remove.setParent(None)
 
         # Load apps from YAML file
-        project_root, _, _, _ = get_project()
+        project_info = get_project()
+        project_root = project_info.get("FXQUINOX_PROJECT_ROOT", None)
         apps_config_path = Path(project_root) / ".pipeline" / "project_config" / "apps.yaml"
-
         if not apps_config_path.exists():
             return
-
         apps_config = yaml.safe_load(apps_config_path.read_text())
-        icons_path = Path(__file__).parents[1] / "images" / "icons" / "apps"
-
-        row, col = 0, 0
-        button_size = QSize(96, 96)
 
         # Parse the `apps.yaml` file and add buttons for each app found
+        row, col = 0, 0
+        button_size = QSize(64, 64)
+
         for app_info in apps_config["apps"]:
             for app, details in app_info.items():
-                version = details["version"]
-                executable = details["executable"].replace("$VERSION$", str(version))
+                version = details.get("version", {})
+                version_major = version.get("major", 0)
+                version_minor = version.get("minor", 0)
+                version_patch = version.get("patch", 0)
+                executable = (
+                    details.get("executable", "")
+                    .replace("$VERSION_MAJOR$", str(version_major))
+                    .replace("$VERSION_MINOR$", str(version_minor))
+                    .replace("$VERSION_PATCH$", str(version_patch))
+                )
                 commands = details.get("commands", [])
-                icon_file = icons_path / f"{app.lower().replace(' ', '_')}.svg"
+                icon_file = details.get("icon", "").replace("$FXQUINOX_ROOT$", fxenvironment.FXQUINOX_ROOT)
 
                 # Create the button
                 button = QPushButton()
                 button.setIcon(QIcon(str(icon_file)))
-                button.setIconSize(QSize(64, 64))
+                button.setIconSize(QSize(48, 48))
                 button.setFixedSize(button_size)
                 button.clicked.connect(lambda exe=executable, cmds=commands: self._launch_executable(exe, cmds))
-                fxguiutils.set_formatted_tooltip(button, app.capitalize(), executable)
+                # Tooltip
+                version_string = (
+                    (
+                        f"<b>Version</b>: {version_major if version_major else ''}"
+                        f"{f'.{version_minor}' if version_minor else ''}"
+                        f"{f'.{version_patch}' if version_patch else ''}<br><br>"
+                    )
+                    if version_major or version_minor or version_patch
+                    else "<b>Version</b>: None<br><br>"
+                )
+                tooltip = (
+                    f"{version_string}"
+                    f"<b>Executable</b>: {executable if executable else None}<br><br>"
+                    f"<b>Commands</b>: <code>{commands if commands else None}</code>"
+                )
+                fxguiutils.set_formatted_tooltip(button, app.capitalize(), tooltip)
+                # Add the button to the grid layout
                 self.grid_layout.addWidget(button, row, col)
                 col += 1
-                if col >= 3:
+                if col >= 4:
                     row += 1
                     col = 0
 
@@ -813,23 +896,12 @@ class FXLauncher(fxwidgets.FXSystemTray):
 
         _logger.info(f"Closed")
         self.setParent(None)
+        _remove_lock(Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock")
         fxwidgets.FXApplication.instance().quit()
         QApplication.instance().quit()
 
 
-class _FXTempWidget(QWidget):
-    """A temporary widget that will be linked to display the splashscreen, as
-    we can't `splashcreen.finish()` without a QWidget."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.setGeometry(0, 0, 0, 0)
-        self.hide()
-        self.close()
-
-
-class FXProjectBrowser(fxwidgets.FXMainWindow):
+class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
     def __init__(
         self,
         parent: Optional[QWidget] = None,
@@ -842,9 +914,6 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
         company: Optional[str] = None,
         accent_color: str = "#039492",
         ui_file: Optional[str] = None,
-        #
-        project_root: Optional[str] = None,
-        project_name: Optional[str] = None,
     ):
         super().__init__(
             parent,
@@ -859,16 +928,29 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
             ui_file,
         )
 
-        # Attributes
-        self._project_root = project_root
-        self._project_name = project_name
-
         # Methods
+        self._get_project()
         self._rename_ui()
         self._create_icons()
         self._modify_ui()
         self._populate_assets()
         self._populate_shots()
+        self._handle_connections()
+
+        self.statusBar().showMessage("Initialized project browser", self.INFO, logger=_logger)
+
+    def _get_project(self) -> None:
+        """_summary_
+
+        Returns:
+            dict: _description_
+        """
+
+        self.project_info = get_project()
+        self._project_root = self.project_info.get("FXQUINOX_PROJECT_ROOT", None)
+        self._project_name = self.project_info.get("FXQUINOX_PROJECT_NAME", None)
+        self._project_assets = self.project_info.get("FXQUINOX_PROJECT_ASSETS", None)
+        self._project_shots = self.project_info.get("FXQUINOX_PROJECT_SHOTS", None)
 
     def _rename_ui(self):
         """_summary_"""
@@ -887,6 +969,15 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
         self.line_edit_filter_shots = self.ui.line_edit_filter_shots
         self.tree_widget_shots = self.ui.tree_widget_shots
 
+    def _handle_connections(self):
+        # Assets
+        self.tree_widget_assets.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_widget_assets.customContextMenuRequested.connect(self._on_assets_context_menu)
+
+        # Shots
+        self.tree_widget_shots.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_widget_shots.customContextMenuRequested.connect(self._on_shots_context_menu)
+
     def _create_icons(self):
         """_summary_"""
 
@@ -895,7 +986,15 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
     def _modify_ui(self):
         """Modifies the UI elements."""
 
+        # Labels
+        font_bold = QFont()
+        font_bold.setBold(True)
+        self.label_project.setText(self._project_name)
+        self.label_project.setFont(font_bold)
+
         # Icons
+        self.tab_assets_shots.setTabIcon(0, fxicons.get_icon("view_in_ar"))
+        self.tab_assets_shots.setTabIcon(1, fxicons.get_icon("image"))
         self.label_icon_filter_assets.setPixmap(self.icon_search)
         self.label_icon_filter_shots.setPixmap(self.icon_search)
 
@@ -913,7 +1012,7 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
 
         # Iterate over the sequences and shots
         icon_sequence = fxicons.get_pixmap("camera_roll")
-        icon_shot = fxicons.get_pixmap("theaters")
+        icon_shot = fxicons.get_pixmap("image")
         font_bold = QFont()
         font_bold.setBold(True)
 
@@ -925,6 +1024,12 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
             sequence_item.setText(0, sequence.name)
             sequence_item.setIcon(0, icon_sequence)
             sequence_item.setFont(0, font_bold)
+            sequence_path = sequence.resolve().absolute().as_posix()
+            sequence_item.setData(0, Qt.UserRole, sequence_path)
+            sequence_item.setToolTip(
+                0,
+                f"<b>{sequence.name}</b><hr><b>Entity</b>: Sequence<br><br><b>Path</b>: {sequence_path}",
+            )
 
             # Check if the sequence has shots
             for shot in sequence.iterdir():
@@ -934,6 +1039,12 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
                 shot_item = QTreeWidgetItem(sequence_item)
                 shot_item.setText(0, shot.name)
                 shot_item.setIcon(0, icon_shot)
+                shot_path = shot.resolve().absolute().as_posix()
+                shot_item.setData(0, Qt.UserRole, shot_path)
+                shot_item.setToolTip(
+                    0,
+                    f"<b>{shot.name}</b><hr><b>Entity</b>: Shot<br><br><b>Path</b>: {shot_path}",
+                )
 
     def _populate_assets(self) -> None:
         """Populates the assets tree widget with the assets in the project."""
@@ -948,7 +1059,7 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
             return
 
         # Iterate over the assets
-        icon_asset = fxicons.get_pixmap("videogame_asset")
+        icon_asset = fxicons.get_pixmap("view_in_ar")
 
         for asset in assets_dir.iterdir():
             if not asset.is_dir():
@@ -958,96 +1069,258 @@ class FXProjectBrowser(fxwidgets.FXMainWindow):
             asset_item.setText(0, asset.name)
             asset_item.setIcon(0, icon_asset)
 
+    def _on_shots_context_menu(self, point: QPoint):
+        # Create the context menu
+        context_menu = QMenu(self)
 
-def get_project() -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str]]:
-    """Gets the project path and name from the environment file.
-
-    Returns:
-        Tuple[Optional[str], Optional[str], Optional[str], Optional[str]]: The
-            project path, name, assets path and shots path if found,
-            `None` otherwise.
-    """
-
-    # Early return if the environment variables are set
-    if (
-        os.getenv("FXQUINOX_PROJECT_ROOT")
-        and os.getenv("FXQUINOX_PROJECT_NAME")
-        and os.getenv("FXQUINOX_PROJECT_ASSETS")
-        and os.getenv("FXQUINOX_PROJECT_SHOTS")
-    ):
-        _logger.info(f"Using environment variables")
-        _logger.info(f"$FQUINOX_PROJECT_ROOT: '{os.getenv('FXQUINOX_PROJECT_ROOT')}'")
-        _logger.info(f"$FXQUINOX_PROJECT_NAME: '{os.getenv('FXQUINOX_PROJECT_NAME')}'")
-        _logger.info(f"$FXQUINOX_PROJECT_ASSETS: '{os.getenv('FXQUINOX_PROJECT_ASSETS')}'")
-        _logger.info(f"$FXQUINOX_PROJECT_SHOTS: '{os.getenv('FXQUINOX_PROJECT_SHOTS')}'")
-
-        return (
-            os.getenv("FXQUINOX_PROJECT_ROOT"),
-            os.getenv("FXQUINOX_PROJECT_NAME"),
-            os.getenv("FXQUINOX_PROJECT_ASSETS"),
-            os.getenv("FXQUINOX_PROJECT_SHOTS"),
+        # Define actions
+        action_create_shot = fxguiutils.create_action(
+            context_menu,
+            "Create Shot",
+            fxicons.get_icon("image"),
+            self.create_shot,
+        )
+        action_edit_shot = fxguiutils.create_action(
+            context_menu,
+            "Edit Shot",
+            fxicons.get_icon("edit"),
+            self.edit_shot,
+        )
+        action_delete_shot = fxguiutils.create_action(
+            context_menu,
+            "Delete Shot",
+            fxicons.get_icon("delete"),
+            self.delete_shot,
+        )
+        ection_expand_all = fxguiutils.create_action(
+            context_menu,
+            "Expand All",
+            fxicons.get_icon("unfold_more"),
+            lambda: self.expand_all(self.tree_widget_shots),
+        )
+        action_collapse_all = fxguiutils.create_action(
+            context_menu,
+            "Collapse All",
+            fxicons.get_icon("unfold_less"),
+            lambda: self.collapse_all(self.tree_widget_shots),
+        )
+        action_show_in_file_browser = fxguiutils.create_action(
+            context_menu,
+            "Show in File Browser",
+            fxicons.get_icon("open_in_new"),
+            lambda: self.show_in_file_browser(
+                self.tree_widget_shots.currentItem().data(0, Qt.UserRole)
+                if self.tree_widget_shots.currentItem()
+                else get_project().get("FXQUINOX_PROJECT_SHOTS", None)
+            ),
         )
 
+        # Add actions to the context menu
+        context_menu.addAction(action_create_shot)
+        context_menu.addSeparator()
+        context_menu.addAction(action_edit_shot)
+        context_menu.addAction(action_delete_shot)
+        context_menu.addSeparator()
+        context_menu.addAction(ection_expand_all)
+        context_menu.addAction(action_collapse_all)
+        context_menu.addAction(action_show_in_file_browser)
+
+        # Show the context menu
+        context_menu.exec_(self.tree_widget_shots.mapToGlobal(point))
+
+    def _on_assets_context_menu(self, point: QPoint):
+        # Similar to on_shots_context_menu, but for assets
+        context_menu = QMenu(self)
+
+        # Define actions
+        action_edit_asset = QAction("Edit Asset", self)
+        action_delete_asset = QAction("Delete Asset", self)
+
+        # Add actions to the context menu
+        context_menu.addAction(action_edit_asset)
+        context_menu.addAction(action_delete_asset)
+
+        # Connect actions to slots
+        action_edit_asset.triggered.connect(self.edit_asset)
+        action_delete_asset.triggered.connect(self.delete_asset)
+
+        # Show the context menu
+        context_menu.exec_(self.tree_widget_assets.mapToGlobal(point))
+
+    # ' Slot for actions
+    # Assets
+    def create_asset(self):
+        # TODO: Implement asset creation logic here
+        pass
+
+    def edit_asset(self):
+        # TODO: Implement asset editing logic here
+        pass
+
+    def delete_asset(self):
+        # TODO: Implement asset deletion logic here
+
+        pass
+
+    # Shots
+    def create_shot(self):
+        widget = FXCreateShotWidget(
+            parent=self,
+            project_name=self._project_name,
+            project_root=self._project_root,
+            project_assets=self._project_assets,
+            project_shots=self._project_shots,
+        )
+        widget.setWindowFlags(widget.windowFlags() | Qt.Window)
+        widget.resize(400, 200)
+        widget.show()
+
+    def edit_shot(self):
+        # Implement shot editing logic here
+        pass
+
+    def delete_shot(self):
+        # Implement shot deletion logic here
+        pass
+
+    # Common
+    def show_in_file_browser(self, path: str):
+        url = QUrl.fromLocalFile(path)
+        QDesktopServices.openUrl(url)
+
+    def expand_all(self, tree_widget: QTreeWidget):
+        tree_widget.expandAll()
+
+    def collapse_all(self, tree_widget: QTreeWidget):
+        tree_widget.collapseAll()
+
+
+class FXCreateShotWidget(QWidget):
+    def __init__(self, parent=None, project_name=None, project_root=None, project_assets=None, project_shots=None):
+        super().__init__(parent)
+
+        # Attributes
+        self.project_name = project_name
+        self._project_root = project_root
+        self._project_assets = project_assets
+        self._project_shots = project_shots
+
+        # Methods
+        self._create_ui()
+        self._rename_ui()
+        self._modify_ui()
+        self._populate_sequences()
+
+        _logger.info("Initialized Create Shots")
+
+    def _create_ui(self):
+        """_summary_"""
+
+        ui_file = Path(__file__).parent / "ui" / "create_shot.ui"
+        self.ui = fxguiutils.load_ui(self, str(ui_file))
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(self.ui)
+        self.setWindowTitle("Create Shot")
+
+    def _rename_ui(self):
+        """_summary_"""
+
+        self.label_icon_sequence = self.ui.label_icon_sequence
+        self.combo_box_sequence = self.ui.combo_box_sequence
+        self.label_icon_shot = self.ui.label_icon_shot
+        self.line_edit_shot = self.ui.line_edit_shot
+        self.label_icon_frame_range = self.ui.label_icon_frame_range
+        self.spin_box_cut_in = self.ui.spin_box_cut_in
+        self.spin_box_cut_out = self.ui.spin_box_cut_out
+
+    def _modify_ui(self):
+        """_summary_"""
+
+        self.label_icon_sequence.setPixmap(fxicons.get_pixmap("camera_roll", 18))
+        self.label_icon_shot.setPixmap(fxicons.get_pixmap("image", 18))
+        self.label_icon_frame_range.setPixmap(fxicons.get_pixmap("alarm", 18))
+
+    def _populate_sequences(self):
+        """_summary_"""
+
+        shots_dir = Path(self._project_root) / "production" / "shots"
+        if not shots_dir.exists():
+            return
+
+        sequences = [sequence.name for sequence in shots_dir.iterdir() if sequence.is_dir()]
+        self.combo_box_sequence.addItems(sequences)
+
+
+class FXCreateProjectWindow(fxwidgets.FXMainWindow):
+    # TODO: Implement the create project window
+    pass
+
+
+def run_create_project():
+    """Runs the create project window."""
+
+    # TODO: Implement the runtime create project window
+    pass
+
+
+def get_project() -> Dict[str, Optional[str]]:
+    """Gets the project path, name, assets path, and shots path from the
+    environment file, or the environment variables (if set beforehand).
+
+    Returns:
+        Dict[str, Optional[str]]: A dictionary with keys
+            'FXQUINOX_PROJECT_ROOT', 'FXQUINOX_PROJECT_NAME',
+            'FXQUINOX_PROJECT_ASSETS', and 'FXQUINOX_PROJECT_SHOTS' pointing to
+            their respective paths if found, `None` otherwise.
+    """
+
+    keys = ["FXQUINOX_PROJECT_ROOT", "FXQUINOX_PROJECT_NAME", "FXQUINOX_PROJECT_ASSETS", "FXQUINOX_PROJECT_SHOTS"]
+    project_info = {key: None for key in keys}
+
+    # Early return if the environment variables are set
+    if all(os.getenv(key) for key in keys):
+        _logger.info("Using environment variables")
+        for key in keys:
+            project_info[key] = os.getenv(key)
+            _logger.debug(f"${key}: '{project_info[key]}'")
+        return project_info
+
     # Else, parse the environment file
-    project_root_key = "FXQUINOX_PROJECT_ROOT"
-    project_name_key = "FXQUINOX_PROJECT_NAME"
-    project_assets_key = "FXQUINOX_PROJECT_ASSETS"
-    project_shots_key = "FXQUINOX_PROJECT_SHOTS"
-
-    project_root = None
-    project_name = None
-    project_assets = None
-    project_shots = None
-
     try:
         with open(fxenvironment.FXQUINOX_ENV_FILE, "r") as file:
             for line in file:
-                if line.startswith(project_root_key):
-                    _, project_root = line.strip().split("=", 1)
-                    project_root = project_root.strip("'\"")  # Remove quotes
-                elif line.startswith(project_name_key):
-                    _, project_name = line.strip().split("=", 1)
-                    project_name = project_name.strip("'\"")  # Remove quotes
-                elif line.startswith(project_assets_key):
-                    _, project_assets = line.strip().split("=", 1)
-                    project_assets = project_assets.strip("'\"")
-                elif line.startswith(project_shots_key):
-                    _, project_shots = line.strip().split("=", 1)
-                    project_shots = project_shots.strip("'\"")
+                for key in keys:
+                    if line.startswith(key):
+                        _, value = line.strip().split("=", 1)
+                        project_info[key] = value.strip("'\"")  # Remove quotes
+                        break  # Move to the next line after finding a match
 
-                # If values are found, no need to continue reading the file
-                if (
-                    project_root is not None
-                    and project_name is not None
-                    and project_assets is not None
-                    and project_shots is not None
-                ):
+                # If all values are found, no need to continue reading the file
+                if all(project_info.values()):
                     break
 
     except FileNotFoundError:
         _logger.error(f"File not found: '{fxenvironment.FXQUINOX_ENV_FILE.as_posix()}'")
+        return project_info
 
-    os.environ["FXQUINOX_PROJECT_ROOT"] = str(project_root)
-    os.environ["FXQUINOX_PROJECT_NAME"] = str(project_name)
-    os.environ["FXQUINOX_PROJECT_ASSETS"] = str(project_assets)
-    os.environ["FXQUINOX_PROJECT_SHOTS"] = str(project_shots)
+    # Update environment variables
+    for key, value in project_info.items():
+        os.environ[key] = str(value)
 
-    _logger.info(f"Using environment file")
-    _logger.info(f"Project root: '{project_root}'")
-    _logger.info(f"Project name: '{project_name}'")
-    _logger.info(f"Project assets: '{project_assets}'")
-    _logger.info(f"Project shots: '{project_shots}'")
+    _logger.info("Using environment file")
+    for key, value in project_info.items():
+        _logger.debug(f"{key.replace('FXQUINOX_', '').replace('_', ' ').capitalize()}: '{value}'")
 
-    return project_root, project_name, project_assets, project_shots
+    return project_info
 
 
 def set_project(
-    launcher: Optional[FXLauncher] = None, quit_on_last_window_closed: bool = False, project_path: str = None
+    launcher: Optional[FXLauncherSystemTray] = None, quit_on_last_window_closed: bool = False, project_path: str = None
 ) -> Optional[Tuple[str, str]]:
     """Sets the project path in the project browser.
 
     Args:
-        launcher (FXLauncher): The launcher instance to update the project name.
+        launcher (FXLauncherSystemTray): The launcher instance to update the project name.
             Defaults to `None`.
         quit_on_last_window_closed (bool): Whether to quit the application when
             the last window is closed. Defaults to `False`.
@@ -1140,7 +1413,8 @@ def set_project(
 def open_project_directory() -> None:
     """Opens the project directory in the system file manager."""
 
-    project_root, _, _, _ = get_project()
+    project_info = get_project()
+    project_root = project_info.get("FXQUINOX_PROJECT_ROOT", None)
     if project_root:
         open_directory(project_root)
     else:
@@ -1154,7 +1428,65 @@ def open_directory(path: str) -> None:
     QDesktopServices.openUrl(url)
 
 
-def run_launcher(quit_on_last_window_closed: bool = True, show_splashscreen: bool = False) -> None:
+def _is_process_running(pid: int) -> bool:
+    """Check if there's a running process with the given PID.
+
+    Args:
+        pid (int): The process ID to check.
+
+    Returns:
+        bool: `True` if the process is running, `False` otherwise.
+    """
+
+    try:
+        p = psutil.Process(pid)
+        return p.is_running()
+    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        return False
+
+
+def _check_and_create_lock(lock_file_path: str) -> bool:
+    """Check for an existing lock and handle it appropriately.
+
+    Args:
+        lock_file_path (str): The path to the lock file.
+
+    Returns:
+        bool: `True` if the lock file was created, `False` otherwise (aka
+            another instance is running).
+    """
+
+    lock_path = Path(lock_file_path)
+
+    if lock_path.exists():
+        pid = lock_path.read_text().strip()
+        if pid and _is_process_running(int(pid)):
+            # Another instance is running
+            return False
+        else:
+            # The process is not running > overwrite the lock file
+            lock_path.write_text(str(os.getpid()))
+            return True
+    else:
+        lock_path.write_text(str(os.getpid()))
+        return True
+
+
+def _remove_lock(lock_file_path: str) -> None:
+    """Remove the lock file.
+
+    Args:
+        lock_file_path (str): The path to the lock file.
+    """
+
+    lock_path = Path(lock_file_path)
+    if lock_path.exists():
+        lock_path.unlink()
+
+
+def run_launcher(
+    parent: QWidget = None, quit_on_last_window_closed: bool = True, show_splashscreen: bool = False
+) -> None:
     """Runs the FX Launcher UI.
 
     Args:
@@ -1164,13 +1496,24 @@ def run_launcher(quit_on_last_window_closed: bool = True, show_splashscreen: boo
             Defaults to `False`.
     """
 
+    # Check for an existing lock file
+    lock_file = Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock"
+    if not _check_and_create_lock(lock_file):
+        _logger.warning("Launcher already running")
+        return
+    else:
+        _logger.debug(f"Lock file created: {lock_file.as_posix()}")
+
     # Get the current project
-    project_root, project_name, _, _ = get_project()
+    project_info = get_project()
+    project_root = project_info.get("FXQUINOX_PROJECT_ROOT", None)
+    project_name = project_info.get("FXQUINOX_PROJECT_NAME", None)
 
     # If it doesn't exist but has been set in the environment file, error
     if project_root and not Path(project_root).exists():
         _logger.error(f"Project set in the environment file doesn't exist: '{project_root}'")
-
+        # Ask the user if they want to delete the environment file, allowing
+        # the creation of a new one from the launcher
         while True:
             confirmation = input(f"Delete the corrupted environment file? (y/n): ")
             if confirmation.lower() == "y":
@@ -1181,18 +1524,12 @@ def run_launcher(quit_on_last_window_closed: bool = True, show_splashscreen: boo
                 _logger.info(f"Deletion cancelled")
                 return None
             else:
-                _logger.warning("Please enter 'y' to continue or 'N' to cancel")
-
-    # Allow only one instance of the launcher
-    lock_file_path = Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock"
-    if lock_file_path.exists():
-        _logger.warning("Launcher already running")
-        return
-    lock_file_path.touch()
+                _logger.warning("Please enter 'y' to continue or 'n' to cancel")
 
     # Application
-    app = fxwidgets.FXApplication().instance()
-    app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
+    if not parent:
+        app = fxwidgets.FXApplication().instance()
+        app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
 
     # Icon
     icon_path = (Path(__file__).parents[1] / "images" / "fxquinox_logo_light.svg").as_posix()
@@ -1204,6 +1541,8 @@ def run_launcher(quit_on_last_window_closed: bool = True, show_splashscreen: boo
         information = textwrap.dedent(
             """\
         USD centric pipeline for feature animation and VFX projects. Made with love by Valentin Beaumont.
+
+        This project is a very early work in progress and is not ready for production use.
         """
         )
         splashscreen = fxwidgets.FXSplashScreen(
@@ -1222,51 +1561,56 @@ def run_launcher(quit_on_last_window_closed: bool = True, show_splashscreen: boo
         splashscreen.showMessage("Loading project...")
         temp_widget = _FXTempWidget(parent=None)
         splashscreen.showMessage("Starting launcher...")
-        launcher = FXLauncher(parent=None, icon=icon_path, project=project_name)
+        launcher = FXLauncherSystemTray(parent=None, icon=icon_path, project=project_name)
         splashscreen.finish(temp_widget)
     else:
-        launcher = FXLauncher(parent=None, icon=icon_path, project=project_name)
+        launcher = FXLauncherSystemTray(parent=None, icon=icon_path, project=project_name)
 
     launcher.show()
     _logger.info("Started launcher")
-    app.exec_()
 
-    # Remove lock file (allowing to run the launcher again)
-    lock_file_path.unlink()
+    if not parent:
+        app.exec_()
 
 
-def run_project_browser(quit_on_last_window_closed: bool = False) -> None:
+def run_project_browser(parent: QWidget = None, quit_on_last_window_closed: bool = False) -> None:
     """Runs the project browser UI.
 
     Args:
+        parent (QWidget): The parent widget. Defaults to `None`.
         quit_on_last_window_closed (bool): Whether to quit the application when
             the last window is closed. Defaults to `False`.
     """
 
-    app = fxwidgets.FXApplication.instance()
-    app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
+    base_path = Path(__file__).resolve().parent
+    images_path = base_path.parent / "images"
+
+    if not parent:
+        app = fxwidgets.FXApplication.instance()
+        app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
 
     # Get current project
-    project_root, project_name, _, _ = get_project()
+    project_info = get_project()
+    project_name = project_info.get("FXQUINOX_PROJECT_NAME", None)
 
-    ui_file = (Path(__file__).parent / "ui" / "project_browser.ui").as_posix()
-    window = FXProjectBrowser(
-        parent=None,
-        icon=None,
-        title="FX Project Browser",
+    ui_file = base_path / "ui" / "project_browser.ui"
+    icon_path = images_path / "fxquinox_logo_dark.svg"
+
+    window = FXProjectBrowserWindow(
+        parent=parent if isinstance(parent, QWidget) else None,
+        icon=icon_path.resolve().as_posix(),
+        title="Project Browser",
         size=(1500, 900),
         project=project_name,
         version="0.0.1",
         company="fxquinox",
-        ui_file=ui_file,
-        #
-        project_root=project_root,
-        project_name=project_name,
+        ui_file=ui_file.resolve().as_posix(),
     )
+
     window.show()
-    window.setAttribute(Qt.WA_DeleteOnClose)
-    _logger.info("Started project browser")
-    app.exec_()
+
+    if not parent:
+        app.exec_()
 
 
 ###### Runtime
@@ -1279,4 +1623,5 @@ if __name__ == "__main__":
         _logger.info("Running in debug mode")
     # Production
     else:
-        run_launcher()
+        # run_project_browser(parent=None, quit_on_last_window_closed=True)
+        run_launcher(parent=None, show_splashscreen=True)

@@ -71,7 +71,7 @@
      </property>
      <widget class="QTabWidget" name="tab_assets_shots">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_assets">
        <attribute name="title">
@@ -120,6 +120,9 @@
         </item>
         <item>
          <widget class="QTreeWidget" name="tree_widget_assets">
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
           <column>
            <property name="text">
             <string notr="true">1</string>
@@ -240,6 +243,9 @@
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
         <widget class="QTreeWidget" name="tree_workfiles">
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
          <column>
           <property name="text">
            <string notr="true">1</string>

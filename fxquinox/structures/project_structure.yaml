@@ -86,27 +86,41 @@ $PROJECT$:
                 apps:
                   #
                   - houdini:
-                      version: 20.0.547
-                      executable: C:/Program Files/Side Effects Software/Houdini $VERSION$/bin/houdini.exe
-                      commands: ["-n"]
-                      # icon: C:/Program Files/Side Effects Software/Houdini $VERSION$/houdini_icon.png
-                      # executable: /opt/hfs$VERSION$/bin/houdini
-                      # icon: /opt/hfs$VERSION$/houdini_icon.png
+                      version:
+                        major: 20
+                        minor: 0
+                        patch: 547
+                      executable: C:/Program Files/Side Effects Software/Houdini $VERSION_MAJOR$.$VERSION_MINOR$.$VERSION_PATCH$/bin/houdini.exe
+                      # executable: /opt/hfs$VERSION_MAJOR$.$VERSION_MINOR$.$VERSION_PATCH$/bin/houdini
+                      icon: $FXQUINOX_ROOT$/images/icons/apps/houdini.svg
 
                   #
                   - maya:
-                      version: 2024
-                      executable: C:/Program Files/Autodesk/Maya$VERSION$/bin/maya.exe
-                      # executable: /usr/autodesk/maya$VERSION$/bin/maya
-                      # icon: /usr/autodesk/maya$VERSION$/maya_icon.png
+                      version:
+                        major: 2024
+                        minor:
+                        patch:
+                      executable: C:/Program Files/Autodesk/Maya$VERSION_MAJOR$/bin/maya.exe
+                      icon: $FXQUINOX_ROOT$/images/icons/apps/maya.svg
 
                   #
                   - nuke:
-                      version: 15.0v4
-                      executable: C:/Program Files/Nuke$VERSION$/nuke15.0.exe
+                      version:
+                        major: 15
+                        minor: 0
+                        patch: 4
+                      executable: C:/Program Files/Nuke$VERSION_MAJOR$.$VERSION_MINOR$v$VERSION_PATCH$/nuke$VERSION_MAJOR$.$VERSION_MINOR$.exe
                       commands: ["--nc"]
-                      # executable: /usr/foundry/nuke$VERSION$/bin/nuke
-                      # icon: /usr/foundry/nuke$VERSION$/NukeXApp.ico
+                      icon: $FXQUINOX_ROOT$/images/icons/apps/nuke.svg
+
+                  #
+                  - substance_painter:
+                      version:
+                        major:
+                        minor:
+                        patch:
+                      executable: C:/Program Files/Adobe/Adobe Substance 3D Painter/Adobe Substance 3D Painter.exe
+                      icon: $FXQUINOX_ROOT$/images/icons/apps/substance_painter.svg
 
             # File:
             - name: steps.yaml
