@@ -36,3 +36,7 @@
     │               └── 📄 .$SHOT_info.json
     └── 📄 .$PROJECT_info.json
 ```
+
+> [!CAUTION]
+> The YAML files inside `structures` starting with `_` have their content being used within another structure.
+> E.g. `_apps_structure.yaml` and `_steps_structure` are used within `project_structure`.

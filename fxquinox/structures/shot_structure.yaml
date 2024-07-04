@@ -61,7 +61,7 @@ $SHOT$:
             type: folder
             metadata:
               creator: "fxquinox"
-              entity: "movies"
+              entity: "3d_renders"
               description: "3D renders of the shot"
 
     # Folder

@@ -1,0 +1,7 @@
+# Folder
+$TASK$:
+  type: folder
+  metadata:
+    creator: "fxquinox"
+    entity: "task"
+    description: "Task folder for the shot, containing the workfiles"

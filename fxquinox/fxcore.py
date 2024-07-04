@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 from turtle import color
+from git import refresh
 import psutil
 import sys
 import subprocess
@@ -38,6 +39,9 @@ _SHOTS_DIR = "shots"
 _SHOT = "shot"
 _ASSETS_DIR = "assets"
 _ASSET = "asset"
+_STEP = "step"
+_TASK = "task"
+_WORKFILE = "workfile"
 
 
 @lru_cache(maxsize=None)
@@ -550,20 +554,81 @@ def _check_assets_directory(base_dir: str = ".") -> bool:
     return _check_entity(_ASSETS_DIR, base_dir)
 
 
-###### Steps
+###### Steps (departments)
 # TODO: Implement the steps
 
 
-def create_step(step_name: str, base_dir: str = ".") -> Optional[str]:
+class InvalidStepError(Exception):
+    """Exception raised when a step is not valid."""
+
     pass
+
+
+def create_step(step_name: str, base_dir: str = ".") -> Optional[str]:
+    base_dir_path = Path(base_dir).resolve()
+
+    if not check_workfile(base_dir_path):
+        error_message = f"'{base_dir_path.as_posix()}' is not a valid workfiles directory"
+        _logger.error(error_message)
+        raise InvalidStepError(error_message)
+
+    # Create the step
+    return _create_entity(_STEP, step_name, base_dir_path)
+
+
+def check_step(base_dir: str = ".") -> bool:
+    """Checks if a valid step directory structure exists within a project.
+
+    Args:
+        base_dir (str): The base directory where the step should be located,
+            typically the "project/production/steps" directory.
+            Defaults to the current directory.
+
+    Returns:
+        bool: `True` if the step is valid, `False` otherwise.
+    """
+
+    return _check_entity(_STEP, base_dir)
 
 
 ###### Tasks
 # TODO: Implement the tasks
 
 
-def create_task(task_name: str, base_dir: str = ".") -> Optional[str]:
+class InvalidTaskError(Exception):
+    """Exception raised when a task is not valid."""
+
     pass
+
+
+def create_task(task_name: str, base_dir: str = ".") -> Optional[str]:
+    base_dir_path = Path(base_dir).resolve()
+
+    if not check_step(base_dir_path):
+        error_message = f"'{base_dir_path.as_posix()}' is not a valid steps directory"
+        _logger.error(error_message)
+        raise InvalidTaskError(error_message)
+
+    # Create the task
+    return _create_entity(_TASK, task_name, base_dir_path)
+
+
+###### Workfiles
+
+
+def check_workfile(base_dir: str = ".") -> bool:
+    """Checks if a valid workfile directory structure exists within a project.
+
+    Args:
+        base_dir (str): The base directory where the workfile should be located,
+            typically the "project/production/workfiles" directory.
+            Defaults to the current directory.
+
+    Returns:
+        bool: `True` if the workfile is valid, `False` otherwise.
+    """
+
+    return _check_entity(_WORKFILE, base_dir)
 
 
 ###### UI
@@ -983,6 +1048,12 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self.label_icon_filter_shots = self.ui.label_icon_filter_shots
         self.line_edit_filter_shots = self.ui.line_edit_filter_shots
         self.tree_widget_shots = self.ui.tree_widget_shots
+        #
+        self.group_box_steps = self.ui.group_box_steps
+        self.list_steps = self.ui.list_steps
+        #
+        self.group_box_tasks = self.ui.group_box_tasks
+        self.list_tasks = self.ui.list_tasks
 
     def _handle_connections(self):
         # Assets
@@ -992,6 +1063,14 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         # Shots
         self.tree_widget_shots.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree_widget_shots.customContextMenuRequested.connect(self._on_shots_context_menu)
+
+        # Steps
+        self.list_steps.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.list_steps.customContextMenuRequested.connect(self._on_steps_context_menu)
+
+        # Tasks
+        # self.list_tasks.setContextMenuPolicy(Qt.CustomContextMenu)
+        # self.list_tasks.customContextMenuRequested.connect(self._on_tasks_context_menu)
 
     def _create_icons(self):
         """_summary_"""
@@ -1012,6 +1091,10 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self.tab_assets_shots.setTabIcon(1, fxicons.get_icon("image"))
         self.label_icon_filter_assets.setPixmap(self.icon_search)
         self.label_icon_filter_shots.setPixmap(self.icon_search)
+
+    #
+    def refresh(self):
+        self._populate_shots()
 
     def _populate_shots(self) -> None:
         """Populates the shots tree widget with the shots in the project."""
@@ -1084,6 +1167,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             asset_item.setText(0, asset.name)
             asset_item.setIcon(0, icon_asset)
 
+    # ' Contextual menus
+    # Shots
     def _on_shots_context_menu(self, point: QPoint):
         # Create the context menu
         context_menu = QMenu(self)
@@ -1143,11 +1228,13 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         # Show the context menu
         context_menu.exec_(self.tree_widget_shots.mapToGlobal(point))
 
+    # Assets
     def _on_assets_context_menu(self, point: QPoint):
         # Similar to on_shots_context_menu, but for assets
         context_menu = QMenu(self)
 
         # Define actions
+
         action_edit_asset = QAction("Edit Asset", self)
         action_delete_asset = QAction("Delete Asset", self)
 
@@ -1161,6 +1248,27 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
         # Show the context menu
         context_menu.exec_(self.tree_widget_assets.mapToGlobal(point))
+
+    # Steps
+    def _on_steps_context_menu(self, point: QPoint):
+        # Similar to on_shots_context_menu, but for steps
+        context_menu = QMenu(self)
+
+        # Define actions
+        action_create_step = fxguiutils.create_action(
+            context_menu,
+            "Create Step",
+            fxicons.get_icon("dashboard"),
+            self.create_step,
+        )
+
+        # Add actions to the context menu
+        context_menu.addAction(action_create_step)
+
+        # Connect actions to slots
+
+        # Show the context menu
+        context_menu.exec_(self.list_steps.mapToGlobal(point))
 
     # ' Slot for actions
     # Assets
@@ -1190,6 +1298,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         widget.resize(400, 200)
         widget.show()
 
+        self.refresh()
+
     def edit_shot(self):
         # Implement shot editing logic here
         pass
@@ -1197,6 +1307,21 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
     def delete_shot(self):
         # Implement shot deletion logic here
         pass
+
+    # Steps
+    def create_step(self):
+        widget = FXCreateStepWidget(
+            parent=self,
+            project_name=self._project_name,
+            project_root=self._project_root,
+            project_assets=self._project_assets,
+            project_shots=self._project_shots,
+        )
+        widget.setWindowFlags(widget.windowFlags() | Qt.Window)
+        widget.resize(400, 500)
+        widget.show()
+
+        self.refresh()
 
     # Common
     def show_in_file_browser(self, path: str):
@@ -1227,7 +1352,7 @@ class FXCreateShotWidget(QWidget):
         self._handle_connections()
         self._populate_sequences()
 
-        _logger.info("Initialized create shots")
+        _logger.info("Initialized create shot")
 
     def _create_ui(self):
         """_summary_"""
@@ -1397,6 +1522,88 @@ class FXCreateShotWidget(QWidget):
 
         # Close on completion
         self.close()
+
+
+class FXCreateStepWidget(QWidget):
+    def __init__(self, parent=None, project_name=None, project_root=None, project_assets=None, project_shots=None):
+        super().__init__(parent)
+
+        # Attributes
+        self.project_name = project_name
+        self._project_root = project_root
+        self._project_assets = project_assets
+        self._project_shots = project_shots
+
+        # Methods
+        self._create_ui()
+        self._rename_ui()
+        self._modify_ui()
+        self._handle_connections()
+        self._populate_steps()
+
+        _logger.info("Initialized create step")
+
+    def _create_ui(self):
+        """_summary_"""
+
+        ui_file = Path(__file__).parent / "ui" / "create_step.ui"
+        self.ui = fxguiutils.load_ui(self, str(ui_file))
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(self.ui)
+        self.setWindowTitle("Create Step")
+
+    def _rename_ui(self):
+        """_summary_"""
+
+        self.list_steps: QListWidget = self.ui.list_steps
+        self.checkbox_add_tasks: QCheckBox = self.ui.checkbox_add_tasks
+        self.list_tasks: QListWidget = self.ui.list_tasks
+        self.button_box: QButtonGroup = self.ui.button_box
+
+    def _modify_ui(self):
+        # Contains some slots connections, to avoid iterating multiple times
+        # over the buttons
+        for button in self.button_box.buttons():
+            role = self.button_box.buttonRole(button)
+            if role == QDialogButtonBox.AcceptRole:
+                button.setIcon(fxicons.get_icon("check", color="#8fc550"))
+                button.setText("Create")
+                # Create shot
+                # TODO: Create the step
+                # button.clicked.connect(self._create_step)
+            elif role == QDialogButtonBox.RejectRole:
+                button.setIcon(fxicons.get_icon("close", color="#ec0811"))
+                # Close
+                button.clicked.connect(self.close)
+
+    def _handle_connections(self):
+        """_summary_"""
+
+        self.list_steps.currentItemChanged.connect(self._populate_tasks)
+
+    def _populate_steps(self):
+
+        steps_file = Path(self._project_root) / ".pipeline" / "project_config" / "steps.yaml"
+        if not steps_file.exists():
+            return
+
+        steps_data = yaml.safe_load(steps_file.read_text())
+
+        for step in steps_data["steps"]:
+            step_item = QListWidgetItem(step.get("name_long", None))
+            step_item.setIcon(fxicons.get_icon(step.get("icon", "check_box_outline_blank")))
+            step_item.setData(Qt.UserRole, step)
+            self.list_steps.addItem(step_item)
+
+    def _populate_tasks(self, current, previous):
+        self.list_tasks.clear()  # Clear existing tasks
+        if current is not None:
+            step = current.data(Qt.UserRole)
+            for task in step["tasks"]:
+                task_item = QListWidgetItem(task.get("name", "Unknown Task"))
+                task_item.setIcon(fxicons.get_icon("task_alt"))
+                task_item.setData(Qt.UserRole, task)
+                self.list_tasks.addItem(task_item)
 
 
 class FXCreateProjectWindow(fxwidgets.FXMainWindow):

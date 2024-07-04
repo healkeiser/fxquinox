@@ -1,72 +1,89 @@
+# Contains all the default steps for a project
+# Each step has a short name, a long name, an icon and a list of tasks
+# The icon is a Material Design icon name
+# The tasks are the default tasks for each step
+
 steps:
   #
   - name_short: RND
     name_long: Research
+    icon: science # Material Design icon name
     tasks:
       - name: Research
 
   #
   - name_short: MOD
     name_long: Modeling
+    icon: edit
     tasks:
       - name: Modeling
 
   #
   - name_short: TEX
     name_long: Texturing
+    icon: texture
     tasks:
       - name: Texturing
 
   #
   - name_short: LDV
     name_long: Lookdev
+    icon: brush
     tasks:
       - name: Lookdev
 
   #
   - name_short: LAY
     name_long: Layout
+    icon: park
     tasks:
       - name: Layout
 
   #
   - name_short: RIG
     name_long: Rigging
+    icon: accessibility
     tasks:
       - name: Rigging
 
   #
   - name_short: ANI
     name_long: Animation
+    icon: animation
     tasks:
       - name: Animation
 
   #
   - name_short: CFX
     name_long: CharacterEffects
+    icon: face
     tasks:
       - name: CharacterEffects
 
   #
   - name_short: FX
     name_long: Effects
+    icon: local_fire_department
     tasks:
       - name: Effects
 
   #
   - name_short: LGT
     name_long: Lighting
+    icon: lightbulb
     tasks:
       - name: Lighting
 
   #
   - name_short: CMP
     name_long: Compositing
+    icon: compare
     tasks:
       - name: Compositing
 
   #
   - name_short: EDI
     name_long: Editing
+    icon: local_movies
     tasks:
       - name: Editing

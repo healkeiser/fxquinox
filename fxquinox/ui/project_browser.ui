@@ -125,7 +125,7 @@
           </property>
           <column>
            <property name="text">
-            <string notr="true">1</string>
+            <string notr="true">Assets</string>
            </property>
           </column>
          </widget>
@@ -184,7 +184,7 @@
          <widget class="QTreeWidget" name="tree_widget_shots">
           <column>
            <property name="text">
-            <string notr="true">1</string>
+            <string notr="true">Shots</string>
            </property>
           </column>
          </widget>
@@ -248,7 +248,7 @@
          </property>
          <column>
           <property name="text">
-           <string notr="true">1</string>
+           <string notr="true">Workfiles</string>
           </property>
          </column>
         </widget>

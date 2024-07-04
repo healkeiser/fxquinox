@@ -1,0 +1,7 @@
+# Folder
+$STEP$:
+  type: folder
+  metadata:
+    creator: "fxquinox"
+    entity: "step"
+    description: "Step folder for the shot, containing the tasks"
