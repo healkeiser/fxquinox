@@ -3,8 +3,8 @@ $SHOT$:
   type: folder
   metadata:
     creator: "fxquinox"
-    entity: "asset"
-    description: "Asset root folder"
+    entity: "shot"
+    description: "Shot root folder"
   children:
     # File
     - name: .$SHOT$_info.json
@@ -12,6 +12,8 @@ $SHOT$:
       metadata:
         creator: "fxquinox"
         entity: "metadata"
+        cut_in: "$CUT_IN$"
+        cut_out: "$CUT_OUT$"
         description: "Shot information"
       content: |
         {
@@ -21,7 +23,7 @@ $SHOT$:
           "cut_in": "$CUT_IN$",
           "cut_out": "$CUT_OUT$",
           "handle_in": "$HANDLE_IN$",
-          "handle_out": "$HANDLE_OUT$",
+          "handle_out": "$HANDLE_OUT$"
         }
 
     # Folder

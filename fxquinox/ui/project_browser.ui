@@ -225,15 +225,7 @@
        <property name="title">
         <string>Info</string>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_6">
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Frame Range</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <layout class="QVBoxLayout" name="verticalLayout_6"/>
       </widget>
      </widget>
      <widget class="QGroupBox" name="group_box_workfiles">

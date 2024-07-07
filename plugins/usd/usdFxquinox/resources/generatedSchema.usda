@@ -43,6 +43,7 @@ class FxquinoxContextInfo "FxquinoxContextInfo" (
 }
 
 class FxquinoxRenderPass "FxquinoxRenderPass" (
+    apiSchemas = ["CollectionAPI:renderVisible", "CollectionAPI:renderPhantom", "CollectionAPI:renderMatte", "CollectionAPI:renderLights"]
     doc = "Define a Fxquinox render pass."
 )
 {
@@ -68,6 +69,15 @@ class FxquinoxRenderPass "FxquinoxRenderPass" (
     uniform bool fxquinox:denoise:enable = 0 (
         doc = "When True, this FxquinoxRenderPass pass should be denoised."
     )
+    rel fxquinox:inheritPass (
+        doc = """The FxquinoxRenderPass primitive used to override the\r
+        attributes of this FxquinoxRenderPass.\r
+\r
+        This gets very useful when defining collections on a `BTY_` pass and\r
+        you need to transfer them over to a `UTL_` pass: it will avoid a\r
+        double calculation of the same attributes.\r
+        """
+    )
     rel fxquinox:inputPasses (
         doc = """The set of other Passes that this Pass depends on\r
         in order to be constructed properly.  For example, a Pass A\r
@@ -90,9 +100,12 @@ class FxquinoxRenderPass "FxquinoxRenderPass" (
         the transitive dependencies.\r
         """
     )
-    uniform asset fxquinox:outpuRenderUSD
-    uniform asset fxquinox:outputCacheUSD
-    uniform asset fxquinox:outputPicture
+    uniform asset fxquinox:outputPicture (
+        doc = "The output image filepath, usually an EXR file."
+    )
+    uniform asset fxquinox:outputUSD (
+        doc = "The output USD filepath, used to render the image (`outputPicture`)."
+    )
     uniform token fxquinox:passType (
         doc = """A string used to categorize differently structured\r
         or executed types of passes within a customized pipeline.\r

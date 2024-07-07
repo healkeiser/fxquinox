@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import platform
 import re
+import subprocess
 from typing import Dict, Any, Optional, Union, List, Tuple
 
 # Internal
@@ -316,6 +317,88 @@ def get_multiple_metadata(file_path: str, metadata_names: List[str]) -> Dict[str
     return metadatas
 
 
+def get_all_metadata(file_path: str) -> Dict[str, Optional[str]]:
+    """Retrieve all metadata for a file or directory.
+
+    Args:
+        file_path (str): Path to the file or directory to retrieve metadata
+            from.
+
+    Returns:
+        Dictionary of all metadata names and their values. If a metadata entry
+        is not found, its value is `None`.
+    """
+
+    metadata = {}
+    if platform.system() == "Windows":
+        # Windows: Use `dir /R` command to list NTFS streams
+        cmd = f'dir /R "{file_path}"'
+        result = subprocess.check_output(cmd, shell=True, text=True)
+        # Parse the output for stream names and retrieve their content
+        for line in result.split("\n"):
+            if ":" in line and "$DATA" in line:
+                parts = line.split()
+                for part in parts:
+                    if ":" in part and not part.endswith(":") and not part.startswith(file_path):
+                        # Format is `filename:streamname:$DATA`
+                        stream_name = part.split(":")[1]
+                        # Construct the full path to the stream
+                        stream_path = f"{file_path}:{stream_name}"
+                        try:
+                            with open(stream_path, "r") as stream:
+                                metadata[stream_name] = stream.read()
+                        except Exception as e:
+                            pass
+                            # print(f"Error reading stream {stream_name}: {e}")
+                        break  # Exit the loop after finding the first valid stream name
+    else:
+        # Unix-like: Use `getfattr` command or similar to list attributes
+        cmd = f'getfattr -n user "{file_path}"'
+        result = subprocess.check_output(cmd, shell=True, text=True)
+        # Parse the output for attribute names and retrieve their values
+        for line in result.split("\n"):
+            if "user." in line:
+                attr_name = line.split("=")[0].strip()
+                metadata[attr_name] = os.getxattr(file_path, attr_name.encode()).decode()
+
+    return metadata
+
+
+def get_metadata_type(metadata_name: str) -> type:
+    """Determines the data type of a metadata value based on its name.
+
+    Args:
+        metadata_name (str): The name of the metadata entry.
+
+    Returns:
+        Optional[type]: The data type of the metadata value. Returns `str` if
+            the type cannot be determined.
+    """
+
+    if metadata_name.startswith("[") or metadata_name.startswith("{"):
+        try:
+            real_value = json.loads(metadata_name)
+            if isinstance(real_value, dict):
+                return dict
+            elif isinstance(real_value, list):
+                return list
+        except json.JSONDecodeError:
+            real_value = metadata_name
+            return str
+    else:
+        # Handle non-JSON strings directly
+        try:
+            real_value = int(metadata_name)
+            return int
+        except ValueError:
+            try:
+                real_value = float(metadata_name)
+                return float
+            except ValueError:
+                real_value = metadata_name
+                return str
+
+
 def delete_metadata(file_path: str, metadata_name) -> None:
     if platform.system() == "Windows":
         # Windows: Delete NTFS stream by opening and closing it in write mode
@@ -548,19 +631,22 @@ class FXWorkfileTemplate:
 
 
 if __name__ == "__main__":
-    # Workfile template
-    _workfile = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
-    _workfile = FXWorkfileTemplate.from_string(str(_workfile), False)
-    _logger.info(
-        f"{type(_workfile).__name__} (str): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
-    )
-    _workfile = FXWorkfileTemplate.from_string(str(_workfile), True)
-    _logger.info(
-        f"{type(_workfile).__name__} (int): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
-    )
+    # # Workfile template
+    # _workfile = FXWorkfileTemplate(sequence="000", shot="0010", step="LGT", task="main", version="v001")
+    # _workfile = FXWorkfileTemplate.from_string(str(_workfile), False)
+    # _logger.info(
+    #     f"{type(_workfile).__name__} (str): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
+    # )
+    # _workfile = FXWorkfileTemplate.from_string(str(_workfile), True)
+    # _logger.info(
+    #     f"{type(_workfile).__name__} (int): {str(_workfile)}, {_workfile.sequence}, {_workfile.shot}, {_workfile.step}, {_workfile.version}",
+    # )
 
-    # Project template
-    _project = FXProjectTemplate.from_string("D:/Projects/_test_000")
-    _logger.info(
-        f"{type(_project).__name__}: {str(_project)}, {_project.name}, {_project.root}, {_project.info}",
-    )
+    # # Project template
+    # _project = FXProjectTemplate.from_string("D:/Projects/_test_000")
+    # _logger.info(
+    #     f"{type(_project).__name__}: {str(_project)}, {_project.name}, {_project.root}, {_project.info}",
+    # )
+    shot_dir = Path("D:") / "Projects" / "fxquinox_test_1582" / "production" / "shots" / "010" / "0010"
+    shot_dir = shot_dir.resolve().absolute().as_posix()
+    print(get_all_metadata(shot_dir))

@@ -10,6 +10,36 @@ over "GLOBAL" (
         string libraryName       = "usdFxquinox"
         string libraryPath       = "."
         string libraryPrefix     = "usdFxquinox"
+        dictionary libraryTokens = {
+            dictionary renderVisible = {
+                string doc = """
+                This token represents the collection name to use
+                with UsdCollectionAPI to represent renderVisible
+                primitives.
+                """
+            }
+            dictionary renderPhantom = {
+                string doc = """
+                This token represents the collection name to use
+                with UsdCollectionAPI to represent renderPhantom
+                primitives.
+                """
+            }
+            dictionary renderMatte = {
+                string doc = """
+                This token represents the collection name to use
+                with UsdCollectionAPI to represent renderMatte
+                primitives.
+                """
+            }
+            dictionary renderLights = {
+                string doc = """
+                This token represents the collection name to use
+                with UsdCollectionAPI to represent renderLights
+                primitives.
+                """
+            }
+        }
         bool skipCodeGeneration = true
     }
 )
@@ -75,7 +105,10 @@ class FxquinoxRenderPass "FxquinoxRenderPass" (
     inherits = </Typed>
     customData = {
         string className     = "RenderPass"
+        string extraIncludes = """
+#include 'pxr/usd/usd/collectionAPI.h'"""
     }
+    prepend apiSchemas = ["CollectionAPI:renderVisible", "CollectionAPI:renderPhantom", "CollectionAPI:renderMatte", "CollectionAPI:renderLights"]
 )
 {
     uniform token fxquinox:passType (
@@ -147,13 +180,22 @@ class FxquinoxRenderPass "FxquinoxRenderPass" (
         """
     )
 
+    rel fxquinox:inheritPass (
+        doc = """The FxquinoxRenderPass primitive used to override the
+        attributes of this FxquinoxRenderPass.
+
+        This gets very useful when defining collections on a `BTY_` pass and
+        you need to transfer them over to a `UTL_` pass: it will avoid a
+        double calculation of the same attributes.
+        """
+    )
+
+    uniform asset fxquinox:outputUSD (
+        doc = """The output USD filepath, used to render the image (`outputPicture`)."""
+    )
+
     uniform asset fxquinox:outputPicture (
-    )
-
-    uniform asset fxquinox:outpuRenderUSD (
-    )
-
-    uniform asset fxquinox:outputCacheUSD (
+        doc = """The output image filepath, usually an EXR file."""
     )
 
     uniform bool fxquinox:denoise:enable = false (

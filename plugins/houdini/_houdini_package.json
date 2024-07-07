@@ -20,9 +20,22 @@
 			"FXQUINOX_USD_PLUGINS": "$FXQUINOX_PLUGINS/usd"
 		},
 		{
+			"USD_ASSET_RESOLVER": "$FXQUINOX_USD_PLUGINS/usdAssetResolver"
+		},
+		{
+			"RESOLVER_NAME": "cachedResolver"
+		},
+		{
+			"PATH": {
+				"value": "$USD_ASSET_RESOLVER/$RESOLVER_NAME/lib",
+				"method": "append"
+			}
+		},
+		{
 			"PXR_PLUGINPATH_NAME": {
 				"value": [
-					"$FXQUINOX_USD_PLUGINS/usdFxquinox/resources"
+					"$FXQUINOX_USD_PLUGINS/usdFxquinox/resources",
+					"$USD_ASSET_RESOLVER/$RESOLVER_NAME/resources"
 				],
 				"method": "append"
 			}
@@ -30,10 +43,17 @@
 		{
 			"PYTHONPATH": {
 				"value": [
-					"$FXQUINOX_ROOT"
+					"$FXQUINOX_ROOT",
+					"$USD_ASSET_RESOLVER/$RESOLVER_NAME/lib/python"
 				],
 				"method": "append"
 			}
+		},
+		{
+			"TF_DEBUG": "AR_RESOLVER_INIT"
+		},
+		{
+			"AR_CACHEDRESOLVER_ENV_EXPOSE_RELATIVE_PATH_IDENTIFIERS=1": 1
 		}
 	]
 }

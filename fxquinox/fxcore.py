@@ -4,11 +4,10 @@ the creation of VFX entities.
 
 # Built-in
 from functools import lru_cache
+from importlib import metadata
 import json
 import os
 from pathlib import Path
-from turtle import color
-from git import refresh
 import psutil
 import sys
 import subprocess
@@ -25,7 +24,6 @@ import yaml
 
 # Internal
 from fxquinox import fxenvironment, fxlog, fxfiles
-import fxquinox
 
 
 # Log
@@ -41,7 +39,7 @@ _ASSETS_DIR = "assets"
 _ASSET = "asset"
 _STEP = "step"
 _TASK = "task"
-_WORKFILE = "workfile"
+_WORKFILES = "workfiles"
 
 
 @lru_cache(maxsize=None)
@@ -92,13 +90,22 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".", pare
 
     base_dir_path = Path(base_dir)
     entity_dir = base_dir_path / entity_name
+    _logger.debug(f"Entity directory: '{entity_dir}'")
 
     structure_dict = _get_structure_dict(entity_type)
     structure_dict = fxfiles.replace_placeholders_in_dict(
         structure_dict,
         {
+            # Common metadata
             entity_type.upper(): entity_name,
             f"{entity_type.upper()}_ROOT": entity_dir.resolve().as_posix(),
+            # Project metadata
+            "FPS": "24",
+            # Shot metadata
+            "CUT_IN": "None",
+            "CUT_OUT": "None",
+            "HANDLE_IN": "None",
+            "HANDLE_OUT": "None",
         },
     )
 
@@ -106,13 +113,18 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".", pare
 
     if Path(entity_dir).exists():
         if parent:
-            confirmation = QMessageBox.question(
-                parent,
-                f"Create {entity_type.capitalize()}",
-                f"There's already a {entity_type} '{entity_name}' in '{_base_dir_path}', do you want to continue?",
-                QMessageBox.Yes | QMessageBox.No,
+            confirmation = QMessageBox(parent)
+            confirmation.setWindowTitle(f"Create {entity_type.capitalize()}")
+            confirmation.setText(
+                f"There's already a {entity_type} <b>{entity_name}</b> in <code>{_base_dir_path}</code>, do you want to continue?"
             )
-            if confirmation == QMessageBox.No:
+            confirmation.setIcon(QMessageBox.Warning)
+            confirmation.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            confirmation.setDefaultButton(QMessageBox.No)  # Set the default button to `No`
+            confirmation.setTextInteractionFlags(Qt.TextSelectableByMouse)  # Make the text selectable
+
+            confirmation_response = confirmation.exec_()
+            if confirmation_response == QMessageBox.No:
                 _logger.info(f"{entity_type.capitalize()} creation cancelled")
                 return None
         else:
@@ -218,7 +230,7 @@ class InvalidSequencesDirectoryError(Exception):
     pass
 
 
-def create_sequence(sequence_name: str, base_dir: str = ".") -> Optional[str]:
+def create_sequence(sequence_name: str, base_dir: str = ".", parent: QWidget = None) -> Optional[str]:
     """Creates a new sequence directory structure within a project.
 
     Args:
@@ -226,6 +238,8 @@ def create_sequence(sequence_name: str, base_dir: str = ".") -> Optional[str]:
         base_dir (str): The base directory where the sequence will be created,
             typically the "project/production/shots" directory.
             Defaults to the current directory.
+        parent (QWidget): The parent widget for the message box. Only
+            applicable in a GUI environment.
 
     Returns:
         Optional[str]: The name of the sequence if created, `None` otherwise.
@@ -254,7 +268,7 @@ def create_sequence(sequence_name: str, base_dir: str = ".") -> Optional[str]:
         raise InvalidSequencesDirectoryError(error_message)
 
     # Create the sequence
-    return _create_entity(_SEQUENCE, sequence_name, base_dir_path)
+    return _create_entity(_SEQUENCE, sequence_name, base_dir_path, parent)
 
 
 def create_sequences(sequence_names: list[str], base_dir: str = ".") -> Optional[list[str]]:
@@ -453,7 +467,7 @@ class InvalidAssetsDirectoryError(Exception):
     pass
 
 
-def create_asset(asset_name: str, base_dir: str = ".") -> Optional[str]:
+def create_asset(asset_name: str, base_dir: str = ".", parent: QWidget = None) -> Optional[str]:
     """Creates a new asset directory structure within a project.
 
     Args:
@@ -461,6 +475,8 @@ def create_asset(asset_name: str, base_dir: str = ".") -> Optional[str]:
         base_dir (str): The base directory where the asset will be created,
             typically the "project/production/assets" directory.
             Defaults to the current directory.
+        parent (QWidget): The parent widget for the message box. Only
+            applicable in a GUI environment.
 
     Returns:
         Optional[str]: The name of the asset if created, `None` otherwise.
@@ -483,7 +499,7 @@ def create_asset(asset_name: str, base_dir: str = ".") -> Optional[str]:
         raise InvalidAssetsDirectoryError(error_message)
 
     # Create the asset
-    return _create_entity(_ASSET, asset_name, base_dir)
+    return _create_entity(_ASSET, asset_name, base_dir, parent)
 
 
 def create_assets(asset_names: list[str], base_dir: str = ".") -> Optional[list[str]]:
@@ -564,7 +580,21 @@ class InvalidStepError(Exception):
     pass
 
 
-def create_step(step_name: str, base_dir: str = ".") -> Optional[str]:
+def create_step(step_name: str, base_dir: str = ".", parent: QWidget = None) -> Optional[str]:
+    """Creates a new step directory structure within a project.
+
+    Args:
+        step_name (str): The name of the step to create.
+        base_dir (str): The base directory where the step will be created,
+            typically the "project/production/steps" directory.
+            Defaults to the current directory.
+        parent (QWidget): The parent widget for the message box. Only
+            applicable in a GUI environment.
+
+    Returns:
+        Optional[str]: The name of the step if created, `None` otherwise.
+    """
+
     base_dir_path = Path(base_dir).resolve()
 
     if not check_workfile(base_dir_path):
@@ -573,7 +603,7 @@ def create_step(step_name: str, base_dir: str = ".") -> Optional[str]:
         raise InvalidStepError(error_message)
 
     # Create the step
-    return _create_entity(_STEP, step_name, base_dir_path)
+    return _create_entity(_STEP, step_name, base_dir_path, parent)
 
 
 def check_step(base_dir: str = ".") -> bool:
@@ -601,7 +631,21 @@ class InvalidTaskError(Exception):
     pass
 
 
-def create_task(task_name: str, base_dir: str = ".") -> Optional[str]:
+def create_task(task_name: str, base_dir: str = ".", parent: QWidget = None) -> Optional[str]:
+    """Creates a new task directory structure within a project.
+
+    Args:
+        task_name (str): The name of the task to create.
+        base_dir (str): The base directory where the task will be created,
+            typically the "project/production/tasks" directory.
+            Defaults to the current directory.
+        parent (QWidget): The parent widget for the message box. Only
+            applicable in a GUI environment.
+
+    Returns:
+        Optional[str]: The name of the task if created, `None` otherwise.
+    """
+
     base_dir_path = Path(base_dir).resolve()
 
     if not check_step(base_dir_path):
@@ -628,7 +672,7 @@ def check_workfile(base_dir: str = ".") -> bool:
         bool: `True` if the workfile is valid, `False` otherwise.
     """
 
-    return _check_entity(_WORKFILE, base_dir)
+    return _check_entity(_WORKFILES, base_dir)
 
 
 ###### UI
@@ -830,6 +874,12 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         # Line edit for additional arguments
         self.additional_args_line_edit = QLineEdit()
         self.additional_args_line_edit.setPlaceholderText("Additional arguments...")
+        fxguiutils.set_formatted_tooltip(
+            self.additional_args_line_edit,
+            "Additional Arguments",
+            "Additional arguments to pass to the executable, e.g. <code>--flag value -h</code>.",
+        )
+
         args_layout.addWidget(self.additional_args_line_edit)
 
         # Clear button for the line edit
@@ -971,7 +1021,7 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
             self.open_project_directory_action.setEnabled(False)
             self.list_apps_action.setEnabled(False)
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, _) -> None:
         """Overrides the close event to handle the system tray close event."""
 
         _logger.info(f"Closed")
@@ -992,7 +1042,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         project: Optional[str] = None,
         version: Optional[str] = None,
         company: Optional[str] = None,
-        accent_color: str = "#039492",
+        color_a: str = "#4a4a4a",
+        color_b: str = "#3e3e3e",
         ui_file: Optional[str] = None,
     ):
         super().__init__(
@@ -1004,9 +1055,17 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             project,
             version,
             company,
-            accent_color,
+            color_a,
+            color_b,
             ui_file,
         )
+
+        # Attributes
+        self.asset = None
+        self.sequence: str = None
+        self.shot: str = None
+        self.step: str = None
+        self.task: str = None
 
         # Methods
         self._get_project()
@@ -1017,6 +1076,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self._populate_shots()
         self._handle_connections()
 
+        self.status_line.hide()
         self.statusBar().showMessage("Initialized project browser", self.INFO, logger=_logger)
 
     def _get_project(self) -> None:
@@ -1038,39 +1098,55 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self.label_project = self.ui.label_project
         self.line_project = self.ui.line_project
         #
-        self.tab_assets_shots = self.ui.tab_assets_shots
-        self.tab_assets = self.ui.tab_assets
+        self.tab_assets_shots: QTabWidget = self.ui.tab_assets_shots
+        #
+        self.tab_assets: QWidget = self.ui.tab_assets
         self.label_icon_filter_assets = self.ui.label_icon_filter_assets
         self.line_edit_filter_assets = self.ui.frame_filter_assets
-        self.tree_widget_assets = self.ui.tree_widget_assets
+        self.tree_widget_assets: QTreeWidget = self.ui.tree_widget_assets
         #
-        self.tab_shots = self.ui.tab_shots
+        self.tab_shots: QWidget = self.ui.tab_shots
         self.label_icon_filter_shots = self.ui.label_icon_filter_shots
         self.line_edit_filter_shots = self.ui.line_edit_filter_shots
-        self.tree_widget_shots = self.ui.tree_widget_shots
+        self.tree_widget_shots: QTreeWidget = self.ui.tree_widget_shots
         #
         self.group_box_steps = self.ui.group_box_steps
-        self.list_steps = self.ui.list_steps
+        self.list_steps: QListWidget = self.ui.list_steps
         #
         self.group_box_tasks = self.ui.group_box_tasks
-        self.list_tasks = self.ui.list_tasks
+        self.list_tasks: QListWidget = self.ui.list_tasks
+        #
+        self.group_box_info: QGroupBox = self.ui.group_box_info
 
     def _handle_connections(self):
         # Assets
         self.tree_widget_assets.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree_widget_assets.customContextMenuRequested.connect(self._on_assets_context_menu)
+        self.tree_widget_assets.itemSelectionChanged.connect(self.get_current_asset)
+        self.tree_widget_assets.itemSelectionChanged.connect(lambda: self._display_metadata(_ASSET))
 
         # Shots
         self.tree_widget_shots.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree_widget_shots.customContextMenuRequested.connect(self._on_shots_context_menu)
+        self.tree_widget_shots.itemSelectionChanged.connect(self.get_current_sequence_and_shot)
+        self.tree_widget_shots.itemSelectionChanged.connect(self._populate_steps)
+        self.tree_widget_shots.itemSelectionChanged.connect(lambda: self._display_metadata(_SHOT))
 
         # Steps
         self.list_steps.setContextMenuPolicy(Qt.CustomContextMenu)
         self.list_steps.customContextMenuRequested.connect(self._on_steps_context_menu)
+        self.list_steps.itemSelectionChanged.connect(self.get_current_step)
+        self.list_steps.itemSelectionChanged.connect(self._populate_tasks)
+        self.list_steps.itemSelectionChanged.connect(lambda: self._display_metadata(_STEP))
 
         # Tasks
         # self.list_tasks.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.list_tasks.customContextMenuRequested.connect(self._on_tasks_context_menu)
+        self.list_tasks.itemSelectionChanged.connect(self.get_current_task)
+        self.list_tasks.itemSelectionChanged.connect(lambda: self._display_metadata(_TASK))
+
+        #
+        self.refresh_action.triggered.connect(self.refresh)
 
     def _create_icons(self):
         """_summary_"""
@@ -1094,7 +1170,14 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
     #
     def refresh(self):
+        # Display statusbar message and change icon
+        self.statusBar().showMessage("Refreshing...", fxwidgets.INFO, logger=_logger)
+
+        # Methods to run
+        self._populate_assets()
         self._populate_shots()
+        self._populate_steps()
+        self._populate_tasks()
 
     def _populate_shots(self) -> None:
         """Populates the shots tree widget with the shots in the project."""
@@ -1102,6 +1185,10 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         # Check if the project root is set
         if not self._project_root:
             return
+
+        # Store the expanded states and clear
+        expanded_states = self._store_expanded_states(self.tree_widget_shots)
+        self.tree_widget_shots.clear()
 
         # Check if the shots directory exists
         shots_dir = Path(self._project_root) / "production" / "shots"
@@ -1144,12 +1231,151 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
                     f"<b>{shot.name}</b><hr><b>Entity</b>: Shot<br><br><b>Path</b>: {shot_path}",
                 )
 
+        # Restore expanded state
+        self._restore_expanded_states(self.tree_widget_shots, expanded_states)
+
+    def get_current_sequence_and_shot(self) -> Tuple[str, str]:
+        """Returns the current sequence and shot selected in the tree widget.
+
+        Returns:
+            Tuple[str, str]: A tuple containing the sequence and shot names.
+        """
+
+        current_item = self.tree_widget_shots.currentItem()
+        if current_item is None:
+            return None, None  # No item is selected
+
+        parent_item = current_item.parent()
+        # If no parent...
+        if parent_item is None:
+            # ...the current item is a sequence
+            sequence = current_item
+            shot = None
+        else:
+            # If parent, the current item is a shot, and its parent is
+            # the sequence
+            sequence = parent_item
+            shot = current_item
+
+        self.asset = None
+        self.sequence = sequence.text(0) if sequence else None
+        self.shot = shot.text(0) if shot else None
+        _logger.debug(f"Asset: '{self.asset}', sequence: '{self.sequence}', shot: '{self.shot}'")
+
+        return self.sequence, self.shot
+
+    def _display_metadata(self, entity_type: str = None) -> None:
+        """Displays the entity metadata in the group box info using a
+        QTableWidget.
+
+        Args:
+            path (str): The path to the entity directory.
+            entity_type (str): The entity type.
+        """
+
+        # Check if the project root is set
+        if not self._project_root:
+            return
+
+        # Check if the sequence and shot are set
+        if self.sequence is None or self.shot is None:
+            return
+
+        # Check if the directory exists
+        if entity_type == _SEQUENCE:
+            path = Path(self._project_root) / "production" / "shots" / self.sequence
+        elif entity_type == _SHOT:
+            path = Path(self._project_root) / "production" / "shots" / self.sequence / self.shot
+        elif entity_type == _ASSET:
+            path = Path(self._project_root) / "production" / "assets" / self.asset
+        elif entity_type == _STEP:
+            path = (
+                Path(self._project_root) / "production" / "shots" / self.sequence / self.shot / "workfiles" / self.step
+            )
+        elif entity_type == _TASK:
+            path = (
+                Path(self._project_root)
+                / "production"
+                / "shots"
+                / self.sequence
+                / self.shot
+                / "workfiles"
+                / self.step
+                / self.task
+            )
+
+        if not path.exists():
+            return
+
+        # Retrieve the metadata
+        path = path.resolve().absolute().as_posix()
+        metadata_data = fxfiles.get_all_metadata(path)
+
+        # Prepare the table
+        table_widget = QTableWidget()
+        table_widget.setColumnCount(2)  # For key and value
+        table_widget.setRowCount(len(metadata_data))
+        table_widget.setHorizontalHeaderLabels(["Key", "Value"])
+        table_widget.horizontalHeader().setStretchLastSection(True)
+
+        font_bold = QFont()
+        font_bold.setBold(True)
+
+        for row, (key, value) in enumerate(metadata_data.items()):
+            key_item = QTableWidgetItem(key.capitalize().replace("_", " "))
+
+            # Attempt to determine the "real" value type
+            type = fxfiles.get_metadata_type(value)
+            if type == str:
+                value_item = QTableWidgetItem(value)
+                value_item.setIcon(fxicons.get_icon("font_download", color="#ffffff"))
+            elif type == int:
+                value_item = QTableWidgetItem(value)
+                value_item.setIcon(fxicons.get_icon("looks_one", color="#ffc107"))
+            elif type == float:
+                value_item = QTableWidgetItem(value)
+                value_item.setIcon(fxicons.get_icon("looks_two", color="#03a9f4"))
+            elif type == dict:
+                value_item = QTableWidgetItem(str(value))
+                value_item.setIcon(fxicons.get_icon("book", color="#8bc34a"))
+            elif type == list:
+                value_item = QTableWidgetItem(str(value))
+                value_item.setIcon(fxicons.get_icon("view_list", color="#3f51b5"))
+            else:
+                value_item = QTableWidgetItem(value)
+                value_item.setIcon(fxicons.get_icon("font_download", color="#ffffff"))
+
+            # Set flags to make the items non-editable but selectable
+            non_editable_flag = Qt.ItemIsEnabled
+            key_item.setFlags(non_editable_flag)
+            value_item.setFlags(non_editable_flag)
+
+            # Font
+            key_item.setFont(font_bold)
+
+            # Add the items to the table
+            table_widget.setItem(row, 0, key_item)
+            table_widget.setItem(row, 1, value_item)
+
+        table_widget.setSortingEnabled(True)
+
+        # Clear the layout and add the table widget
+        layout = self.group_box_info.layout()
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        layout.addWidget(table_widget)
+
     def _populate_assets(self) -> None:
         """Populates the assets tree widget with the assets in the project."""
 
         # Check if the project root is set
         if not self._project_root:
             return
+
+        self.tree_widget_assets.clear()
 
         # Check if the assets directory exists
         assets_dir = Path(self._project_root) / "production" / "assets"
@@ -1166,6 +1392,202 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             asset_item = QTreeWidgetItem(self.tree_widget_assets)
             asset_item.setText(0, asset.name)
             asset_item.setIcon(0, icon_asset)
+
+    def get_current_asset(self) -> str:
+        """Returns the current asset selected in the tree widget.
+
+        Returns:
+            str: The name of the asset.
+        """
+
+        current_item = self.tree_widget_assets.currentItem()
+        if current_item is None:
+            return None
+
+        self.asset = current_item.text(0)
+        self.sequence = None
+        self.shot = None
+        _logger.debug(f"Asset: '{self.asset}', sequence: '{self.sequence}', shot: '{self.shot}'")
+
+        return self.asset
+
+    def _populate_steps(self):
+
+        # Check if the project root is set
+        if not self._project_root:
+            return
+
+        # Clear
+        self.list_steps.clear()
+
+        # Check if the sequence and shot are set
+        if self.sequence is None or self.shot is None:
+            return
+
+        # Check if the steps directory exists
+        workfiles_dir = Path(self._project_root) / "production" / "shots" / self.sequence / self.shot / "workfiles"
+        if not workfiles_dir.exists():
+            return
+
+        # Iterate over the steps
+        steps_file = Path(self._project_root) / ".pipeline" / "project_config" / "steps.yaml"
+        if not steps_file.exists():
+            return
+
+        steps_data = yaml.safe_load(steps_file.read_text())
+
+        for step in workfiles_dir.iterdir():
+            if not step.is_dir():
+                continue
+
+            step_name = step.name
+            step_item = QListWidgetItem(step_name)
+
+            # Find the matching step in steps_data based on step_name
+            matching_step = next(
+                (_step for _step in steps_data["steps"] if _step.get("name_long", None) == step_name), None
+            )
+
+            if matching_step:
+                # Set the icon for the matching step
+                step_item.setIcon(
+                    fxicons.get_icon(
+                        matching_step.get("icon", "check_box_outline_blank"),
+                        color=matching_step.get("color", "#ffffff"),
+                    )
+                )
+            else:
+                # Optional: Set a default icon if no matching step is found
+                step_item.setIcon(fxicons.get_icon("check_box_outline_blank"))
+
+            step_path = step.resolve().absolute().as_posix()
+            step_item.setData(Qt.UserRole, step_path)
+            step_item.setToolTip(f"<b>{step.name}</b><hr><b>Entity</b>: Step<br><br><b>Path</b>: {step_path}")
+            self.list_steps.addItem(step_item)
+
+    def get_current_step(self) -> str:
+        """Returns the current step selected in the list widget.
+
+        Returns:
+            str: The name of the step.
+        """
+
+        current_item = self.list_steps.currentItem()
+        if current_item is None:
+            return None
+
+        self.step = current_item.text()
+        _logger.debug(f"Step: '{self.step}'")
+
+        return self.step
+
+    def _populate_tasks(self):
+        # Check if the project root is set
+        if not self._project_root:
+            return
+
+        # Clear
+        self.list_tasks.clear()
+
+        # Check if the sequence, shot, and step are set
+        if self.sequence is None or self.shot is None or self.step is None:
+            return
+
+        # Check if the tasks directory exists
+        tasks_dir = (
+            Path(self._project_root) / "production" / "shots" / self.sequence / self.shot / "workfiles" / self.step
+        )
+        if not tasks_dir.exists():
+            return
+
+        # Iterate over the tasks
+        for task in tasks_dir.iterdir():
+            if not task.is_dir():
+                continue
+
+            task_name = task.name
+            task_item = QListWidgetItem(task_name)
+            task_item.setIcon(fxicons.get_icon("task_alt"))
+            task_path = task.resolve().absolute().as_posix()
+            task_item.setData(Qt.UserRole, task_path)
+            task_item.setToolTip(f"<b>{task.name}</b><hr><b>Entity</b>: Task<br><br><b>Path</b>: {task_path}")
+            self.list_tasks.addItem(task_item)
+
+    def get_current_task(self) -> str:
+        """Returns the current task selected in the list widget.
+
+        Returns:
+            str: The name of the task.
+        """
+
+        current_item = self.list_tasks.currentItem()
+        if current_item is None:
+            return None
+
+        self.task = current_item.text()
+        _logger.debug(f"Task: '{self.task}'")
+
+        return self.task
+
+    #
+    def _store_expanded_states(self, tree_widget: QTreeWidget) -> dict:
+        """Stores the expanded states of the tree widget items.
+
+        Args:
+            tree_widget (QTreeWidget): The tree widget to store the expanded
+                states.
+
+        Returns:
+            dict: A dictionary containing the expanded states of the items.
+        """
+
+        expanded_states = {}
+        for i in range(tree_widget.topLevelItemCount()):
+            item = tree_widget.topLevelItem(i)
+            self._store_item_state(item, expanded_states)
+        return expanded_states
+
+    def _store_item_state(self, item: QTreeWidgetItem, states: dict):
+        """Stores the expanded state of the item and its children.
+
+        Args:
+            item (QTreeWidgetItem): The item to store the state.
+            states (dict): The dictionary to store the states.
+        """
+
+        # ! Need each item to have a unique identifier in its text or via data
+        identifier = item.text(0)  # or `item.data(0, Qt.UserRole)`
+        states[identifier] = item.isExpanded()
+        for i in range(item.childCount()):
+            self._store_item_state(item.child(i), states)
+
+    def _restore_expanded_states(self, tree_widget: QTreeWidget, states: dict):
+        """Restores the expanded states of the tree widget items.
+
+        Args:
+            tree_widget (QTreeWidget): The tree widget to restore the expanded
+                states.
+            states (dict): The dictionary containing the expanded states of the
+                items.
+        """
+
+        for i in range(tree_widget.topLevelItemCount()):
+            item = tree_widget.topLevelItem(i)
+            self._restore_item_state(item, states)
+
+    def _restore_item_state(self, item: QTreeWidgetItem, states: dict):
+        """Restores the expanded state of the item and its children.
+
+        Args:
+            item (QTreeWidgetItem): The item to restore the state.
+            states (dict): The dictionary containing the states.
+        """
+
+        identifier = item.text(0)  # or `item.data(0, Qt.UserRole)`
+        if identifier in states:
+            item.setExpanded(states[identifier])
+        for i in range(item.childCount()):
+            self._restore_item_state(item.child(i), states)
 
     # ' Contextual menus
     # Shots
@@ -1287,7 +1709,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
     # Shots
     def create_shot(self):
-        widget = FXCreateShotWidget(
+        widget = FXCreateShotDialog(
             parent=self,
             project_name=self._project_name,
             project_root=self._project_root,
@@ -1297,8 +1719,6 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         widget.setWindowFlags(widget.windowFlags() | Qt.Window)
         widget.resize(400, 200)
         widget.show()
-
-        self.refresh()
 
     def edit_shot(self):
         # Implement shot editing logic here
@@ -1310,18 +1730,26 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
     # Steps
     def create_step(self):
-        widget = FXCreateStepWidget(
+        widget = FXCreateStepDialog(
             parent=self,
             project_name=self._project_name,
             project_root=self._project_root,
             project_assets=self._project_assets,
             project_shots=self._project_shots,
+            asset=self.asset,
+            sequence=self.sequence,
+            shot=self.shot,
         )
         widget.setWindowFlags(widget.windowFlags() | Qt.Window)
         widget.resize(400, 500)
         widget.show()
 
         self.refresh()
+
+    # Tasks
+    def create_task(self):
+        # Implement task creation logic here
+        pass
 
     # Common
     def show_in_file_browser(self, path: str):
@@ -1335,7 +1763,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         tree_widget.collapseAll()
 
 
-class FXCreateShotWidget(QWidget):
+class FXCreateShotDialog(QDialog):
     def __init__(self, parent=None, project_name=None, project_root=None, project_assets=None, project_shots=None):
         super().__init__(parent)
 
@@ -1346,11 +1774,14 @@ class FXCreateShotWidget(QWidget):
         self._project_shots = project_shots
 
         # Methods
+        self.setModal(True)
+
         self._create_ui()
         self._rename_ui()
         self._modify_ui()
         self._handle_connections()
         self._populate_sequences()
+        self._disable_ui()
 
         _logger.info("Initialized create shot")
 
@@ -1408,6 +1839,15 @@ class FXCreateShotWidget(QWidget):
                 button.setIcon(fxicons.get_icon("refresh"))
                 # Reset connection
                 button.clicked.connect(self._reset_ui_values)
+
+    def _disable_ui(self):
+        """Disable all sibling widgets of the current widget without disabling
+        the current widget itself.
+        """
+
+        parent = self.parent()
+        if not parent:
+            return
 
     def _populate_sequences(self):
         """_summary_"""
@@ -1491,22 +1931,28 @@ class FXCreateShotWidget(QWidget):
 
         # Create the shot
         sequence_dir = Path(self._project_root) / "production" / "shots" / sequence
+
+        # If sequence does not exist, create it
+        if not sequence_dir.exists():
+            create_sequence(sequence, self._project_shots)
+
         shot_dir = sequence_dir / shot
         shot = create_shot(shot, sequence_dir, self)
         if not shot:
-            self.close()
+            # self.close()
             return
 
         # Get the metadata key-value pairs
         metadata = {}
         layout_metadata = self.frame_metadata.layout()
 
-        for i in range(layout_metadata.count()):
-            item = layout_metadata.itemAt(i)
-            if item.widget():
-                key = item.widget().findChild(QLineEdit, "line_edit_key_metadata").text()
-                value = item.widget().findChild(QLineEdit, "line_edit_value_metadata").text()
-                metadata[key] = value
+        if layout_metadata is not None:
+            for i in range(layout_metadata.count()):
+                item = layout_metadata.itemAt(i)
+                if item.widget():
+                    key = item.widget().findChild(QLineEdit, "line_edit_key_metadata").text()
+                    value = item.widget().findChild(QLineEdit, "line_edit_value_metadata").text()
+                    metadata[key] = value
 
         # Add cut in and cut out to the metadata dictionary
         metadata["cut_in"] = cut_in
@@ -1520,12 +1966,33 @@ class FXCreateShotWidget(QWidget):
                     _logger.debug(f"Adding metadata: '{key}' - '{value}'")
                     fxfiles.set_metadata(shot_dir_str, key, value)
 
-        # Close on completion
+        # Feedback
+        parent = self.parent()
+        if parent:
+            parent.statusBar().showMessage(
+                f"Created shot '{shot}' in sequence '{sequence}'", parent.SUCCESS, logger=_logger
+            )
+
+        # Refresh parent and close QDialog on completion
+        parent = self.parent()
+        if parent:
+            parent.refresh()
+
         self.close()
 
 
-class FXCreateStepWidget(QWidget):
-    def __init__(self, parent=None, project_name=None, project_root=None, project_assets=None, project_shots=None):
+class FXCreateStepDialog(QDialog):
+    def __init__(
+        self,
+        parent=None,
+        project_name=None,
+        project_root=None,
+        project_assets=None,
+        project_shots=None,
+        asset=None,
+        sequence=None,
+        shot=None,
+    ):
         super().__init__(parent)
 
         # Attributes
@@ -1534,7 +2001,13 @@ class FXCreateStepWidget(QWidget):
         self._project_assets = project_assets
         self._project_shots = project_shots
 
+        self.asset = asset
+        self.sequence = sequence
+        self.shot = shot
+
         # Methods
+        self.setModal(True)
+
         self._create_ui()
         self._rename_ui()
         self._modify_ui()
@@ -1550,7 +2023,7 @@ class FXCreateStepWidget(QWidget):
         self.ui = fxguiutils.load_ui(self, str(ui_file))
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.ui)
-        self.setWindowTitle("Create Step")
+        self.setWindowTitle(f"Create Step | {self.sequence} - {self.shot}")
 
     def _rename_ui(self):
         """_summary_"""
@@ -1568,9 +2041,8 @@ class FXCreateStepWidget(QWidget):
             if role == QDialogButtonBox.AcceptRole:
                 button.setIcon(fxicons.get_icon("check", color="#8fc550"))
                 button.setText("Create")
-                # Create shot
-                # TODO: Create the step
-                # button.clicked.connect(self._create_step)
+                # Create step
+                button.clicked.connect(self._create_step)
             elif role == QDialogButtonBox.RejectRole:
                 button.setIcon(fxicons.get_icon("close", color="#ec0811"))
                 # Close
@@ -1580,6 +2052,9 @@ class FXCreateStepWidget(QWidget):
         """_summary_"""
 
         self.list_steps.currentItemChanged.connect(self._populate_tasks)
+        self.checkbox_add_tasks.stateChanged.connect(
+            lambda: self.list_tasks.setEnabled(self.checkbox_add_tasks.isChecked())
+        )
 
     def _populate_steps(self):
 
@@ -1591,7 +2066,10 @@ class FXCreateStepWidget(QWidget):
 
         for step in steps_data["steps"]:
             step_item = QListWidgetItem(step.get("name_long", None))
-            step_item.setIcon(fxicons.get_icon(step.get("icon", "check_box_outline_blank")))
+            step_item.setIcon(
+                fxicons.get_icon(step.get("icon", "check_box_outline_blank"), color=step.get("color", "#ffffff"))
+            )
+            # step_item.setForeground(QColor(step.get("color", "#ffffff")))
             step_item.setData(Qt.UserRole, step)
             self.list_steps.addItem(step_item)
 
@@ -1604,6 +2082,31 @@ class FXCreateStepWidget(QWidget):
                 task_item.setIcon(fxicons.get_icon("task_alt"))
                 task_item.setData(Qt.UserRole, task)
                 self.list_tasks.addItem(task_item)
+
+    def _create_step(self):
+        # Get the selected step
+        _logger.debug(f"Asset: '{self.asset}', sequence: '{self.sequence}', shot: '{self.shot}'")
+        step = self.list_steps.currentItem().text()
+
+        # Create the step
+        workfiles_dir = Path(self._project_root) / "production" / "shots" / self.sequence / self.shot / "workfiles"
+        step = create_step(step, workfiles_dir, self)
+        if not step:
+            # self.close()
+            return
+
+        step_dir = workfiles_dir / step
+        if self.checkbox_add_tasks.isChecked():
+            for i in range(self.list_tasks.count()):
+                task = self.list_tasks.item(i).text()
+                create_task(task, step_dir, self)
+
+        # Refresh parent and close QDialog on completion
+        parent = self.parent()
+        if parent:
+            parent.refresh()
+
+        self.close()
 
 
 class FXCreateProjectWindow(fxwidgets.FXMainWindow):
@@ -1634,7 +2137,7 @@ def get_project() -> Dict[str, Optional[str]]:
 
     # Early return if the environment variables are set
     if all(os.getenv(key) for key in keys):
-        _logger.info("Using environment variables")
+        _logger.info("Accessing environment using environment variables")
         for key in keys:
             project_info[key] = os.getenv(key)
             _logger.debug(f"${key}: '{project_info[key]}'")
@@ -1662,7 +2165,7 @@ def get_project() -> Dict[str, Optional[str]]:
     for key, value in project_info.items():
         os.environ[key] = str(value)
 
-    _logger.info("Using environment file")
+    _logger.info("Accessing environment using environment file")
     for key, value in project_info.items():
         _logger.debug(f"{key.replace('FXQUINOX_', '').replace('_', ' ').capitalize()}: '{value}'")
 

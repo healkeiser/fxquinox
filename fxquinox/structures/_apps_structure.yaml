@@ -4,7 +4,7 @@ apps:
       version:
         major: 20
         minor: 0
-        patch: 547
+        patch: 643
       executable: C:/Program Files/Side Effects Software/Houdini $VERSION_MAJOR$.$VERSION_MINOR$.$VERSION_PATCH$/bin/houdini.exe
       # executable: /opt/hfs$VERSION_MAJOR$.$VERSION_MINOR$.$VERSION_PATCH$/bin/houdini
       icon: $FXQUINOX_ROOT$/images/icons/apps/houdini.svg
