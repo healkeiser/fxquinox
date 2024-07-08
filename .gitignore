@@ -2,7 +2,19 @@
 _tests/
 
 # Houdini
+*.hip
+*.hiplc
+*.hipnc
 backup/
+
+# Maya
+*.ma
+*.mb
+
+# Nuke
+*.nk
+*.autosave
+*.nknc
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

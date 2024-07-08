@@ -44,88 +44,6 @@ def path_to_unix(path: str) -> str:
     return path.replace("\\", "/")
 
 
-###### ! Old
-
-
-def _create_structure_from_dict(
-    directory_structure: Dict[str, Any], parent_path: str = ".", folders: List[str] = None, files: List[str] = None
-) -> Tuple[List[str], List[str]]:
-    """Recursively creates folders and files based on the provided directory
-    structure and returns lists of created folders and files.
-
-    Args:
-        directory_structure (dict): The directory structure in JSON format.
-        parent_path (str, optional): The parent path where the directory
-            structure should be created. Defaults to current directory (`"."`).
-        folders (List[str], optional): List of created folders. Used for recursion.
-        files (List[str], optional): List of created files. Used for recursion.
-
-    Returns:
-        Tuple[List[str], List[str]]: A tuple containing two lists - the first
-            with folders and the second with files created.
-
-    Examples:
-        >>> with open("directory_structure_with_files.json", "r") as file:
-        >>>     directory_structure = json.load(file)
-        >>> folders, files = _create_structure_from_dict(directory_structure)
-        >>> print(f"Created folders: {folders}")
-        >>> print(f"Created files: {files}")
-
-    """
-
-    if folders is None:
-        folders = []
-    if files is None:
-        files = []
-
-    for name, content in directory_structure.items():
-        path = os.path.join(parent_path, name)
-        if isinstance(content, dict):
-            if not os.path.exists(path):
-                os.makedirs(path, exist_ok=True)
-                folders.append(path)
-            _create_structure_from_dict(content, path, folders, files)
-        else:
-            with open(path, "w") as file:
-                file.write(content)
-            files.append(path)
-
-    return folders, files
-
-
-def _replace_placeholders_in_dict(data: Dict, replacements: Dict) -> Dict:
-    """Replaces placeholders in a JSON object with values from a dictionary.
-
-    Args:
-        data (Dict): The JSON data as a dictionary.
-        replacements (Dict): A dictionary mapping placeholder strings to replacement values.
-
-    Returns:
-        Dict: A new dictionary with the replacements made.
-    """
-
-    if isinstance(data, str):
-        # Handle string values (e.g., within quotes)
-        for placeholder, replacement in replacements.items():
-            data = data.replace(placeholder, replacement)
-        return data
-    elif isinstance(data, dict):
-        # Recursively replace in dictionaries
-        return {
-            _replace_placeholders_in_dict(k, replacements): _replace_placeholders_in_dict(v, replacements)
-            for k, v in data.items()
-        }
-    elif isinstance(data, list):
-        # Recursively replace in lists
-        return [_replace_placeholders_in_dict(item, replacements) for item in data]
-    else:
-        # Return other data types unchanged
-        return data
-
-
-###### ' New
-
-
 def create_structure_from_dict(structure_dict: dict, base_dir: str = ".") -> None:
     """Creates the directory structure based on the provided dict structure.
 
@@ -330,72 +248,111 @@ def get_all_metadata(file_path: str) -> Dict[str, Optional[str]]:
     """
 
     metadata = {}
-    if platform.system() == "Windows":
-        # Windows: Use `dir /R` command to list NTFS streams
-        cmd = f'dir /R "{file_path}"'
-        result = subprocess.check_output(cmd, shell=True, text=True)
-        # Parse the output for stream names and retrieve their content
-        for line in result.split("\n"):
-            if ":" in line and "$DATA" in line:
-                parts = line.split()
-                for part in parts:
-                    if ":" in part and not part.endswith(":") and not part.startswith(file_path):
-                        # Format is `filename:streamname:$DATA`
-                        stream_name = part.split(":")[1]
-                        # Construct the full path to the stream
-                        stream_path = f"{file_path}:{stream_name}"
-                        try:
-                            with open(stream_path, "r") as stream:
-                                metadata[stream_name] = stream.read()
-                        except Exception as e:
-                            pass
-                            # print(f"Error reading stream {stream_name}: {e}")
-                        break  # Exit the loop after finding the first valid stream name
-    else:
-        # Unix-like: Use `getfattr` command or similar to list attributes
-        cmd = f'getfattr -n user "{file_path}"'
-        result = subprocess.check_output(cmd, shell=True, text=True)
-        # Parse the output for attribute names and retrieve their values
-        for line in result.split("\n"):
-            if "user." in line:
-                attr_name = line.split("=")[0].strip()
-                metadata[attr_name] = os.getxattr(file_path, attr_name.encode()).decode()
+    try:
+        if platform.system() == "Windows":
+            # Windows: Use `dir /R` command to list NTFS streams
+            cmd = f'dir /R "{file_path}"'
+            result = subprocess.check_output(cmd, shell=True, text=True)
+            # Parse the output for stream names and retrieve their content
+            for line in result.split("\n"):
+                if ":" in line and "$DATA" in line:
+                    parts = line.split()
+                    for part in parts:
+                        if ":" in part and not part.endswith(":") and not part.startswith(file_path):
+                            # Format is `filename:streamname:$DATA`
+                            stream_name = part.split(":")[1]
+                            # Construct the full path to the stream
+                            stream_path = f"{file_path}:{stream_name}"
+                            try:
+                                with open(stream_path, "r") as stream:
+                                    metadata[stream_name] = stream.read()
+                            except Exception as exception:
+                                # XXX: Investigate why this fails on some streams
+                                # _logger.error(f"Error reading stream '{stream_name}': {exception}")
+                                pass
+                            break  # Exit the loop after finding the first valid stream name
+        else:
+            # Unix-like: Use `getfattr` command or similar to list attributes
+            cmd = f'getfattr -n user "{file_path}"'
+            result = subprocess.check_output(cmd, shell=True, text=True)
+            # Parse the output for attribute names and retrieve their values
+            for line in result.split("\n"):
+                if "user." in line:
+                    attr_name = line.split("=")[0].strip()
+                    metadata[attr_name] = os.getxattr(file_path, attr_name.encode()).decode()
+    except subprocess.CalledProcessError as exception:
+        _logger.error(f"Error executing command: {exception}")
+        _logger.error(f"Command output: {exception.output}")
+        _logger.error(f"Command error output: {exception.stderr}")
+        return metadata
 
     return metadata
 
 
-def get_metadata_type(metadata_name: str) -> type:
-    """Determines the data type of a metadata value based on its name.
+def get_metadata_type(metadata_name: str, metadata_value: str) -> type:
+    """Determines the data type of a metadata value.
 
     Args:
-        metadata_name (str): The name of the metadata entry.
+        metadata_name (str): The name of the metadata entry. This is mostly
+            used for special cases where the type can be determined based on
+            the name only.
+        metadata_value (str): The metadata value to determine the type of.
 
     Returns:
-        Optional[type]: The data type of the metadata value. Returns `str` if
-            the type cannot be determined.
+        type: The data type of the metadata value. Returns `str` if the type
+            cannot be determined.
     """
 
-    if metadata_name.startswith("[") or metadata_name.startswith("{"):
+    # Clean up metadata name and value
+    metadata_name = metadata_name.strip().lower()
+    metadata_value = metadata_value.strip().lower()
+    # _logger.debug(f"Checking metadata type for '{metadata_name}': '{metadata_value}'")
+
+    # Special cases for known metadata names
+    if metadata_name == "creator":
+        return str
+    if metadata_name == "version":
+        return str
+    if metadata_name == "name":
+        return str
+    if metadata_name == "type":
+        return str
+    if metadata_name == "status":
+        return str
+    if metadata_name == "description":
+        return str
+    if metadata_name == "created":
+        return str
+    if metadata_name == "modified":
+        return str
+    if metadata_name == "user":
+        return str
+    if metadata_name == "parent":
+        return str
+    if metadata_name == "path":
+        return str
+
+    if metadata_value.startswith("[") or metadata_value.startswith("{"):
         try:
-            real_value = json.loads(metadata_name)
-            if isinstance(real_value, dict):
+            value = json.loads(metadata_value)
+            if isinstance(value, dict):
                 return dict
-            elif isinstance(real_value, list):
+            elif isinstance(value, list):
                 return list
         except json.JSONDecodeError:
-            real_value = metadata_name
+            value = metadata_value
             return str
     else:
         # Handle non-JSON strings directly
         try:
-            real_value = int(metadata_name)
+            value = int(metadata_value)
             return int
         except ValueError:
             try:
-                real_value = float(metadata_name)
+                value = float(metadata_value)
                 return float
             except ValueError:
-                real_value = metadata_name
+                value = metadata_value
                 return str
 
 
@@ -423,7 +380,27 @@ def clear_metadata(file_path: str) -> None:
             os.removexattr(file_path, attr)
 
 
-def get_next_version(path: str, as_string: bool = False) -> Union[int, str]:
+def find_version_in_filename(filename: str, as_string: bool = False) -> Optional[str]:
+    """Finds the version number in a filename.
+
+    Args:
+        filename (str): The filename to search for the version number.
+        as_string (bool, optional): If `True`, returns the version number as a
+            string with the 'v' prefix. Defaults to `False`.
+
+    Returns:
+        Optional[str]: The version number found in the filename, if any.
+    """
+
+    version_pattern = re.compile(r"_v(\d{3})(\.\w+)?$")
+    match = version_pattern.search(filename)
+    if match:
+        version_num = int(match.group(1))
+        return f"v{version_num:03d}" if as_string else version_num
+    return None
+
+
+def get_next_version(path: str, as_string: bool = False, return_highest: bool = False) -> Union[int, str]:
     """Determines the next version number based on the existing versioned files
     in the given directory.
 
@@ -435,7 +412,9 @@ def get_next_version(path: str, as_string: bool = False) -> Union[int, str]:
     Args:
         path (str): The path to the directory containing the versioned files.
         as_string (bool, optional): If `True`, returns the next version number
-        as a string with the 'v' prefix. Defaults to `False`.
+            as a string with the 'v' prefix. Defaults to `False`.
+        return_highest (bool, optional): If `True`, returns the highest version
+            number found in the directory. Defaults to `False`.
 
     Returns:
         Union[int, str]: The next version number to be used, incremented by one
@@ -450,7 +429,7 @@ def get_next_version(path: str, as_string: bool = False) -> Union[int, str]:
     """
 
     # Compile the regex pattern
-    version_pattern = re.compile(r"_v(\d{3})$")
+    version_pattern = re.compile(r"_v(\d{3})(\.\w+)?$")
 
     # Initialize maximum version to 0
     max_version = 0
@@ -464,6 +443,10 @@ def get_next_version(path: str, as_string: bool = False) -> Union[int, str]:
                     version_num = int(match.group(1))
                     if version_num > max_version:
                         max_version = version_num
+
+    # Return the highest version number
+    if return_highest:
+        return f"v{max_version:03d}" if as_string else max_version
 
     # Return the next version number
     next_version = max_version + 1
@@ -647,6 +630,9 @@ if __name__ == "__main__":
     # _logger.info(
     #     f"{type(_project).__name__}: {str(_project)}, {_project.name}, {_project.root}, {_project.info}",
     # )
-    shot_dir = Path("D:") / "Projects" / "fxquinox_test_1582" / "production" / "shots" / "010" / "0010"
-    shot_dir = shot_dir.resolve().absolute().as_posix()
-    print(get_all_metadata(shot_dir))
+    # shot_dir = Path("D:") / "Projects" / "fxquinox_test_1582" / "production" / "shots" / "010" / "0010"
+    # shot_dir = shot_dir.resolve().absolute().as_posix()
+    # print(get_all_metadata(shot_dir))
+    path = Path("D:/Projects/fxquinox_test_1582/production/shots/010/0010/workfiles/Research/Research")
+    print(get_next_version(path))
+    print(find_version_in_filename("Research_v001.ma"))

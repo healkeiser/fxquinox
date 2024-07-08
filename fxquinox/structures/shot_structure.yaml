@@ -4,28 +4,14 @@ $SHOT$:
   metadata:
     creator: "fxquinox"
     entity: "shot"
+    name: "$SHOT$"
+    path: "$PATH$"
+    parent: "$PARENT$"
     description: "Shot root folder"
+    # Shot specific metadata
+    cut_in: "$CUT_IN$"
+    cut_out: "$CUT_OUT$"
   children:
-    # File
-    - name: .$SHOT$_info.json
-      type: file
-      metadata:
-        creator: "fxquinox"
-        entity: "metadata"
-        cut_in: "$CUT_IN$"
-        cut_out: "$CUT_OUT$"
-        description: "Shot information"
-      content: |
-        {
-          "entity_type": "shot",
-          "shot_name": "$SHOT$",
-          "shot_root": "$SHOT_ROOT$",
-          "cut_in": "$CUT_IN$",
-          "cut_out": "$CUT_OUT$",
-          "handle_in": "$HANDLE_IN$",
-          "handle_out": "$HANDLE_OUT$"
-        }
-
     # Folder
     - name: exports
       type: folder

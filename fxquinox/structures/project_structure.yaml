@@ -5,23 +5,11 @@ $PROJECT$:
     creator: "fxquinox"
     entity: "project"
     name: "$PROJECT$"
-    fps: "$FPS$"
+    path: "$PATH$"
     description: "Project root folder"
+    # Project specific metadata
+    fps: "$FPS$"
   children:
-    # Folder
-    - name: .$PROJECT$_info.json
-      type: file
-      metadata:
-        creator: "fxquinox"
-        entity: "metadata"
-        description: "Project configuration"
-      content: |
-        {
-          "entity_type": "project",
-          "project_name": "$PROJECT$",
-          "project_root": "$PROJECT_ROOT$"
-        }
-
     # Folder
     - name: .pipeline
       type: folder

@@ -4,4 +4,7 @@ $STEP$:
   metadata:
     creator: "fxquinox"
     entity: "step"
+    name: "$STEP$"
+    path: "$PATH$"
+    parent: "$PARENT$"
     description: "Step folder for the shot, containing the tasks"

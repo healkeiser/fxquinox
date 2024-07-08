@@ -4,4 +4,7 @@ $TASK$:
   metadata:
     creator: "fxquinox"
     entity: "task"
+    name: "$TASK$"
+    path: "$PATH$"
+    parent: "$PARENT$"
     description: "Task folder for the shot, containing the workfiles"
