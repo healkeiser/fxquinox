@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+    <!-- This file contains definitions of shelves, toolbars, and tools.
+ It should not be hand-edited when it is being used by the application.
+ Note, that two definitions of the same element are not allowed in
+ a single file. -->
+
+    <tool name="separator_01" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_02" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_03" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_04" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_05" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_06" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_07" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_08" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_09" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+    <tool name="separator_10" label=" " icon="MISC_tree_vline">
+        <script scriptType="python">
+            <![CDATA[]]>
+        </script>
+    </tool>
+
+</shelfDocument>

@@ -44,6 +44,7 @@
 			"PYTHONPATH": {
 				"value": [
 					"$FXQUINOX_ROOT",
+					"FXQUINOX_HOUDINI_PLUGIN/python",
 					"$USD_ASSET_RESOLVER/$RESOLVER_NAME/lib/python"
 				],
 				"method": "append"

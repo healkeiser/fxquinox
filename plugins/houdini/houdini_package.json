@@ -30,7 +30,8 @@
 		{
 			"PYTHONPATH": {
 				"value": [
-					"$FXQUINOX_ROOT"
+					"$FXQUINOX_ROOT",
+					"FXQUINOX_HOUDINI_PLUGIN/python"
 				],
 				"method": "append"
 			}

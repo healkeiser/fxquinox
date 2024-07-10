@@ -23,10 +23,13 @@
       </sizepolicy>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
@@ -70,6 +73,12 @@
       <enum>Qt::Horizontal</enum>
      </property>
      <widget class="QTabWidget" name="tab_assets_shots">
+      <property name="toolTip">
+       <string>&lt;b&gt;Filter Assets&lt;/b&gt;&lt;hr&gt;Filter the assets by name.</string>
+      </property>
+      <property name="statusTip">
+       <string>Filter the assets by name</string>
+      </property>
       <property name="currentIndex">
        <number>1</number>
       </property>
@@ -124,6 +133,12 @@
         </item>
         <item>
          <widget class="QTreeWidget" name="tree_widget_assets">
+          <property name="toolTip">
+           <string>&lt;b&gt;Assets&lt;/b&gt;&lt;hr&gt;A tree of the existing assets.</string>
+          </property>
+          <property name="statusTip">
+           <string>A tree of the existing assets</string>
+          </property>
           <property name="alternatingRowColors">
            <bool>true</bool>
           </property>
@@ -180,6 +195,12 @@
            </item>
            <item>
             <widget class="QLineEdit" name="line_edit_filter_shots">
+             <property name="toolTip">
+              <string>&lt;b&gt;Filter Shots&lt;/b&gt;&lt;hr&gt;Filter the shots by name.</string>
+             </property>
+             <property name="statusTip">
+              <string>Filter the shots by name</string>
+             </property>
              <property name="placeholderText">
               <string>Filter...</string>
              </property>
@@ -190,6 +211,12 @@
         </item>
         <item>
          <widget class="QTreeWidget" name="tree_widget_shots">
+          <property name="toolTip">
+           <string>&lt;b&gt;Shots&lt;/b&gt;&lt;hr&gt;A tree of the existing sequences and their shots.</string>
+          </property>
+          <property name="statusTip">
+           <string>A tree of the existing sequences and their shots</string>
+          </property>
           <property name="uniformRowHeights">
            <bool>false</bool>
           </property>
@@ -270,10 +297,13 @@
        <item>
         <widget class="QFrame" name="frame">
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <property name="leftMargin">

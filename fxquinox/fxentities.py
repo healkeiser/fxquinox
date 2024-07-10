@@ -3,6 +3,35 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
 
+class entity:
+    """Holds the entity names."""
+
+    project = "project"
+    sequence = "sequence"
+    shots_dir = "shots"
+    shot = "shot"
+    assets_dir = "assets"
+    asset = "asset"
+    step = "step"
+    task = "task"
+    workfiles_dir = "workfiles"
+    workfile = "workfile"
+
+
+class DCC:
+    """Holds the DCC names."""
+
+    blender = "blender"
+    houdini = "houdini"
+    maya = "maya"
+    nuke = "nuke"
+    photoshop = "photoshop"
+    substance_painter = "substance_painter"
+
+    # Standalone indicates that the software is not tied to a specific DCC
+    standalone = "standalone"
+
+
 @dataclass
 class FXProject:
     # Required

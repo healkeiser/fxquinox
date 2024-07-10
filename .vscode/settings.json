@@ -4,6 +4,16 @@
         "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder};C:/Program Files/usd-20.5-win64_py310_release/lib/python",
         "PATH": "${env:PATH};C:/Program Files/usd-20.5-win64_py310_release/bin;C:/Program Files/usd-20.5-win64_py310_release/lib",
     },
+    "python.analysis.extraPaths": [
+        "C:/Program Files/Side Effects Software/Houdini 20.0.653/houdini/python3.10libs",
+        "C:/Program Files/Nuke15.0v4/plugins",
+        "C:/Program Files/usd-20.5-win64_py310_release/lib/python",
+    ],
+    "python.autoComplete.extraPaths": [
+        "C:/Program Files/Side Effects Software/Houdini 20.0.653/houdini/python3.10libs",
+        "C:/Program Files/Nuke15.0v4/plugins",
+        "C:/Program Files/usd-20.5-win64_py310_release/lib/python",
+    ],
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#323232",
         "activityBar.background": "#323232",

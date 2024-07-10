@@ -9,11 +9,11 @@ import os
 import math
 import numpy as np
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Callable, List
+from typing import Any, Optional, Sequence, Tuple, Callable, List, Dict
 from typing_extensions import Literal
 
 # Third-party
-from pxr import Gf, Sdf, Usd, Kind, UsdGeom, UsdLux, UsdShade
+from pxr import Gf, Plug, Sdf, Usd, Kind, UsdGeom, UsdLux, UsdShade
 
 # Internal
 from fxquinox import fxlog
@@ -876,6 +876,59 @@ def get_prim_prototype(stage: Usd.Stage, prim: Usd.Prim) -> Optional[Usd.Prim]:
                 prototype = ancestor_prim.GetPrototype()
                 return prototype
     return None
+
+
+def get_prim_info(prim: Usd.Prim) -> Dict[str, Any]:
+    """Returns information about a given USD prim.
+
+    Args:
+        prim (Usd.Prim): The USD prim to query.
+
+    Returns:
+        Dict[str, Any]: A dictionary with information about the prim.
+
+    Examples:
+        >>> stage = Usd.Stage.Open("test.usda")
+        >>> prim = stage.GetPrimAtPath("/box")
+        >>> get_prim_info(prim)
+        >>> {
+        ...     "name": "box",
+        ...     "path": "/box",
+        ...     "type": "Xform",
+        ...     ...
+        ... }
+    """
+
+    prim_type_info = prim.GetPrimTypeInfo()
+    prim_definition = prim.GetPrimDefinition()
+    prim_active_state = prim.IsActive()
+    prim_name = prim.GetName()
+    prim_path = prim.GetPath()
+    prim_type = prim.GetTypeName()
+    # prim_kind = prim.GetKind() # ! Might not be available in all versions of USD
+    prim_attributes = prim.GetAttributes()
+    prim_relationships = prim.GetRelationships()
+
+    prim_schema_type = prim_type_info.GetSchemaType()
+    prim_plugin = Plug.Registry().GetPluginForType(prim_schema_type)
+    prim_plugin_name = prim_plugin.name
+
+    return {
+        "type_info": prim_type_info,
+        "definition": prim_definition,
+        #
+        "active": prim_active_state,
+        #
+        "name": prim_name,
+        "path": prim_path,
+        "type": prim_type,
+        # "kind": prim_kind, # ! Might not be available in all versions of USD
+        "schema_type": prim_schema_type,
+        "plugin": prim_plugin,
+        "plugin_name": prim_plugin_name,
+        "attributes": prim_attributes,
+        "reliationships": prim_relationships,
+    }
 
 
 def iterator(

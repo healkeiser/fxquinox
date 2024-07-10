@@ -35,5 +35,5 @@ setup(
     include_package_data=True,
 )
 
-# To install as an editable package:
+# To install as a local editable package:
 # python -m pip install -e .

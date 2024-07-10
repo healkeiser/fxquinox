@@ -23,6 +23,12 @@
    </item>
    <item row="0" column="1" colspan="2">
     <widget class="QComboBox" name="combo_box_sequence">
+     <property name="toolTip">
+      <string>&lt;b&gt;Sequence&lt;/b&gt;&lt;hr&gt;The parent sequence. If not existing, will be created.</string>
+     </property>
+     <property name="statusTip">
+      <string>The parent sequence. If not existing, will be created</string>
+     </property>
      <property name="editable">
       <bool>true</bool>
      </property>
@@ -43,6 +49,12 @@
    </item>
    <item row="1" column="1" colspan="2">
     <widget class="QLineEdit" name="line_edit_shot">
+     <property name="toolTip">
+      <string>&lt;b&gt;Shot&lt;/b&gt;&lt;hr&gt;The shot to create.</string>
+     </property>
+     <property name="statusTip">
+      <string>The shot to create</string>
+     </property>
      <property name="placeholderText">
       <string>Shot...</string>
      </property>
@@ -89,6 +101,9 @@
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="1">
        <widget class="QPushButton" name="button_add_metadata">
+        <property name="toolTip">
+         <string>&lt;b&gt;Metadata&lt;/b&gt;&lt;hr&gt;Add custom metadata to the shot.</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -138,10 +153,13 @@
       </sizepolicy>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::NoFrame</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+      <enum>QFrame::Plain</enum>
+     </property>
+     <property name="lineWidth">
+      <number>0</number>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="leftMargin">
@@ -171,6 +189,9 @@
       </item>
       <item>
        <widget class="QLineEdit" name="line_edit_thumbnail">
+        <property name="toolTip">
+         <string>&lt;b&gt;Thumbnail&lt;/b&gt;&lt;hr&gt;Choose the thumbnail image that will be displayed.</string>
+        </property>
         <property name="placeholderText">
          <string>Thumbnail...</string>
         </property>
@@ -195,6 +216,9 @@
    </item>
    <item row="3" column="1">
     <widget class="QSpinBox" name="spin_box_cut_in">
+     <property name="toolTip">
+      <string>&lt;b&gt;Cut In&lt;/b&gt;&lt;hr&gt;The frame cut in of the shot.</string>
+     </property>
      <property name="maximum">
       <number>999999999</number>
      </property>
@@ -205,6 +229,9 @@
    </item>
    <item row="3" column="2">
     <widget class="QSpinBox" name="spin_box_cut_out">
+     <property name="toolTip">
+      <string>&lt;b&gt;Cut Out&lt;/b&gt;&lt;hr&gt;The frame cut out of the shot.</string>
+     </property>
      <property name="maximum">
       <number>999999999</number>
      </property>
