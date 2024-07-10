@@ -109,6 +109,41 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
 
 
 class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
+    """The The Fxquinox project browser class. Provides a window for browsing
+    the project assets, shots, steps, tasks, and workfiles.
+
+    Args:
+        parent (Optional[QWidget], optional): The parent widget.
+            Defaults to `None`.
+        icon (Optional[str], optional): The icon name. Defaults to `None`.
+        title (Optional[str], optional): The window title. Defaults to `None`.
+        size (Optional[int], optional): The window size. Defaults to `None`.
+        documentation (Optional[str], optional): The documentation URL.
+            Defaults to `None`.
+        project (Optional[str], optional): The project name. Defaults to `None`.
+        version (Optional[str], optional): The version number.
+            Defaults to `None`.
+        company (Optional[str], optional): The company name. Defaults to `None`.
+        color_a (Optional[str], optional): The color A for the window.
+            Defaults to `None`.
+        color_b (Optional[str], optional): The color B for the window.
+            Defaults to `None`.
+        ui_file (Optional[str], optional): The UI file to load.
+            Defaults to `None`.
+        dcc (fxentities.DCC, optional): The DCC to use.
+            Defaults to `fxentities.DCC.standalone`.
+
+    Attributes:
+        dcc (fxentities.DCC): The DCC to use.
+        project_info (dict): The project information.
+        asset (Optional[str]): The current asset.
+        sequence (str): The current sequence.
+        shot (str): The current shot.
+        step (str): The current step.
+        task (str): The current task.
+        workfile (str): The current workfile.
+    """
+
     def __init__(
         self,
         parent: Optional[QWidget] = None,
@@ -763,6 +798,48 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         # After populating the tree, select the first item if it exists
         # self._select_first_item_in_tree(self.tree_widget_workfiles)
 
+    def _get_icon_based_on_type(self, item_type: str) -> QIcon:
+        """Returns an icon based on the item type. To be used when populating
+        the workfiles tree widget.
+
+        Args:
+            item_type (str): The item type.
+
+        Returns:
+            QIcon: The icon.
+        """
+
+        path_icons_apps = Path(__file__).parents[1] / "images" / "icons" / "apps"
+
+        if item_type in ["hip", "hipnc", "hiplc"]:
+            icon = path_icons_apps / "houdini.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        elif item_type in ["ma", "mb"]:
+            icon = path_icons_apps / "maya.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        elif item_type in ["nk", "nknc"]:
+            icon = path_icons_apps / "nuke.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        elif item_type in ["blend"]:
+            icon = path_icons_apps / "blender.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        elif item_type in ["max"]:
+            icon = path_icons_apps / "3ds_max.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        elif item_type in ["psd"]:
+            icon = path_icons_apps / "photoshop.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        elif item_type in ["ae"]:
+            icon = path_icons_apps / "after_effects.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        elif item_type in ["spp"]:
+            icon = path_icons_apps / "substance_painter.svg"
+            icon = QIcon(icon.resolve().as_posix())
+        else:
+            icon = fxicons.get_icon("description")
+
+        return icon
+
     def _toggle_latest_workfile_visibility(self, show_highest_only):
         if show_highest_only:
             highest_version = -1
@@ -881,7 +958,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
     # ? Define functions for each DCC opening
     def _open_workfile_standalone(self, file_path: str) -> None:
-        self.open_file_or_folder(path=file_path)
+        fxutils.open_directory(path=file_path)
 
     def _open_workfile_houdini(self, file_path: str) -> None:
         import hou
@@ -914,47 +991,6 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
         else:
             return
-
-    def _get_icon_based_on_type(self, item_type: str) -> QIcon:
-        """Returns an icon based on the item type.
-
-        Args:
-            item_type (str): The item type.
-
-        Returns:
-            QIcon: The icon.
-        """
-
-        path_icons_apps = Path(__file__).parents[1] / "images" / "icons" / "apps"
-
-        if item_type in ["hip", "hipnc", "hiplc"]:
-            icon = path_icons_apps / "houdini.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        elif item_type in ["ma", "mb"]:
-            icon = path_icons_apps / "maya.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        elif item_type in ["nk", "nknc"]:
-            icon = path_icons_apps / "nuke.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        elif item_type in ["blend"]:
-            icon = path_icons_apps / "blender.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        elif item_type in ["max"]:
-            icon = path_icons_apps / "3ds_max.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        elif item_type in ["psd"]:
-            icon = path_icons_apps / "photoshop.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        elif item_type in ["ae"]:
-            icon = path_icons_apps / "after_effects.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        elif item_type in ["spp"]:
-            icon = path_icons_apps / "substance_painter.svg"
-            icon = QIcon(icon.resolve().as_posix())
-        else:
-            icon = fxicons.get_icon("description")
-
-        return icon
 
     # Common
     def _select_first_item_in_tree(self, tree_widget: QTreeWidget):
@@ -1286,19 +1322,19 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             context_menu,
             "Expand All",
             fxicons.get_icon("unfold_more"),
-            lambda: self.expand_all(self.tree_widget_shots),
+            lambda: self._expand_all(self.tree_widget_shots),
         )
         action_collapse_all = fxguiutils.create_action(
             context_menu,
             "Collapse All",
             fxicons.get_icon("unfold_less"),
-            lambda: self.collapse_all(self.tree_widget_shots),
+            lambda: self._collapse_all(self.tree_widget_shots),
         )
         action_show_in_file_browser = fxguiutils.create_action(
             context_menu,
             "Show in File Browser",
             fxicons.get_icon("open_in_new"),
-            lambda: self.open_file_or_folder(
+            lambda: fxutils.open_directory(
                 Path(self.tree_widget_shots.currentItem().data(1, Qt.UserRole)).parent.resolve().as_posix()
                 if self.tree_widget_shots.currentItem()
                 else fxcore.get_project().get("FXQUINOX_PROJECT_SHOTS", None)
@@ -1346,19 +1382,19 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             context_menu,
             "Expand All",
             fxicons.get_icon("unfold_more"),
-            lambda: self.expand_all(self.tree_widget_shots),
+            lambda: self._expand_all(self.tree_widget_shots),
         )
         action_collapse_all = fxguiutils.create_action(
             context_menu,
             "Collapse All",
             fxicons.get_icon("unfold_less"),
-            lambda: self.collapse_all(self.tree_widget_shots),
+            lambda: self._collapse_all(self.tree_widget_shots),
         )
         action_show_in_file_browser = fxguiutils.create_action(
             context_menu,
             "Show in File Browser",
             fxicons.get_icon("open_in_new"),
-            lambda: self.open_file_or_folder(
+            lambda: fxutils.open_directory(
                 Path(self.tree_widget_shots.currentItem().data(1, Qt.UserRole)).parent.resolve().as_posix()
                 if self.tree_widget_shots.currentItem()
                 else fxcore.get_project().get("FXQUINOX_PROJECT_ASSETS", None)
@@ -1394,7 +1430,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             context_menu,
             "Show in File Browser",
             fxicons.get_icon("open_in_new"),
-            lambda: self.open_file_or_folder(
+            lambda: fxutils.open_directory(
                 Path(self.list_steps.currentItem().data(Qt.UserRole + 1)).parent.resolve().as_posix()
                 if self.list_steps.currentItem()
                 else None
@@ -1424,7 +1460,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             context_menu,
             "Show in File Browser",
             fxicons.get_icon("open_in_new"),
-            lambda: self.open_file_or_folder(
+            lambda: fxutils.open_directory(
                 Path(self.list_tasks.currentItem().data(Qt.UserRole + 1)).parent.resolve().as_posix()
                 if self.list_tasks.currentItem()
                 else None
@@ -1454,7 +1490,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             context_menu,
             "Show in File Browser",
             fxicons.get_icon("open_in_new"),
-            lambda: self.open_file_or_folder(
+            lambda: fxutils.open_directory(
                 Path(self.tree_widget_workfiles.currentItem().data(1, Qt.UserRole)).parent.resolve().as_posix()
                 if self.tree_widget_workfiles.currentItem()
                 else None
@@ -1508,6 +1544,10 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
     # Shots
     def create_shot(self):
+        """Open a `FXCreateShotDialog` instance to create a new shot in the
+        project.
+        """
+
         widget = FXCreateShotDialog(
             parent=self,
             project_name=self._project_name,
@@ -1530,6 +1570,9 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
     # Steps
     def create_step(self):
+        """Open a `FXCreateStepDialog` instance to create a new step in the
+        shot.
+        """
         if not self.sequence or not self.shot:
             warning = QMessageBox(self)
             warning.setWindowTitle("Create Step")
@@ -1558,6 +1601,10 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
     # Tasks
     def create_task(self):
+        """Open a `FXCreateTaskDialog` instance to create a new task in
+        the step.
+        """
+
         if not self.sequence or not self.shot or not self.step:
             warning = QMessageBox(self)
             warning.setWindowTitle("Create Task")
@@ -1586,11 +1633,12 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         widget.show()
 
     # Workfiles
-    def create_workfile_from_preset(self, preset_file: str = None):
-        """Creates a workfile from the selected file in the tree widget.
+    def create_workfile_from_preset(self, preset_file: Optional[str] = None):
+        """Creates a workfile from the selected preset file, inside
+        the current `task/workfiles` directory.
 
         Args:
-            file (str, optional): The file to create the workfile from.
+            preset_file (str, optional): The file to create the workfile from.
                 Defaults to `None`.
         """
 
@@ -1655,14 +1703,22 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self.refresh()
 
     # Common
-    def open_file_or_folder(self, path: str):
-        url = QUrl.fromLocalFile(path)
-        QDesktopServices.openUrl(url)
+    def _expand_all(self, tree_widget: QTreeWidget):
+        """Expands all the items in the tree widget.
 
-    def expand_all(self, tree_widget: QTreeWidget):
+        Args:
+            tree_widget (QTreeWidget): The tree widget to expand.
+        """
+
         tree_widget.expandAll()
 
-    def collapse_all(self, tree_widget: QTreeWidget):
+    def _collapse_all(self, tree_widget: QTreeWidget):
+        """Collapses all the items in the tree widget.
+
+        Args:
+            tree_widget (QTreeWidget): The tree widget to collapse.
+        """
+
         tree_widget.collapseAll()
 
 
@@ -1980,6 +2036,12 @@ class FXCreateShotDialog(QDialog):
             parent.refresh()
 
         self.close()
+
+    def closeEvent(self, _) -> None:
+        """Overrides the close event."""
+
+        _logger.info(f"Closed")
+        self.setParent(None)
 
 
 class FXCreateAssetDialog(QDialog):

@@ -95,6 +95,7 @@ def _create_entity(entity_type: str, entity_name: str, base_dir: str = ".", pare
             "CUT_IN": "None",
             "CUT_OUT": "None",
             # Asset metadata
+            # Workfile metadata
         },
     )
 
@@ -175,6 +176,9 @@ def create_project(project_name: str, base_dir: str = ".") -> Optional[str]:
 
         CLI
         >>> python -m fxquinox.cli.fxcore create_project my_project
+
+    Info:
+        Has a CLI counterpart.
     """
 
     return _create_entity(fxentities.entity.project, project_name, base_dir)
@@ -215,6 +219,9 @@ def create_sequence(sequence_name: str, base_dir: str = ".", parent: QWidget = N
 
         CLI
         >>> fxquinox.cli.fxcore.create_sequence 010 --base_dir "/path/to/shots"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     # Check the parent entity sequence "shots" directory validity before
@@ -248,6 +255,9 @@ def create_sequences(sequence_names: list[str], base_dir: str = ".") -> Optional
 
         CLI
         >>> fxquinox.cli.fxcore.create_sequences 010,020 --base_dir "/path/to/shots"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     # Check the parent entity sequence "shots" directory validity before
@@ -322,6 +332,9 @@ def create_shot(shot_name: str, base_dir: str = ".", parent: QWidget = None) -> 
 
         CLI
         >>> fxquinox.cli.fxcore.create_shot 0010 --base_dir "/path/to/sequence"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     # Check the parent entity sequence validity before creating the shot
@@ -356,6 +369,9 @@ def create_shots(shot_names: list[str], base_dir: str = ".") -> Optional[list[st
 
         CLI
         >>> fxquinox.cli.fxcore.create_shots 0010,0020 --base_dir "/path/to/sequence"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     # Check the parent entity sequence validity before creating the shot
@@ -418,6 +434,9 @@ def create_asset(asset_name: str, base_dir: str = ".", parent: QWidget = None) -
 
         CLI
         >>> fxquinox.cli.fxcore.create_asset charA --base_dir "/path/to/assets"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     # Check the parent entity assets "assets" directory validity before
@@ -451,6 +470,9 @@ def create_assets(asset_names: list[str], base_dir: str = ".") -> Optional[list[
 
         CLI
         >>> fxquinox.cli.fxcore.create_assets charA,propA --base_dir "/path/to/assets"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     # Check the parent entity sequence validity before creating the shot
@@ -515,6 +537,16 @@ def create_step(step_name: str, base_dir: str = ".", parent: QWidget = None) -> 
 
     Returns:
         Optional[str]: The name of the step if created, `None` otherwise.
+
+    Examples:
+        Python
+        >>> create_step("modeling", "/path/to/steps")
+
+        CLI
+        >>> fxquinox.cli.fxcore.create_step modeling --base_dir "/path/to/steps"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     base_dir_path = Path(base_dir).resolve()
@@ -557,6 +589,16 @@ def create_task(task_name: str, base_dir: str = ".", parent: QWidget = None) -> 
 
     Returns:
         Optional[str]: The name of the task if created, `None` otherwise.
+
+    Examples:
+        Python
+        >>> create_task("rigging", "/path/to/tasks")
+
+        CLI
+        >>> fxquinox.cli.fxcore.create_task rigging --base_dir "/path/to/tasks"
+
+    Info:
+        Has a CLI counterpart.
     """
 
     base_dir_path = Path(base_dir).resolve()
@@ -599,6 +641,19 @@ def create_workfile(workfile_name: str, base_dir: str = ".", parent: QWidget = N
 
     Returns:
         Optional[str]: The name of the workfile if created, `None` otherwise.
+
+    Examples:
+        Python
+        >>> create_workfile("rigging_v001", "/path/to/workfiles")
+
+        CLI
+        >>> fxquinox.cli.fxcore.create_workfile rigging_v001 --base_dir "/path/to/workfiles"
+
+    Info:
+        Has a CLI counterpart.
+
+    Bug:
+        Not implemented yet.
     """
 
     base_dir_path = Path(base_dir).resolve()

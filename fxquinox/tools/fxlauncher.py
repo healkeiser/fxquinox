@@ -78,12 +78,17 @@ class FXExecutableRunnerThread(QThread):
 
 
 class FXLauncherSystemTray(fxwidgets.FXSystemTray):
-    """The Fxuinox main launcher UI class.
+    """The Fxquinox main launcher UI class.
 
     Args:
         parent (QWidget): The parent widget.
         icon (QIcon): The icon to display in the system tray.
         project (str): The current project name.
+
+    Attributes:
+        project (str): The current project name.
+        colors (dict): The color dictionary.
+        runner_threads (list): A list of runner threads.
 
     Signals:
         project_changed (str, str): The signal emitted when the project is

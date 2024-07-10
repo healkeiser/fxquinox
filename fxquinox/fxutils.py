@@ -167,7 +167,7 @@ def remove_lock(lock_file_path: str) -> None:
 
 # Directory
 def open_directory(path: str) -> None:
-    """Opens the given directory in the system file manager."""
+    """Opens the given file or directory in the system file manager."""
 
     url = QUrl.fromLocalFile(path)
     QDesktopServices.openUrl(url)
