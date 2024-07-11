@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../fxutils/">
+        <link rel="prev" href="../fxfiles/">
       
       
-        <link rel="next" href="../fxprojectbrowser/">
+        <link rel="next" href="../fxusd/">
       
       
       <link rel="icon" href="../images/fxquinox_logo_background_light.svg">
@@ -22,7 +22,7 @@
     
     
       
-        <title>fxlauncher - fxquinox</title>
+        <title>fxlog - fxquinox</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#fxquinox.tools.fxlauncher" class="md-skip">
+        <a href="#fxquinox.fxlog" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              fxlauncher
+              fxlog
             
           </span>
         </div>
@@ -468,10 +468,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../fxlog/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    fxlog
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -480,6 +498,78 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;fxlog
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog.FXFormatter" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXFormatter
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog.FXTimedRotatingFileHandler" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXTimedRotatingFileHandler
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog.clear_logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;clear_logs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog.get_logger" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_logger
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog.set_log_level" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;set_log_level
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -531,8 +621,6 @@
                 
   
   
-    
-  
   
   
     
@@ -547,11 +635,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_9" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_9" >
         
           
           <label class="md-nav__link" for="__nav_2_9" id="__nav_2_9_label" tabindex="">
@@ -565,7 +655,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_9_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_9">
             <span class="md-nav__icon md-icon"></span>
             Tools
@@ -576,28 +666,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    fxlauncher
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../fxlauncher/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -606,93 +678,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;fxlauncher
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXExecutableRunnerThread" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXExecutableRunnerThread
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXLauncherSystemTray
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label=" FXLauncherSystemTray">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray.__create_actions" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__create_actions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray.__handle_connections" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__handle_connections
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray.closeEvent" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;closeEvent
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.run_launcher" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;run_launcher
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -759,69 +744,54 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher" class="md-nav__link">
+  <a href="#fxquinox.fxlog" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;fxlauncher
+      <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;fxlog
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXExecutableRunnerThread" class="md-nav__link">
+  <a href="#fxquinox.fxlog.FXFormatter" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXExecutableRunnerThread
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXFormatter
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray" class="md-nav__link">
+  <a href="#fxquinox.fxlog.FXTimedRotatingFileHandler" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXLauncherSystemTray
+      <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FXTimedRotatingFileHandler
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label=" FXLauncherSystemTray">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray.__create_actions" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__create_actions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray.__handle_connections" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__handle_connections
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.FXLauncherSystemTray.closeEvent" class="md-nav__link">
-    <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;closeEvent
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#fxquinox.tools.fxlauncher.run_launcher" class="md-nav__link">
+  <a href="#fxquinox.fxlog.clear_logs" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;run_launcher
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;clear_logs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog.get_logger" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_logger
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fxquinox.fxlog.set_log_level" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;set_log_level
     </span>
   </a>
   
@@ -842,7 +812,7 @@
                   
 
   
-    <a href="https://github.com/healkeiser/fxquinox/edit/main/docs/fxlauncher.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/healkeiser/fxquinox/edit/main/docs/fxlog.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4v-2m10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1 2.1 2.1Z"/></svg>
     </a>
@@ -850,13 +820,13 @@
   
 
 
-  <h1>fxlauncher</h1>
+  <h1>fxlog</h1>
 
 <div class="doc doc-object doc-module">
 
 
 
-<a id="fxquinox.tools.fxlauncher"></a>
+<a id="fxquinox.fxlog"></a>
   <div class="doc doc-contents first">
 
   
@@ -874,8 +844,8 @@
 
 
 
-<h2 id="fxquinox.tools.fxlauncher.FXExecutableRunnerThread" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">FXExecutableRunnerThread</span>
+<h2 id="fxquinox.fxlog.FXFormatter" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">FXFormatter</span>
 
 
 </h2>
@@ -883,50 +853,11 @@
 
   <div class="doc doc-contents ">
           <p class="doc doc-class-bases">
-            Bases: <code>QThread</code></p>
+            Bases: <code><span title="logging.Formatter">Formatter</span></code></p>
 
   
-      <p>A QThread subclass to run an executable in a separate thread.</p>
-
-
-  
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-  </div>
-
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
-<h2 id="fxquinox.tools.fxlauncher.FXLauncherSystemTray" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">FXLauncherSystemTray</span>
-
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-          <p class="doc doc-class-bases">
-            Bases: <code><span title="fxgui.fxwidgets.FXSystemTray">FXSystemTray</span></code></p>
-
-  
-      <p>The Fxquinox main launcher UI class.</p>
+      <p>Custom log formatter that adds color to log messages based on the log
+level.</p>
 
 
 
@@ -942,45 +873,74 @@
     </thead>
     <tbody>
         <tr class="doc-section-item">
-          <td><code>parent</code></td>
-          <td>
-                <code>QWidget</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The parent widget.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>icon</code></td>
-          <td>
-                <code>QIcon</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The icon to display in the system tray.</p>
-            </div>
-          </td>
-          <td>
-                <code>None</code>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code>project</code></td>
+          <td><code>fmt</code></td>
           <td>
                 <code>str</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>The current project name.</p>
+              <p>The log message format string.</p>
             </div>
           </td>
           <td>
                 <code>None</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>datefmt</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The date format string.</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>style</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The format style.</p>
+            </div>
+          </td>
+          <td>
+                <code>&#39;{&#39;</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>color</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to enable color logging. Defaults to <code>False</code>.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>separator</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to enable a separator between log messages.
+Defaults to <code>False</code>.</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
           </td>
         </tr>
     </tbody>
@@ -999,51 +959,42 @@
     </thead>
     <tbody>
         <tr class="doc-section-item">
-          <td><code><span title="fxquinox.tools.fxlauncher.FXLauncherSystemTray.project">project</span></code></td>
-          <td>
-                <code>str</code>
-          </td>
-          <td>
-            <div class="doc-md-description">
-              <p>The current project name.</p>
-            </div>
-          </td>
-        </tr>
-        <tr class="doc-section-item">
-          <td><code><span title="fxquinox.tools.fxlauncher.FXLauncherSystemTray.colors">colors</span></code></td>
+          <td><code><span title="fxquinox.fxlog.FXFormatter.LEVEL_COLORS">LEVEL_COLORS</span></code></td>
           <td>
                 <code>dict</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>The color dictionary.</p>
+              <p>A dictionary mapping log levels to their respective
+color codes.</p>
             </div>
           </td>
         </tr>
         <tr class="doc-section-item">
-          <td><code><span title="fxquinox.tools.fxlauncher.FXLauncherSystemTray.runner_threads">runner_threads</span></code></td>
+          <td><code><span title="fxquinox.fxlog.FXFormatter.color">color</span></code></td>
           <td>
-                <code>list</code>
+                <code>bool</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>A list of runner threads.</p>
+              <p>Whether to enable color logging.</p>
+            </div>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code><span title="fxquinox.fxlog.FXFormatter.separator">separator</span></code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Whether to enable a separator between log messages.</p>
             </div>
           </td>
         </tr>
     </tbody>
   </table>
 
-<details class="signals" open>
-  <summary>Signals</summary>
-  <p>project_changed (str, str): The signal emitted when the project is
-    changed.</p>
-</details>
-<details class="note" open>
-  <summary>Note</summary>
-  <p>This class inherits from <code>FXSystemTray</code> which is a custom system tray
-class that inherits from <code>QSystemTrayIcon</code>.</p>
-</details>
 
   
 
@@ -1058,77 +1009,6 @@ class that inherits from <code>QSystemTrayIcon</code>.</p>
 
 
 
-<div class="doc doc-object doc-function">
-
-
-
-<h3 id="fxquinox.tools.fxlauncher.FXLauncherSystemTray.__create_actions" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">__create_actions</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__create_actions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Creates the actions for the system tray.</p>
-
-<details class="note" open>
-  <summary>Note</summary>
-  <p>Using <code>__</code> to avoid name clashes with the parent class.</p>
-</details>
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h3 id="fxquinox.tools.fxlauncher.FXLauncherSystemTray.__handle_connections" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">__handle_connections</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__handle_connections</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Connects the signals to the slots.</p>
-
-<details class="note" open>
-  <summary>Note</summary>
-  <p>Using <code>__</code> to avoid name clashes with the parent class.</p>
-</details>
-  </div>
-
-</div>
-
-
-<div class="doc doc-object doc-function">
-
-
-
-<h3 id="fxquinox.tools.fxlauncher.FXLauncherSystemTray.closeEvent" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>          <span class="doc doc-object-name doc-function-name">closeEvent</span>
-
-
-</h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">closeEvent</span><span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-
-  <div class="doc doc-contents ">
-  
-      <p>Overrides the close event to handle the system tray close event.</p>
-
-  </div>
-
-</div>
-
-
 
   </div>
 
@@ -1137,27 +1017,112 @@ class that inherits from <code>QSystemTrayIcon</code>.</p>
 
 </div>
 
-
-
-<div class="doc doc-object doc-function">
+<div class="doc doc-object doc-class">
 
 
 
-<h2 id="fxquinox.tools.fxlauncher.run_launcher" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>          <span class="doc doc-object-name doc-function-name">run_launcher</span>
+<h2 id="fxquinox.fxlog.FXTimedRotatingFileHandler" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>          <span class="doc doc-object-name doc-class-name">FXTimedRotatingFileHandler</span>
 
 
 </h2>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">run_launcher</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">parent</span><span class="p">:</span> <span class="n">QWidget</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">quit_on_last_window_closed</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">show_splashscreen</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="logging.handlers.TimedRotatingFileHandler">TimedRotatingFileHandler</span></code></p>
+
+  
+      <p>Custom log file handler that rotates log files at midnight.</p>
+
+
+
+  <p><span class="doc-section-title">Attributes:</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr class="doc-section-item">
+          <td><code><span title="fxquinox.fxlog.FXTimedRotatingFileHandler.suffix">suffix</span></code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The suffix to append to the rotated log file.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="fxquinox.fxlog.clear_logs" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>          <span class="doc doc-object-name doc-function-name">clear_logs</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">clear_logs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
   <div class="doc doc-contents ">
   
-      <p>Runs the launcher UI.</p>
+      <p>Clears the fxquinox log files.</p>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="fxquinox.fxlog.get_logger" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>          <span class="doc doc-object-name doc-function-name">get_logger</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_logger</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">logger_name</span><span class="p">:</span> <span class="n">str</span><span class="p">,</span> <span class="n">color</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">separator</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="logging.Logger">Logger</span></span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Creates a custom logger with the specified name and returns it.</p>
 
 
 
@@ -1173,14 +1138,27 @@ class that inherits from <code>QSystemTrayIcon</code>.</p>
     </thead>
     <tbody>
         <tr class="doc-section-item">
-          <td><code>quit_on_last_window_closed</code></td>
+          <td><code>logger_name</code></td>
+          <td>
+                <code>str</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The name of the logger.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr class="doc-section-item">
+          <td><code>color</code></td>
           <td>
                 <code>bool</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Whether to quit the application when
-the last window is closed. Defaults to <code>True</code>.</p>
+              <p>Whether to enable color logging. Defaults to <code>True</code>.</p>
             </div>
           </td>
           <td>
@@ -1188,18 +1166,94 @@ the last window is closed. Defaults to <code>True</code>.</p>
           </td>
         </tr>
         <tr class="doc-section-item">
-          <td><code>show_splashscreen</code></td>
+          <td><code>separator</code></td>
           <td>
                 <code>bool</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>Whether to show the splash screen.
+              <p>Whether to enable a separator between log messages.
 Defaults to <code>False</code>.</p>
             </div>
           </td>
           <td>
                 <code>False</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><span class="doc-section-title">Returns:</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr class="doc-section-item">
+          <td>
+                <code><span title="logging.Logger">Logger</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>logging.Logger: The custom logger.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="fxquinox.fxlog.set_log_level" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>          <span class="doc doc-object-name doc-function-name">set_log_level</span>
+
+
+</h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">set_log_level</span><span class="p">(</span><span class="n">level</span><span class="p">:</span> <span class="n">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+  <div class="doc doc-contents ">
+  
+      <p>Sets the logging level for all instances of loggers created by the
+<code>FXFormatter</code> class.</p>
+
+
+
+  <p><span class="doc-section-title">Parameters:</span></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr class="doc-section-item">
+          <td><code>level</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The logging level to set.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
           </td>
         </tr>
     </tbody>
@@ -1238,7 +1292,7 @@ Defaults to <code>False</code>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 10, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 11, 2024</span>
   </span>
 
     
@@ -1248,7 +1302,7 @@ Defaults to <code>False</code>.</p>
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 10, 2024</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 11, 2024</span>
   </span>
 
     
@@ -1258,12 +1312,11 @@ Defaults to <code>False</code>.</p>
   <span class="md-source-file__fact">
     <span class="md-icon" title="Contributors">
       
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5.5A3.5 3.5 0 0 1 15.5 9a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 8.5 9 3.5 3.5 0 0 1 12 5.5M5 8c.56 0 1.08.15 1.53.42-.15 1.43.27 2.85 1.13 3.96C7.16 13.34 6.16 14 5 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3m14 0a3 3 0 0 1 3 3 3 3 0 0 1-3 3c-1.16 0-2.16-.66-2.66-1.62a5.536 5.536 0 0 0 1.13-3.96c.45-.27.97-.42 1.53-.42M5.5 18.25c0-2.07 2.91-3.75 6.5-3.75s6.5 1.68 6.5 3.75V20h-13v-1.75M0 20v-1.5c0-1.39 1.89-2.56 4.45-2.9-.59.68-.95 1.62-.95 2.65V20H0m24 0h-3.5v-1.75c0-1.03-.36-1.97-.95-2.65 2.56.34 4.45 1.51 4.45 2.9V20Z"/></svg>
       
     </span>
     <nav>
       
-        <a href="mailto:valentin.onze@gmail.com">Valentin Beaumont</a>
     </nav>
   </span>
 
