@@ -4,9 +4,8 @@ from functools import partial
 import getpass
 import os
 from pathlib import Path
-from PIL import Image
 import shutil
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
 # Third-party
 from fxgui import fxwidgets, fxicons, fxutils as fxguiutils
@@ -17,95 +16,19 @@ from qtpy.QtGui import *
 import yaml
 
 # Internal
-from fxquinox import fxlog, fxfiles, fxutils, fxentities, fxcore
+from fxquinox import fxcore, fxentities, fxenvironment, fxfiles, fxlog, fxutils
+from fxquinox.ui.fxwidgets.fxcreateshotdialog import FXCreateShotDialog
+
+# from fxquinox.ui.fxwidgets.fxcreateassetdialog import FXCreateAssetDialog
+from fxquinox.ui.fxwidgets.fxcreatestepdialog import FXCreateStepDialog
+from fxquinox.ui.fxwidgets.fxcreatetaskdialog import FXCreateTaskDialog
+from fxquinox.ui.fxwidgets.fxmetadatatablewidget import FXMetadataTableWidget
+from fxquinox.ui.fxwidgets.fxthumbnaildelegate import FXThumbnailItemDelegate
 
 
 # Log
-_logger = fxlog.get_logger("fxquinox.tools.fxprojectbrowser")
+_logger = fxlog.get_logger("fxprojectbrowser")
 _logger.setLevel(fxlog.DEBUG)
-
-
-class FXThumbnailItemDelegate(QStyledItemDelegate):
-    # ! The `show_thumbnail` flag should be stored in the `Qt.UserRole + 1` as bool
-    # ! The thumbnail path should be stored in the `Qt.UserRole + 2` as str
-
-    def sizeHint(self, option, index):
-        # Check if the thumbnail should be shown
-        show_thumbnail = index.data(Qt.UserRole + 1)
-        if show_thumbnail is None or show_thumbnail:  # Show thumbnail by default
-            # Increase the height of the items for thumbnails
-            original_size = super().sizeHint(option, index)
-            return QSize(original_size.width(), 50)  # Increased item height for thumbnails
-        else:
-            # Return a smaller height if the thumbnail is disabled
-            original_size = super().sizeHint(option, index)
-            return QSize(original_size.width(), 20)  # Reduced item height without thumbnails
-
-    def paint(self, painter, option, index):
-        # Fill the entire item's background first
-        background_color = (
-            option.palette.window() if not (option.state & QStyle.State_Selected) else option.palette.highlight()
-        )
-        painter.fillRect(option.rect, background_color)
-        if index.column() == 0:  # Check if it's the first column
-            # Check if the thumbnail should be shown
-            show_thumbnail = index.data(Qt.UserRole + 1)
-            if show_thumbnail is None or show_thumbnail:  # Show thumbnail by default
-                # Load the thumbnail
-                thumbnail_path = index.data(Qt.UserRole + 2)
-                if thumbnail_path:
-                    thumbnail = QPixmap(thumbnail_path)
-                else:
-                    # Fallback path if no thumbnail path is set
-                    thumbnail_path = Path(__file__).parents[1] / "images" / "missing_image.png"
-                    thumbnail = QPixmap(thumbnail_path.resolve().as_posix())
-
-                # Adjust the target height for scaling the thumbnail, subtracting 10 pixels for top and bottom spaces
-                item_height = option.rect.height() - 10  # 5 pixels space on top and bottom
-                thumbnail = thumbnail.scaledToHeight(item_height - 2, Qt.SmoothTransformation)  # Subtract border width
-
-                # Create a new QPixmap for the border and rounded corners
-                bordered_thumbnail = QPixmap(thumbnail.size() + QSize(2, 2))  # Add space for the border
-                bordered_thumbnail.fill(Qt.transparent)  # Fill with transparent background
-
-                # Use QPainter to draw the border and image with rounded corners
-                painter_with_border = QPainter(bordered_thumbnail)
-                painter_with_border.setRenderHint(QPainter.Antialiasing)
-                painter_with_border.setPen(QPen(Qt.white, 1))  # White pen for the border
-                painter_with_border.setBrush(QBrush(thumbnail))  # Use the thumbnail as the brush
-                radius = 2  # Adjust radius
-                painter_with_border.drawRoundedRect(
-                    bordered_thumbnail.rect().marginsRemoved(QMargins(1, 1, 1, 1)), radius, radius
-                )
-
-                painter_with_border.end()  # Finish drawing
-
-                # Adjust the y-coordinate to add a 5-pixel offset from the top
-                x_offset = 5  # Offset from the left border of the item
-                y_offset = 5  # Pixels space on top
-                y = option.rect.top() + y_offset  # Align to the top of the item with a 5-pixel offset
-
-                painter.drawPixmap(option.rect.left() + x_offset, y, bordered_thumbnail)
-
-                # Adjust the option.rect for the icon and text to be on the right of the thumbnail
-                thumbnail_width_with_padding = bordered_thumbnail.width() + x_offset * 2
-            else:
-                # If not showing thumbnail, adjust padding as if there's no thumbnail
-                thumbnail_width_with_padding = 0
-
-            new_option = QStyleOptionViewItem(option)
-            new_option.rect = QRect(
-                option.rect.left() + thumbnail_width_with_padding,
-                option.rect.top(),
-                option.rect.width() - thumbnail_width_with_padding,
-                option.rect.height(),
-            )
-
-            # Call the base class paint method with the adjusted rect
-            super().paint(painter, new_option, index)
-        else:
-            # For other columns, use the default painting
-            super().paint(painter, option, index)
 
 
 class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
@@ -134,8 +57,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             Defaults to `fxentities.DCC.standalone`.
 
     Attributes:
-        dcc (fxentities.DCC): The DCC to use.
         project_info (dict): The project information.
+        dcc (fxentities.DCC): The DCC to use.
         asset (Optional[str]): The current asset.
         sequence (str): The current sequence.
         shot (str): The current shot.
@@ -157,6 +80,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         color_a: Optional[str] = None,  # "#3c3c3c",  # "#4a4a4a",
         color_b: Optional[str] = None,  # "#656565",  # "#3e3e3e",
         ui_file: Optional[str] = None,
+        #
+        project_info: Optional[Dict] = None,
         dcc: fxentities.DCC = fxentities.DCC.standalone,
     ):
         super().__init__(
@@ -174,6 +99,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         )
 
         # Attributes
+        self.project_info = project_info
         self.dcc = dcc
 
         self.asset = None
@@ -197,17 +123,16 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self.statusBar().showMessage("Initialized project browser", self.INFO, logger=_logger)
 
     def _get_project(self) -> None:
-        """_summary_
-
-        Returns:
-            dict: _description_
+        """Gets the project information from the environment variables or the
+        configuration file.
         """
 
-        self.project_info = fxcore.get_project()
+        if all(not value for value in self.project_info.values()):
+            self.project_info = fxcore.get_project()
         self._project_root = self.project_info.get("FXQUINOX_PROJECT_ROOT", None)
         self._project_name = self.project_info.get("FXQUINOX_PROJECT_NAME", None)
-        self._project_assets = self.project_info.get("FXQUINOX_PROJECT_ASSETS", None)
-        self._project_shots = self.project_info.get("FXQUINOX_PROJECT_SHOTS", None)
+        self._project_assets_path = self.project_info.get("FXQUINOX_PROJECT_ASSETS_PATH", None)
+        self._project_shots_path = self.project_info.get("FXQUINOX_PROJECT_SHOTS_PATH", None)
 
     def _rename_ui(self):
         """_summary_"""
@@ -960,17 +885,53 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
     def _open_workfile_standalone(self, file_path: str) -> None:
         fxutils.open_directory(path=file_path)
 
-    def _open_workfile_houdini(self, file_path: str) -> None:
-        import hou
-
-        if not self.parent() == hou.qt.mainWindow() or not hou:
+    def _open_workfile_blender(self, file_path: str) -> None:
+        if self.dcc != fxentities.DCC.blender:
             return
 
-        # Load the Houdini file
-        hou.hipFile.load(file_path)
+        try:
+            import bpy  # type: ignore
 
-        # Minimize the window after opening the file
-        self.showMinimized()
+            bpy.ops.wm.open_mainfile(filepath=file_path)
+            self.showMinimized()
+        except ImportError as exception:
+            _logger.error(f"Error: {exception}")
+
+    def _open_workfile_houdini(self, file_path: str) -> None:
+        if self.dcc != fxentities.DCC.houdini:
+            return
+
+        try:
+            import hou  # type: ignore
+
+            hou.hipFile.load(file_path)
+            self.showMinimized()
+        except ImportError as exception:
+            _logger.error(f"Error: {exception}")
+
+    def _open_workfile_maya(self, file_path: str) -> None:
+        if self.dcc != fxentities.DCC.maya:
+            return
+
+        try:
+            import maya.cmds as cmds  # type: ignore
+
+            cmds.file(file_path, open=True, force=True)
+            self.showMinimized()
+        except ImportError as exception:
+            _logger.error(f"Error: {exception}")
+
+    def _open_workfile_nuke(self, file_path: str) -> None:
+        if self.dcc != fxentities.DCC.nuke:
+            return
+
+        try:
+            import nuke  # type: ignore
+
+            nuke.scriptOpen(file_path)
+            self.showMinimized()
+        except ImportError as exception:
+            _logger.error(f"Error: {exception}")
 
     def _open_workfile(self):
         # TODO: Implement the open workfile method, using the defined executables in the launcher
@@ -1219,7 +1180,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         metadata_data = fxfiles.get_all_metadata(path)
 
         # Prepare the table
-        table_widget = QTableWidget()
+        table_widget = FXMetadataTableWidget()
         table_widget.setColumnCount(3)
         table_widget.setRowCount(len(metadata_data))
         table_widget.setHorizontalHeaderLabels(["Label", "Internal", "Value"])
@@ -1337,7 +1298,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             lambda: fxutils.open_directory(
                 Path(self.tree_widget_shots.currentItem().data(1, Qt.UserRole)).parent.resolve().as_posix()
                 if self.tree_widget_shots.currentItem()
-                else fxcore.get_project().get("FXQUINOX_PROJECT_SHOTS", None)
+                else self._project_shots_path
             ),
         )
 
@@ -1382,22 +1343,22 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             context_menu,
             "Expand All",
             fxicons.get_icon("unfold_more"),
-            lambda: self._expand_all(self.tree_widget_shots),
+            lambda: self._expand_all(self.tree_widget_assets),
         )
         action_collapse_all = fxguiutils.create_action(
             context_menu,
             "Collapse All",
             fxicons.get_icon("unfold_less"),
-            lambda: self._collapse_all(self.tree_widget_shots),
+            lambda: self._collapse_all(self.tree_widget_assets),
         )
         action_show_in_file_browser = fxguiutils.create_action(
             context_menu,
             "Show in File Browser",
             fxicons.get_icon("open_in_new"),
             lambda: fxutils.open_directory(
-                Path(self.tree_widget_shots.currentItem().data(1, Qt.UserRole)).parent.resolve().as_posix()
-                if self.tree_widget_shots.currentItem()
-                else fxcore.get_project().get("FXQUINOX_PROJECT_ASSETS", None)
+                Path(self.tree_widget_assets.currentItem().data(1, Qt.UserRole)).parent.resolve().as_posix()
+                if self.tree_widget_assets.currentItem()
+                else self._project_assets_path
             ),
         )
 
@@ -1552,8 +1513,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             parent=self,
             project_name=self._project_name,
             project_root=self._project_root,
-            project_assets=self._project_assets,
-            project_shots=self._project_shots,
+            project_assets=self._project_assets_path,
+            project_shots=self._project_shots_path,
             sequence=self.sequence,
         )
         widget.setWindowFlags(widget.windowFlags() | Qt.Window)
@@ -1589,8 +1550,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             parent=self,
             project_name=self._project_name,
             project_root=self._project_root,
-            project_assets=self._project_assets,
-            project_shots=self._project_shots,
+            project_assets=self._project_assets_path,
+            project_shots=self._project_shots_path,
             asset=self.asset,
             sequence=self.sequence,
             shot=self.shot,
@@ -1621,8 +1582,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             parent=self,
             project_name=self._project_name,
             project_root=self._project_root,
-            project_assets=self._project_assets,
-            project_shots=self._project_shots,
+            project_assets=self._project_assets_path,
+            project_shots=self._project_shots_path,
             asset=self.asset,
             sequence=self.sequence,
             shot=self.shot,
@@ -1722,585 +1683,51 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         tree_widget.collapseAll()
 
 
-class FXCreateProjectWindow(fxwidgets.FXMainWindow):
-    # TODO: Implement the create project window
-    pass
-
-
-class FXCreateShotDialog(QDialog):
-    def __init__(
-        self, parent=None, project_name=None, project_root=None, project_assets=None, project_shots=None, sequence=None
-    ):
-        super().__init__(parent)
-
-        # Attributes
-        self.project_name = project_name
-        self._project_root = project_root
-        self._project_assets = project_assets
-        self._project_shots = project_shots
-        self.sequence = sequence
-
-        # Methods
-        self.setModal(True)
-
-        self._create_ui()
-        self._rename_ui()
-        self._modify_ui()
-        self._handle_connections()
-        self._populate_sequences()
-        self._disable_ui()
-
-        _logger.info("Initialized create shot")
-
-    def _create_ui(self):
-        """_summary_"""
-
-        ui_file = Path(__file__).parent / "ui" / "create_shot.ui"
-        self.ui = fxguiutils.load_ui(self, str(ui_file))
-        self.setLayout(QVBoxLayout())
-        self.layout().addWidget(self.ui)
-        self.setWindowTitle("Create Shot")
-
-    def _rename_ui(self):
-        """_summary_"""
-
-        self.label_icon_sequence: QLabel = self.ui.label_icon_sequence
-        self.combo_box_sequence: QComboBox = self.ui.combo_box_sequence
-        self.label_icon_shot: QLabel = self.ui.label_icon_shot
-        self.line_edit_shot: QLineEdit = self.ui.line_edit_shot
-        self.label_icon_frame_range: QLabel = self.ui.label_icon_frame_range
-        self.spin_box_cut_in: QSpinBox = self.ui.spin_box_cut_in
-        self.spin_box_cut_out: QSpinBox = self.ui.spin_box_cut_out
-        self.label_icon_thumbnail: QLabel = self.ui.label_icon_thumbnail
-        self.line_edit_thumbnail: QLineEdit = self.ui.line_edit_thumbnail
-        self.button_pick_thumbnail: QPushButton = self.ui.button_pick_thumbnail
-        self.button_discard_thumbnail: QPushButton = self.ui.button_discard_thumbnail
-        self.group_box_metadata: QGroupBox = self.ui.group_box_metadata
-        self.button_add_metadata: QPushButton = self.ui.button_add_metadata
-        self.frame_metadata: QFrame = self.ui.frame_metadata
-        self.button_box: QDialogButtonBox = self.ui.button_box
-
-    def _handle_connections(self):
-        """_summary_"""
-
-        self.button_add_metadata.clicked.connect(self._add_metadata_line)
-        self.button_pick_thumbnail.clicked.connect(self._set_thumbnail)
-        self.button_discard_thumbnail.clicked.connect(lambda: self.line_edit_thumbnail.clear())
-
-    def _modify_ui(self):
-        """_summary_"""
-
-        # Set the regular expression validator for the sequence and shot inputs
-        reg_exp = QRegExp("[A-Za-z0-9-_]+")
-        validator = QRegExpValidator(reg_exp)
-
-        self.label_icon_sequence.setPixmap(fxicons.get_pixmap("perm_media", 18))
-        self.combo_box_sequence.setValidator(validator)
-        self.label_icon_shot.setPixmap(fxicons.get_pixmap("image", 18))
-        self.line_edit_shot.setValidator(validator)
-        self.label_icon_frame_range.setPixmap(fxicons.get_pixmap("alarm", 18))
-        self.label_icon_thumbnail.setPixmap(fxicons.get_pixmap("camera", 18))
-        self.button_pick_thumbnail.setIcon(fxicons.get_icon("add_a_photo"))
-        self.button_discard_thumbnail.setIcon(fxicons.get_icon("delete"))
-        self.button_add_metadata.setIcon(fxicons.get_icon("add"))
-
-        # Contains some slots connections, to avoid iterating multiple times
-        # over the buttons
-        for button in self.button_box.buttons():
-            role = self.button_box.buttonRole(button)
-            if role == QDialogButtonBox.AcceptRole:
-                button.setIcon(fxicons.get_icon("check", color="#8fc550"))
-                button.setText("Create")
-                # Create shot
-                button.clicked.connect(self._create_shot)
-            elif role == QDialogButtonBox.RejectRole:
-                button.setIcon(fxicons.get_icon("close", color="#ec0811"))
-                # Close
-                button.clicked.connect(self.close)
-            elif role == QDialogButtonBox.ResetRole:
-                button.setIcon(fxicons.get_icon("refresh"))
-                # Reset connection
-                button.clicked.connect(self._reset_ui_values)
-
-    def _disable_ui(self):
-        """Disable all sibling widgets of the current widget without disabling
-        the current widget itself.
-        """
-
-        parent = self.parent()
-        if not parent:
-            return
-
-    def _populate_sequences(self):
-        """Populates the sequence combo box with the available sequences."""
-
-        shots_dir = Path(self._project_root) / "production" / "shots"
-        if not shots_dir.exists():
-            return
-
-        sequences = [sequence.name for sequence in shots_dir.iterdir() if sequence.is_dir()]
-        self.combo_box_sequence.addItems(sequences)
-
-        # Set the current sequence to the one passed as an argument if it exists
-        if self.sequence:
-            for index in range(self.combo_box_sequence.count()):
-                if self.combo_box_sequence.itemText(index) == self.sequence:
-                    self.combo_box_sequence.setCurrentIndex(index)
-                    break
-
-    def _set_thumbnail(self):
-        """Choose a thumbnail for the shot."""
-
-        config_file_name = "general.cfg"
-        config_section_name = "project_browser_create_shot"
-        config_option_name = "last_thumbnail_directory"
-
-        previous_directory = (
-            fxutils.get_configuration_file_value(config_file_name, config_section_name, config_option_name)
-            or Path.home().resolve().as_posix()
-        )
-
-        # Get the path to the thumbnail
-        thumbnail_path = QFileDialog.getOpenFileName(
-            self, "Select Thumbnail", previous_directory, "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
-        )[0]
-
-        if thumbnail_path:
-            self.line_edit_thumbnail.setText(thumbnail_path)
-
-            # Update the config with the parent directory of the selected thumbnail
-            fxutils.update_configuration_file(
-                config_file_name,
-                config_section_name,
-                config_option_name,
-                Path(thumbnail_path).parent.resolve().as_posix(),
-            )
-
-    def _add_metadata_line(self):
-        """Adds a new line for entering metadata key-value pairs."""
-
-        # Create widgets
-        key_edit = QLineEdit()
-        value_edit = QLineEdit()
-        delete_button = QPushButton()
-        delete_button.setIcon(fxicons.get_icon("delete"))
-        key_edit.setPlaceholderText("Key...")
-        value_edit.setPlaceholderText("Value...")
-
-        # Set object names for later reference
-        key_edit.setObjectName("line_edit_key_metadata")
-        value_edit.setObjectName("line_edit_value_metadata")
-        delete_button.setObjectName("button_delete_metadata")
-
-        # Layout to hold the new line widgets
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(key_edit)
-        layout.addWidget(value_edit)
-        layout.addWidget(delete_button)
-
-        # Container widget
-        container = QWidget()
-        container.setLayout(layout)
-
-        # Add the container to your main layout
-        layout_metadata = QVBoxLayout()
-        layout_metadata.setContentsMargins(0, 0, 0, 0)
-        self.frame_metadata.setLayout(layout_metadata)
-        self.frame_metadata.layout().addWidget(container)
-
-        # Connect the delete button's clicked signal
-        delete_button.clicked.connect(lambda: self._delete_metadata_line(container))
-
-    def _delete_metadata_line(self, container):
-        """Deletes a specified metadata line."""
-
-        # Remove the container from the layout and delete it
-        self.group_box_metadata.layout().removeWidget(container)
-        container.deleteLater()
-
-    def _reset_ui_values(self):
-        """Resets the values of all UI elements to their default states."""
-
-        # Reset QLineEdit and QSpinBox widgets
-        self.line_edit_shot.setText("")
-        self.spin_box_cut_in.setValue(1001)
-        self.spin_box_cut_out.setValue(1100)
-
-        # Clear QComboBox selection
-        self.combo_box_sequence.setCurrentIndex(0)
-
-        # Remove all dynamically added metadata lines
-        layout_metadata = self.frame_metadata.layout()
-        if layout_metadata:
-            while layout_metadata.count():
-                item = layout_metadata.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
-
-    def _create_shot(self):
-        """Creates a shot based on the entered values."""
-
-        # Get the values from the UI elements
-        sequence = self.combo_box_sequence.currentText()
-        shot = self.line_edit_shot.text()
-        cut_in = self.spin_box_cut_in.value()
-        cut_out = self.spin_box_cut_out.value()
-
-        # Create the shot
-        sequence_dir = Path(self._project_root) / "production" / "shots" / sequence
-
-        # If sequence does not exist, create it
-        if not sequence_dir.exists():
-            fxcore.create_sequence(sequence, self._project_shots)
-
-        shot_dir = sequence_dir / shot
-        shot = fxcore.create_shot(shot, sequence_dir, self)
-        if not shot:
-            # self.close()
-            return
-
-        # Get the thumbnail path
-        thumbnail_path = self.line_edit_thumbnail.text()
-        if thumbnail_path and Path(thumbnail_path).is_file():
-
-            old_thumbnail_path = Path(thumbnail_path)
-            thumbnail_name = f"{shot}.jpg"
-            thumbnail_dir = shot_dir / ".thumbnails"
-            thumbnail_dir.mkdir(parents=True, exist_ok=True)
-            new_thumbnail_path = thumbnail_dir / thumbnail_name
-            shutil.copy(old_thumbnail_path, new_thumbnail_path)
-
-            # Resize and convert the copied image to JPG
-            target_width, target_height = 480, 270
-            with Image.open(new_thumbnail_path) as img:
-                # Calculate the scaling factor to ensure at least one side matches the target size
-                scaling_factor = max(target_width / img.width, target_height / img.height)
-
-                # Resize the image with the scaling factor
-                new_size = (int(img.width * scaling_factor), int(img.height * scaling_factor))
-                img = img.resize(new_size, Image.Resampling.LANCZOS)
-
-                # Calculate the cropping area
-                left = (img.width - target_width) / 2
-                top = (img.height - target_height) / 2
-                right = (img.width + target_width) / 2
-                bottom = (img.height + target_height) / 2
-
-                # Crop the image to the target size
-                img = img.crop((left, top, right, bottom))
-
-                # Convert to RGB and save
-                img.convert("RGB").save(new_thumbnail_path, "JPEG")
-
-            shot_dir_str = str(shot_dir)
-            fxfiles.set_metadata(shot_dir_str, "thumbnail", new_thumbnail_path.resolve().as_posix())
-
-            _logger.debug(f"Thumbnail path: '{thumbnail_path}'")
-            _logger.debug(f"Thumbnail dir: '{thumbnail_dir}'")
-
-        # Get the metadata key-value pairs
-        metadata = {}
-        layout_metadata = self.frame_metadata.layout()
-
-        if layout_metadata is not None:
-            for i in range(layout_metadata.count()):
-                item = layout_metadata.itemAt(i)
-                if item.widget():
-                    key = item.widget().findChild(QLineEdit, "line_edit_key_metadata").text()
-                    value = item.widget().findChild(QLineEdit, "line_edit_value_metadata").text()
-                    metadata[key] = value
-
-        # Add cut in and cut out to the metadata dictionary
-        metadata["cut_in"] = cut_in
-        metadata["cut_out"] = cut_out
-
-        # Add metadata to the shot folder
-        if metadata:
-            shot_dir_str = str(shot_dir)
-            for key, value in metadata.items():
-                if key and value:
-                    _logger.debug(f"Adding metadata: '{key}' - '{value}'")
-                    fxfiles.set_metadata(shot_dir_str, key, value)
-
-        # Feedback
-        parent = self.parent()
-        if parent:
-            parent.statusBar().showMessage(
-                f"Created shot '{shot}' in sequence '{sequence}'", parent.SUCCESS, logger=_logger
-            )
-
-        # Refresh parent and close QDialog on completion
-        parent = self.parent()
-        if parent:
-            parent.refresh()
-
-        self.close()
-
-    def closeEvent(self, _) -> None:
-        """Overrides the close event."""
-
-        _logger.info(f"Closed")
-        self.setParent(None)
-
-
-class FXCreateAssetDialog(QDialog):
-    # TODO: Implement the create asset window
-    pass
-
-
-class FXCreateStepDialog(QDialog):
-    def __init__(
-        self,
-        parent=None,
-        project_name=None,
-        project_root=None,
-        project_assets=None,
-        project_shots=None,
-        asset=None,
-        sequence=None,
-        shot=None,
-    ):
-        super().__init__(parent)
-
-        # Attributes
-        self.project_name = project_name
-        self._project_root = project_root
-        self._project_assets = project_assets
-        self._project_shots = project_shots
-
-        self.asset = asset
-        self.sequence = sequence
-        self.shot = shot
-
-        # Methods
-        self.setModal(True)
-
-        self._create_ui()
-        self._rename_ui()
-        self._modify_ui()
-        self._handle_connections()
-        self._populate_steps()
-
-        _logger.info("Initialized create step")
-
-    def _create_ui(self):
-        """_summary_"""
-
-        ui_file = Path(__file__).parent / "ui" / "create_step.ui"
-        self.ui = fxguiutils.load_ui(self, str(ui_file))
-        self.setLayout(QVBoxLayout())
-        self.layout().addWidget(self.ui)
-        self.setWindowTitle(f"Create Step | {self.sequence} - {self.shot}")
-
-    def _rename_ui(self):
-        """_summary_"""
-
-        self.list_steps: QListWidget = self.ui.list_steps
-        self.checkbox_add_tasks: QCheckBox = self.ui.checkbox_add_tasks
-        self.list_tasks: QListWidget = self.ui.list_tasks
-        self.button_box: QButtonGroup = self.ui.button_box
-
-    def _modify_ui(self):
-        # Contains some slots connections, to avoid iterating multiple times
-        # over the buttons
-        for button in self.button_box.buttons():
-            role = self.button_box.buttonRole(button)
-            if role == QDialogButtonBox.AcceptRole:
-                button.setIcon(fxicons.get_icon("check", color="#8fc550"))
-                button.setText("Create")
-                # Create step
-                button.clicked.connect(self._create_step)
-            elif role == QDialogButtonBox.RejectRole:
-                button.setIcon(fxicons.get_icon("close", color="#ec0811"))
-                # Close
-                button.clicked.connect(self.close)
-
-    def _handle_connections(self):
-        """_summary_"""
-
-        self.list_steps.currentItemChanged.connect(self._populate_tasks)
-        self.checkbox_add_tasks.stateChanged.connect(
-            lambda: self.list_tasks.setEnabled(self.checkbox_add_tasks.isChecked())
-        )
-
-    def _populate_steps(self):
-        # Parse the `steps.yaml` file
-        steps_file = Path(self._project_root) / ".pipeline" / "project_config" / "steps.yaml"
-        if not steps_file.exists():
-            return
-        steps_data = yaml.safe_load(steps_file.read_text())
-
-        # Gather existing step names
-        parent = self.parent()
-        if parent:
-            existing_steps = {parent.list_steps.item(i).text() for i in range(parent.list_steps.count())}
-        else:
-            existing_steps = []
-
-        for step in steps_data["steps"]:
-            step_name = step.get("name_long", "Unknown Step")
-            if step_name not in existing_steps:
-                step_item = QListWidgetItem(step_name)
-                step_item.setIcon(
-                    fxicons.get_icon(step.get("icon", "check_box_outline_blank"), color=step.get("color", "#ffffff"))
-                )
-                step_item.setData(Qt.UserRole, step)
-                self.list_steps.addItem(step_item)
-
-    def _populate_tasks(self, current, previous):
-        self.list_tasks.clear()  # Clear existing tasks
-        if current is not None:
-            step = current.data(Qt.UserRole)
-            for task in step["tasks"]:
-                task_item = QListWidgetItem(task.get("name", "Unknown Task"))
-                task_item.setIcon(fxicons.get_icon("task_alt"))
-                task_item.setData(Qt.UserRole, task)
-                self.list_tasks.addItem(task_item)
-
-    def _create_step(self):
-        # Get the selected step
-        _logger.debug(f"Asset: '{self.asset}', sequence: '{self.sequence}', shot: '{self.shot}'")
-        step = self.list_steps.currentItem().text()
-
-        # Create the step
-        workfiles_dir = Path(self._project_root) / "production" / "shots" / self.sequence / self.shot / "workfiles"
-        step = fxcore.create_step(step, workfiles_dir, self)
-        if not step:
-            return
-
-        step_dir = workfiles_dir / step
-        if self.checkbox_add_tasks.isChecked():
-            for i in range(self.list_tasks.count()):
-                task = self.list_tasks.item(i).text()
-                fxcore.create_task(task, step_dir, self)
-
-        # Refresh parent and close QDialog on completion
-        parent = self.parent()
-        if parent:
-            parent.refresh()
-
-        self.close()
-
-
-class FXCreateTaskDialog(QDialog):
-    def __init__(
-        self,
-        parent=None,
-        project_name=None,
-        project_root=None,
-        project_assets=None,
-        project_shots=None,
-        asset=None,
-        sequence=None,
-        shot=None,
-        step=None,
-    ):
-        super().__init__(parent)
-
-        # Attributes
-        self.project_name = project_name
-        self._project_root = project_root
-        self._project_assets = project_assets
-        self._project_shots = project_shots
-
-        self.asset = asset
-        self.sequence = sequence
-        self.shot = shot
-        self.step = step
-
-        # Methods
-        self.setModal(True)
-
-        self._create_ui()
-        self._rename_ui()
-        self._modify_ui()
-        self._populate_tasks()
-
-        _logger.info("Initialized create task")
-
-    def _create_ui(self):
-        """_summary_"""
-
-        ui_file = Path(__file__).parent / "ui" / "create_task.ui"
-        self.ui = fxguiutils.load_ui(self, str(ui_file))
-        self.setLayout(QVBoxLayout())
-        self.layout().addWidget(self.ui)
-        self.setWindowTitle(f"Create Task | {self.sequence} - {self.shot} - {self.step}")
-
-    def _rename_ui(self):
-        """_summary_"""
-
-        self.list_tasks: QListWidget = self.ui.list_tasks
-        self.button_box: QButtonGroup = self.ui.button_box
-
-    def _modify_ui(self):
-        # Contains some slots connections, to avoid iterating multiple times
-        # over the buttons
-        for button in self.button_box.buttons():
-            role = self.button_box.buttonRole(button)
-            if role == QDialogButtonBox.AcceptRole:
-                button.setIcon(fxicons.get_icon("check", color="#8fc550"))
-                button.setText("Create")
-                # Create task
-                button.clicked.connect(self._create_task)
-            elif role == QDialogButtonBox.RejectRole:
-                button.setIcon(fxicons.get_icon("close", color="#ec0811"))
-                # Close
-                button.clicked.connect(self.close)
-
-    def _populate_tasks(self):
-        self.list_tasks.clear()  # Clear existing tasks
-
-        steps_file = Path(self._project_root) / ".pipeline" / "project_config" / "steps.yaml"
-        if not steps_file.exists():
-            return
-
-        steps_data = yaml.safe_load(steps_file.read_text())
-
-        # Find the step that matches self.step
-        current_step = next((step for step in steps_data["steps"] if step["name_long"] == self.step), None)
-        if not current_step:
-            return  # If the step is not found, exit the function
-
-        # Gather existing task names
-        parent = self.parent()
-        if parent:
-            existing_tasks = {parent.list_tasks.item(i).text() for i in range(parent.list_tasks.count())}
-        else:
-            existing_tasks = []
-
-        # Iterate over the tasks of the found step
-        for task in current_step.get("tasks", []):
-            task_name = task.get("name", "Unknown Task")
-            if task_name not in existing_tasks:  # Check if the task is not already in the list
-                task_item = QListWidgetItem(task_name)
-                task_item.setIcon(fxicons.get_icon("task_alt"))
-                task_item.setData(Qt.UserRole, task)
-                self.list_tasks.addItem(task_item)
-                # existing_tasks.add(task_name)  # Add the new task name to the set of existing tasks
-
-    def _create_task(self):
-        # Get the selected task
-        _logger.debug(f"Asset: '{self.asset}', sequence: '{self.sequence}', shot: '{self.shot}', step: '{self.step}'")
-        task = self.list_tasks.currentItem().text()
-
-        # Create the task
-        step_dir = (
-            Path(self._project_root) / "production" / "shots" / self.sequence / self.shot / "workfiles" / self.step
-        )
-        task = fxcore.create_task(task, step_dir, self)
-        if not task:
-            return
-
-        # Refresh parent and close QDialog on completion
-        parent = self.parent()
-        if parent:
-            parent.refresh()
-
-        self.close()
-
-
-class FXCreateWorkfileDialog(QDialog):
-    # TODO: Implement the create workfile window
-    pass
+def run_project_browser(
+    parent: QWidget = None, quit_on_last_window_closed: bool = False, dcc: fxentities.DCC = fxentities.DCC.standalone
+) -> QMainWindow:
+    """Runs the project browser UI.
+
+    Args:
+        parent (QWidget): The parent widget. Defaults to `None`.
+        quit_on_last_window_closed (bool): Whether to quit the application when
+            the last window is closed. Defaults to `False`.
+        dcc (DCC): The DCC to use. Defaults to `None`.
+
+    Returns:
+        QMainWindow: The project browser window.
+    """
+
+    if not parent:
+        app = fxwidgets.FXApplication.instance()
+        app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
+
+    # Get current project
+    project_info = fxcore.get_project()
+    project_name = project_info.get("FXQUINOX_PROJECT_NAME", None)
+
+    ui_file = Path(fxenvironment._FXQUINOX_UI) / "project_browser.ui"
+    icon_path = Path(fxenvironment._FQUINOX_IMAGES) / "fxquinox_logo_background_light.svg"
+
+    window = FXProjectBrowserWindow(
+        parent=parent if isinstance(parent, QWidget) else None,
+        icon=icon_path.resolve().as_posix(),
+        title="Project Browser",
+        size=(2000, 1200),
+        project=project_name,
+        version="0.0.1",
+        company="fxquinox",
+        ui_file=ui_file.resolve().as_posix(),
+        dcc=dcc,
+    )
+    window.show()
+    # window.setStyleSheet(fxstyle.load_stylesheet())
+
+    if not parent:
+        app.exec_()
+
+    return window
+
+
+if __name__ == "__main__":
+    run_project_browser(parent=None, quit_on_last_window_closed=True, dcc=fxentities.DCC.standalone)

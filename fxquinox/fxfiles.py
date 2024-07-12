@@ -12,7 +12,7 @@ from fxquinox import fxlog
 
 
 # Log
-_logger = fxlog.get_logger("fxquinox.fxfiles")
+_logger = fxlog.get_logger("fxfiles")
 _logger.setLevel(fxlog.DEBUG)
 
 # Globals
@@ -136,8 +136,6 @@ def replace_placeholders_in_string(s: str, replacements: Dict) -> str:
 
 
 ###### Metadata
-
-
 def set_metadata(file_path: str, metadata_name: str, metadata_value: str) -> Optional[str]:
     # Convert non-string values to JSON strings
     if not isinstance(metadata_value, str):
@@ -380,6 +378,7 @@ def clear_metadata(file_path: str) -> None:
             os.removexattr(file_path, attr)
 
 
+###### Version
 def find_version_in_filename(filename: str, as_string: bool = False) -> Optional[str]:
     """Finds the version number in a filename.
 

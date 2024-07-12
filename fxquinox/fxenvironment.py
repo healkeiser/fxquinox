@@ -24,7 +24,6 @@ just_fix_windows_console()
 
 # Get the current OS
 _os_name = platform.system()
-# _os_name = "Darwin"  # ? For debug purposes
 
 
 # Package
@@ -51,7 +50,6 @@ FXQUINOX_VERSION = get_version_from_setup()
 
 
 # Set up the environment variables
-
 FXQUINOX_ROOT = os.environ["FXQUINOX_ROOT"] = Path(__file__).parents[1].resolve().as_posix()
 
 _home = Path.home()
@@ -74,57 +72,26 @@ FXQUINOX_LOGS = os.environ["FXQUINOX_LOGS"] = Path(FXQUINOX_APPDATA, "logs").res
 # Files to create
 FXQUINOX_METADATA_DB = Path(FXQUINOX_APPDATA).resolve() / "database" / "metadata.db"
 FXQUINOX_ENV_FILE = Path(FXQUINOX_APPDATA).resolve() / "fxquinox.env"
+FXQUINOX_CONFIG_FILE = Path(FXQUINOX_APPDATA).resolve() / "fxquinox.cfg"
+
+# Internal to the package
+_FXQUINOX_MODULE = Path(FXQUINOX_ROOT, "fxquinox").resolve().as_posix()
+_FXQUINOX_UI = Path(_FXQUINOX_MODULE, "ui").resolve().as_posix()
+_FQUINOX_IMAGES = Path(FXQUINOX_ROOT, "images").resolve().as_posix()
 
 
-def setup_environment(write_file: bool = False) -> None:
-    """Initialize the environment variables for the package.
-
-    Args:
-        write_file (bool, optional): Whether to write the environment variables
-            to a file. Defaults to `False`.
-    """
+def setup_environment() -> None:
+    """Initialize the environment variables for the package."""
 
     # Create the directories
     directories = [FXQUINOX_HOME, FXQUINOX_TEMP, FXQUINOX_APPDATA, FXQUINOX_LOGS]
     for path in directories:
-        # print(f"Creating directory: {Fore.WHITE}{path}{Style.RESET_ALL}")
         os.makedirs(path, exist_ok=True)
 
-    files = [FXQUINOX_METADATA_DB, FXQUINOX_ENV_FILE]
+    files = [FXQUINOX_METADATA_DB]
     for file in files:
-        # print(f"Creating file: {Fore.WHITE}{files}{Style.RESET_ALL}")
         file.parent.mkdir(parents=True, exist_ok=True)
         file.touch(exist_ok=True)
-
-    # Write the environment variables to the file `fxquinox.env`
-    if write_file:
-        # Read the existing content of the file
-        existing_vars = {}
-        try:
-            with open(FXQUINOX_ENV_FILE, "r") as file:
-                for line in file:
-                    if "=" in line:
-                        key, value = line.strip().split("=", 1)
-                        existing_vars[key] = value.strip("'")
-        except FileNotFoundError:
-            pass
-
-        # Update the dictionary with new values
-        env_vars = {
-            "FXQUINOX_ROOT": FXQUINOX_ROOT,
-            "FXQUINOX_HOME": FXQUINOX_HOME,
-            "FXQUINOX_TEMP": FXQUINOX_TEMP,
-            "FXQUINOX_APPDATA": FXQUINOX_APPDATA,
-            "FXQUINOX_LOGS": FXQUINOX_LOGS,
-        }
-
-        # Merge existing vars with new ones, updating values if keys exist
-        updated_vars = {**existing_vars, **env_vars}
-
-        # Write the updated content back to the file
-        with open(FXQUINOX_ENV_FILE, "w") as file:
-            for key, value in updated_vars.items():
-                file.write(f"{key}='{value}'\n")
 
 
 def _test() -> None:
@@ -136,10 +103,12 @@ def _test() -> None:
         [f"{Fore.YELLOW}$FXQUINOX_TEMP{Style.RESET_ALL}", f"{Fore.GREEN}{FXQUINOX_TEMP}{Style.RESET_ALL}"],
         [f"{Fore.YELLOW}$FXQUINOX_APPDATA{Style.RESET_ALL}", f"{Fore.GREEN}{FXQUINOX_APPDATA}{Style.RESET_ALL}"],
         [f"{Fore.YELLOW}$FXQUINOX_LOGS{Style.RESET_ALL}", f"{Fore.GREEN}{FXQUINOX_LOGS}{Style.RESET_ALL}"],
+        [f"{Fore.YELLOW}$_FXQUINOX_UI{Style.RESET_ALL}", f"{Fore.GREEN}{_FXQUINOX_UI}{Style.RESET_ALL}"],
+        [f"{Fore.YELLOW}$_FQUINOX_IMAGES{Style.RESET_ALL}", f"{Fore.GREEN}{_FQUINOX_IMAGES}{Style.RESET_ALL}"],
     ]
     print(tabulate(env_vars, headers=["Variable", "Value"], tablefmt="pretty", colalign=("right", "left")))
 
 
 if __name__ == "__main__":
     _test()
-    setup_environment()
+    # setup_environment()

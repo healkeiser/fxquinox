@@ -4,14 +4,19 @@ import os
 from pathlib import Path
 import psutil
 import re
-from typing import Optional
+from typing import Optional, List, Dict
 
 # Third-party
 from qtpy.QtCore import QUrl
 from qtpy.QtGui import QDesktopServices
 
 # Internal
-from fxquinox import fxenvironment
+from fxquinox import fxenvironment, fxlog
+
+
+# Log
+_logger = fxlog.get_logger("fxutils")
+_logger.setLevel(fxlog.DEBUG)
 
 
 # String manipulation
@@ -47,65 +52,99 @@ def transform_to_valid_string(input_string: str) -> str:
 
 
 # Configuration file handling
-def update_configuration_file(file_name: str, section: str, option: str, value: str) -> None:
-    """Updates or creates a value in a configuration file.
+def update_configuration_file(file_name: str, sections_options_values: dict, temporary: bool = False) -> None:
+    """Updates or creates multiple values in a configuration file based on a nested dictionary.
 
     Args:
         file_name (str): The name of the configuration file.
-        section (str): The section in the configuration file.
-        option (str): The option in the section.
-        value (str): The value to update or create.
+        sections_options_values (dict): A dictionary where keys are section
+            names and values are dictionaries of options and their values to
+            update or create.
+        temporary (bool): If `True`, the configuration file will be stored in
+            the temporary directory. Defaults to `False`.
 
     Examples:
-        >>> update_configuration_file("fxquinox.cfg", "settings", "theme", "dark")
+        >>> config = {
+        ...     "settings": {"theme": "dark", "language": "en"},
+        ...     "database": {"host": "localhost", "port": "3306"},
+        ... }
+        >>> update_configuration_file("fxquinox.cfg", config)
     """
 
-    config_path = Path(fxenvironment.FXQUINOX_APPDATA) / file_name
+    if temporary:
+        config_path = Path(fxenvironment.FXQUINOX_TEMP) / file_name
+    else:
+        config_path = Path(fxenvironment.FXQUINOX_APPDATA) / file_name
 
     # Initialize the configuration parser
     config = configparser.ConfigParser()
 
-    # Load the configuration file if it exists, using the full path
+    # Load the configuration file if it exists
     if config_path.is_file():
         config.read(config_path)
 
-    # Check if the section exists, if not add it
-    if not config.has_section(section):
-        config.add_section(section)
+    # Iterate over the sections and their options in the nested dictionary
+    for section, options_values in sections_options_values.items():
+        # Check if the section exists, if not add it
+        if not config.has_section(section):
+            config.add_section(section)
 
-    # Update the option with the new value
-    config.set(section, option, value)
+        # Iterate over the options and their values in the current section
+        for option, value in options_values.items():
+            config.set(section, option, value)
 
     # Write the changes back to the file, using the full path
     with open(config_path, "w") as config_file:
         config.write(config_file)
 
 
-def get_configuration_file_value(file_name: str, section: str, option: str) -> Optional[str]:
-    """Reads a value from a configuration file.
+def get_configuration_file_values(
+    file_name: str, sections_options: Dict[str, List[str]]
+) -> Dict[str, Dict[str, Optional[str]]]:
+    """Reads values from a configuration file for given sections and their options.
 
     Args:
         file_name (str): The name of the configuration file.
-        section (str): The section in the configuration file.
-        option (str): The option in the section.
+        sections_options (Dict[str, List[str]]): A dictionary where keys are
+            section names and values are lists of options in those sections.
 
     Returns:
-        Optional[str]: The value of the option if found, `None` otherwise.
+        Dict[str, Dict[str, Optional[str]]]: A nested dictionary where the
+            first level keys are section names, and their values are
+            dictionaries with options as keys and their values as values.
+            If an option is not found, its value will be `None`.
+
+    Examples:
+        >>> config = {
+        ...     "settings": ["theme", "language"],
+        ...     "database": ["host", "port"],
+        ... }
+        >>> get_configuration_file_values("fxquinox.cfg", config)
+        {
+            'settings': {'theme': 'dark', 'language': 'en'},
+            'database': {'host': 'localhost', 'port': '3306'}
+        }
     """
 
     config_path = Path(fxenvironment.FXQUINOX_APPDATA) / file_name
+    result = {
+        section: {option: None for option in options} for section, options in sections_options.items()
+    }  # Initialize all sections and options with None
 
     if not config_path.is_file():
-        return None
+        return result
 
     config = configparser.ConfigParser()
     config.read(config_path)
 
-    # Check if the section and option exist, then return the value
-    if config.has_section(section) and config.has_option(section, option):
-        return config.get(section, option)
-    else:
-        return None
+    for section, options in sections_options.items():
+        if config.has_section(section):
+            for option in options:
+                if config.has_option(section, option):
+                    # Update the result dictionary with the actual value from the config file
+                    result[section][option] = config.get(section, option)
+
+    return result
 
 
 # PID Locking
@@ -126,7 +165,7 @@ def is_process_running(pid: int) -> bool:
         return False
 
 
-def check_and_create_lock(lock_file_path: str) -> bool:
+def check_and_create_lock_file(lock_file_path: str) -> bool:
     """Check for an existing lock and handle it appropriately.
 
     Args:
@@ -153,7 +192,7 @@ def check_and_create_lock(lock_file_path: str) -> bool:
         return True
 
 
-def remove_lock(lock_file_path: str) -> None:
+def remove_lock_file(lock_file_path: str) -> None:
     """Remove the lock file.
 
     Args:

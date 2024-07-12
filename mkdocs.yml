@@ -123,13 +123,13 @@ nav:
   - Home: index.md
   - Technical:
       - fxcore: fxcore.md
-      # - fxentities: fxentities.md
-      # - fxenvironment: fxenvironment.md
-      # - fxerrors: fxerrors.md
-      # - fxfiles: fxfiles.md
-      # - fxlog: fxlog.md
-      # - fxusd: fxusd.md
-      # - fxutils: fxutils.md
+      - fxentities: fxentities.md
+      - fxenvironment: fxenvironment.md
+      - fxerrors: fxerrors.md
+      - fxfiles: fxfiles.md
+      - fxlog: fxlog.md
+      - fxusd: fxusd.md
+      - fxutils: fxutils.md
       - Tools:
         - fxlauncher: fxlauncher.md
         - fxprojectprowser: fxprojectbrowser.md

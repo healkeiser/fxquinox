@@ -7,7 +7,6 @@ from functools import lru_cache
 import json
 import os
 from pathlib import Path
-import textwrap
 from typing import Dict, Optional, Tuple
 
 # Third-party
@@ -20,11 +19,11 @@ import yaml
 
 # Internal
 from fxquinox import fxenvironment, fxlog, fxfiles, fxutils, fxerrors, fxentities
-from fxquinox.tools import fxprojectbrowser, fxlauncher
+from fxquinox.ui.fxwidgets import fxlauncher
 
 
 # Log
-_logger = fxlog.get_logger("fxquinox.fxcore")
+_logger = fxlog.get_logger("fxcore")
 _logger.setLevel(fxlog.DEBUG)
 
 
@@ -158,7 +157,7 @@ def _check_entity(entity_type: str, entity_path: str = ".") -> bool:
     return False
 
 
-###### Projects
+###### Project
 def create_project(project_name: str, base_dir: str = ".") -> Optional[str]:
     """Creates a new project directory structure.
 
@@ -198,6 +197,158 @@ def check_project(base_dir: str = ".") -> bool:
     return _check_entity(fxentities.entity.project, base_dir)
 
 
+def get_project(from_file: bool = False) -> Dict[str, Optional[str]]:
+    """Gets the project path, name, assets path, and shots path from the
+    environment file, or the environment variables (if set beforehand).
+
+    Args:
+        from_file (bool): Whether to force read the environment file.
+            Defaults to `False`.
+
+    Returns:
+        Dict[str, Optional[str]]: A dictionary with keys
+            'FXQUINOX_PROJECT_ROOT', 'FXQUINOX_PROJECT_NAME',
+            'FXQUINOX_PROJECT_ASSETS_PATH', and 'FXQUINOX_PROJECT_SHOTS_PATH'
+            pointing to their respective paths if found, `None` otherwise.
+    """
+
+    def read_from_env() -> Dict[str, str]:
+        """Reads the environment variables and returns the project information.
+
+        Returns:
+            Dict[str, str]: A dictionary with project information.
+        """
+
+        return {key: os.getenv(key) for key in keys}
+
+    def ensure_configuration_exists():
+        """Ensures the configuration file exists and creates it with default
+        values if it doesn't.
+        """
+
+        config_path = Path(fxenvironment.FXQUINOX_APPDATA) / "fxquinox.cfg"
+        default_config = {"project": {"root": "", "name": "", "assets_path": "", "shots_path": ""}}
+        if not config_path.is_file():
+            fxutils.update_configuration_file("fxquinox.cfg", default_config)
+
+    def read_configuration() -> Dict[str, str]:
+        """Reads the configuration file and returns the project information.
+
+        Returns:
+            Dict[str, str]: A dictionary with project information.
+        """
+
+        _config = fxutils.get_configuration_file_values(
+            "fxquinox.cfg", {"project": ["root", "name", "assets_path", "shots_path"]}
+        )
+        return {
+            "FXQUINOX_PROJECT_ROOT": _config["project"]["root"],
+            "FXQUINOX_PROJECT_NAME": _config["project"]["name"],
+            "FXQUINOX_PROJECT_ASSETS_PATH": _config["project"]["assets_path"],
+            "FXQUINOX_PROJECT_SHOTS_PATH": _config["project"]["shots_path"],
+        }
+
+    def read_from_file() -> Dict[str, str]:
+        """Reads the project information from the configuration file.
+
+        Returns:
+            Dict[str, str]: A dictionary with project information.
+        """
+
+        ensure_configuration_exists()
+        return read_configuration()
+
+    keys = [
+        "FXQUINOX_PROJECT_ROOT",
+        "FXQUINOX_PROJECT_NAME",
+        "FXQUINOX_PROJECT_ASSETS_PATH",
+        "FXQUINOX_PROJECT_SHOTS_PATH",
+    ]
+    project_info = {key: None for key in keys}
+
+    if not from_file and all(os.getenv(key) for key in keys):
+        _logger.debug("Accessing environment using environment variables")
+        project_info.update(read_from_env())
+    else:
+        _logger.debug("Accessing environment using configuration file")
+        project_info.update(read_from_file())
+
+    # Update environment variables and log
+    for key, value in project_info.items():
+        os.environ[key] = str(value)
+        _logger.debug(f"{key}: '{value}'")
+
+    return project_info
+
+
+def set_project(
+    launcher: Optional[fxlauncher.FXLauncherSystemTray] = None,
+    quit_on_last_window_closed: bool = False,
+    project_path: str = None,
+) -> Optional[Tuple[str, str]]:
+    """Sets the project path in the project browser.
+
+    Args:
+        launcher (FXLauncherSystemTray): The launcher instance to update the
+            project name. Defaults to `None`.
+        quit_on_last_window_closed (bool): Whether to quit the application when
+            the last window is closed. Defaults to `False`.
+        project_dir (str): The project directory to set. Defaults to `None`.
+
+    Returns:
+        Optional[dict]: A dictionary with the project root, name, assets path,
+            and shots path if set, `None` otherwise.
+    """
+
+    if not project_path:
+        app = fxwidgets.FXApplication().instance()
+        app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
+
+        project_path = QFileDialog.getExistingDirectory(
+            caption="Select Project Directory",
+            directory=fxenvironment.FXQUINOX_HOME,
+            options=QFileDialog.ShowDirsOnly,
+        )
+
+    if project_path and check_project(project_path):
+        project_path = Path(project_path).resolve().as_posix()
+
+        # Save the current project to the config file
+        project_name = fxfiles.get_metadata(project_path, "name")
+        fxutils.update_configuration_file(
+            "fxquinox.cfg",
+            {
+                "project": {
+                    "root": project_path,
+                    "name": project_name,
+                    "assets_path": f"{project_path}/production/assets",
+                    "shots_path": f"{project_path}/production/shots",
+                }
+            },
+        )
+
+        # Update the environment variables
+        os.environ["FXQUINOX_PROJECT_ROOT"] = project_path
+        os.environ["FXQUINOX_PROJECT_NAME"] = project_name
+        os.environ["FXQUINOX_PROJECT_ASSETS_PATH"] = f"{project_path}/production/assets"
+        os.environ["FXQUINOX_PROJECT_SHOTS_PATH"] = f"{project_path}/production/shots"
+
+        project_info = get_project()
+
+        # Emit signal to update the launcher label
+        if launcher:
+            _logger.debug(f"Launcher: {launcher}")
+            _logger.debug("Emitting `project_changed` signal")
+            launcher.project_changed.emit(project_info)
+
+        _logger.info(f"Project path set to '{project_path}'")
+        return project_info
+
+    else:
+        _logger.warning("Invalid project path")
+        return None
+
+
 ###### Sequences
 def create_sequence(sequence_name: str, base_dir: str = ".", parent: QWidget = None) -> Optional[str]:
     """Creates a new sequence directory structure within a project.
@@ -228,7 +379,7 @@ def create_sequence(sequence_name: str, base_dir: str = ".", parent: QWidget = N
     # creating the sequence
     base_dir_path = Path(base_dir).resolve()
 
-    if not _check_shots_directory(base_dir_path):
+    if not check_shots_directory(base_dir_path):
         error_message = f"'{base_dir_path.as_posix()}' is not a valid shots directory"
         _logger.error(error_message)
         raise fxerrors.InvalidSequencesDirectoryError(error_message)
@@ -264,7 +415,7 @@ def create_sequences(sequence_names: list[str], base_dir: str = ".") -> Optional
     # creating the sequence
     base_dir_path = Path(base_dir).resolve()
 
-    if not _check_shots_directory(base_dir_path):
+    if not check_shots_directory(base_dir_path):
         error_message = f"'{base_dir_path}' is not a valid shots directory"
         _logger.error(error_message)
         raise fxerrors.InvalidSequencesDirectoryError(error_message)
@@ -295,7 +446,7 @@ def check_sequence(base_dir: str = ".") -> bool:
 
 # ? It could appear as this function should be in the shots section, but it's
 # ? here because the `shots` directory is the one holding the sequences.
-def _check_shots_directory(base_dir: str = ".") -> bool:
+def check_shots_directory(base_dir: str = ".") -> bool:
     """Checks if a valid "shots" (which holds the sequences) directory
     structure exists within a project.
 
@@ -443,7 +594,7 @@ def create_asset(asset_name: str, base_dir: str = ".", parent: QWidget = None) -
     # creating the asset
     base_dir_path = Path(base_dir).resolve()
 
-    if not _check_assets_directory(base_dir_path):
+    if not check_assets_directory(base_dir_path):
         error_message = f"'{base_dir_path.as_posix()}' is not a valid assets directory"
         _logger.error(error_message)
         raise fxerrors.InvalidAssetsDirectoryError(error_message)
@@ -478,7 +629,7 @@ def create_assets(asset_names: list[str], base_dir: str = ".") -> Optional[list[
     # Check the parent entity sequence validity before creating the shot
     base_dir_path = Path(base_dir).resolve()
 
-    if not _check_assets_directory(base_dir_path):
+    if not check_assets_directory(base_dir_path):
         error_message = f"'{base_dir_path.as_posix()}' is not a valid assets directory"
         _logger.error(error_message)
         raise fxerrors.InvalidAssetsDirectoryError(error_message)
@@ -507,7 +658,7 @@ def check_asset(base_dir: str = ".") -> bool:
     return _check_entity(fxentities.entity.asset, base_dir)
 
 
-def _check_assets_directory(base_dir: str = ".") -> bool:
+def check_assets_directory(base_dir: str = ".") -> bool:
     """Checks if a valid "assets" (which holds the assets) directory
     structure exists within a project.
 
@@ -551,7 +702,7 @@ def create_step(step_name: str, base_dir: str = ".", parent: QWidget = None) -> 
 
     base_dir_path = Path(base_dir).resolve()
 
-    if not _check_workfiles_directory(base_dir_path):
+    if not check_workfiles_directory(base_dir_path):
         error_message = f"'{base_dir_path.as_posix()}' is not a valid workfiles directory"
         _logger.error(error_message)
         raise fxerrors.InvalidStepError(error_message)
@@ -667,7 +818,7 @@ def create_workfile(workfile_name: str, base_dir: str = ".", parent: QWidget = N
     return _create_entity(fxentities.entity.workfile, workfile_name, base_dir_path, parent)
 
 
-def _check_workfiles_directory(base_dir: str = ".") -> bool:
+def check_workfiles_directory(base_dir: str = ".") -> bool:
     """Checks if a valid workfile directory structure exists within a project.
 
     Args:
@@ -680,335 +831,3 @@ def _check_workfiles_directory(base_dir: str = ".") -> bool:
     """
 
     return _check_entity(fxentities.entity.workfiles_dir, base_dir)
-
-
-###### UI
-def run_create_project():
-    """Runs the create project UI."""
-
-    # TODO: Implement the runtime create project window
-    pass
-
-
-def get_project() -> Dict[str, Optional[str]]:
-    """Gets the project path, name, assets path, and shots path from the
-    environment file, or the environment variables (if set beforehand).
-
-    Returns:
-        Dict[str, Optional[str]]: A dictionary with keys
-            'FXQUINOX_PROJECT_ROOT', 'FXQUINOX_PROJECT_NAME',
-            'FXQUINOX_PROJECT_ASSETS', and 'FXQUINOX_PROJECT_SHOTS' pointing to
-            their respective paths if found, `None` otherwise.
-    """
-
-    keys = ["FXQUINOX_PROJECT_ROOT", "FXQUINOX_PROJECT_NAME", "FXQUINOX_PROJECT_ASSETS", "FXQUINOX_PROJECT_SHOTS"]
-    project_info = {key: None for key in keys}
-
-    # Early return if the environment variables are set
-    if all(os.getenv(key) for key in keys):
-        _logger.info("Accessing environment using environment variables")
-        for key in keys:
-            project_info[key] = os.getenv(key)
-            _logger.debug(f"${key}: '{project_info[key]}'")
-        return project_info
-
-    # Else, parse the environment file
-    try:
-        with open(fxenvironment.FXQUINOX_ENV_FILE, "r") as file:
-            for line in file:
-                for key in keys:
-                    if line.startswith(key):
-                        _, value = line.strip().split("=", 1)
-                        project_info[key] = value.strip("'\"")  # Remove quotes
-                        break  # Move to the next line after finding a match
-
-                # If all values are found, no need to continue reading the file
-                if all(project_info.values()):
-                    break
-
-    except FileNotFoundError:
-        _logger.error(f"File not found: '{fxenvironment.FXQUINOX_ENV_FILE.as_posix()}'")
-        return project_info
-
-    # Update environment variables
-    for key, value in project_info.items():
-        os.environ[key] = str(value)
-
-    _logger.info("Accessing environment using environment file")
-    for key, value in project_info.items():
-        _logger.debug(f"{key.replace('FXQUINOX_', '').replace('_', ' ').capitalize()}: '{value}'")
-
-    return project_info
-
-
-def set_project(
-    launcher: Optional[fxlauncher.FXLauncherSystemTray] = None,
-    quit_on_last_window_closed: bool = False,
-    project_path: str = None,
-) -> Optional[Tuple[str, str]]:
-    """Sets the project path in the project browser.
-
-    Args:
-        launcher (FXLauncherSystemTray): The launcher instance to update the project name.
-            Defaults to `None`.
-        quit_on_last_window_closed (bool): Whether to quit the application when
-            the last window is closed. Defaults to `False`.
-        project_dir (str): The project directory to set. Defaults to `None`.
-
-    Returns:
-        Optional[Tuple[str, str]]: A tuple with project path and project name
-            if set, `None` otherwise.
-    """
-
-    if not project_path:
-        app = fxwidgets.FXApplication().instance()
-        app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
-
-        config_file_name = "general.cfg"
-        config_section_name = "set_project"
-        config_option_name = "last_project_directory"
-
-        previous_directory = (
-            fxutils.get_configuration_file_value(config_file_name, config_section_name, config_option_name)
-            or Path.home().resolve().as_posix()
-        )
-
-        project_path = QFileDialog.getExistingDirectory(
-            caption="Select Project Directory",
-            directory=previous_directory,
-            options=QFileDialog.ShowDirsOnly,
-        )
-
-    if project_path and check_project(project_path):
-        project_path = Path(project_path).resolve().as_posix()
-
-        # Update the configuration file with last traveled directory
-        fxutils.update_configuration_file(config_file_name, config_section_name, config_option_name, project_path)
-
-        # Save a file to hold the current project
-        file_path = Path(fxenvironment.FXQUINOX_APPDATA) / "fxquinox.env"
-        project_name = fxfiles.get_metadata(project_path, "name")
-
-        # Read the existing content
-        if file_path.exists():
-            content = file_path.read_text()
-        else:
-            content = ""
-
-        # Split the content into lines for easier manipulation
-        lines = content.splitlines()
-
-        # Track if lines were found and replaced
-        root_replaced = False
-        name_replaced = False
-        assets_replaced = False
-        shots_replaced = False
-
-        # Replace or note the lines to append
-        for i, line in enumerate(lines):
-            if "FXQUINOX_PROJECT_ROOT=" in line:
-                lines[i] = f"FXQUINOX_PROJECT_ROOT='{project_path}'"
-                root_replaced = True
-            elif "FXQUINOX_PROJECT_NAME=" in line:
-                lines[i] = f"FXQUINOX_PROJECT_NAME='{project_name}'"
-                name_replaced = True
-            elif "FXQUINOX_PROJECT_ASSETS=" in line:
-                lines[i] = f"FXQUINOX_PROJECT_ASSETS='{project_path}/production/assets'"
-                assets_replaced = True
-            elif "FXQUINOX_PROJECT_SHOTS=" in line:
-                lines[i] = f"FXQUINOX_PROJECT_SHOTS='{project_path}/production/shots'"
-                shots_replaced = True
-
-        # Append lines if they were not found
-        if not root_replaced:
-            lines.append(f"FXQUINOX_PROJECT_ROOT='{project_path}'")
-        if not name_replaced:
-            lines.append(f"FXQUINOX_PROJECT_NAME='{project_name}'")
-        if not assets_replaced:
-            lines.append(f"FXQUINOX_PROJECT_ASSETS='{project_path}/production/assets'")
-        if not shots_replaced:
-            lines.append(f"FXQUINOX_PROJECT_SHOTS='{project_path}/production/shots'")
-
-        # Join the lines back and write to the file
-        content = "\n".join(lines)
-        file_path.write_text(content)
-
-        # Update the environment variables
-        os.environ["FXQUINOX_PROJECT_ROOT"] = project_path
-        os.environ["FXQUINOX_PROJECT_NAME"] = project_name
-        os.environ["FXQUINOX_PROJECT_ASSETS"] = f"{project_path}/production/assets"
-        os.environ["FXQUINOX_PROJECT_SHOTS"] = f"{project_path}/production/shots"
-
-        # Emit signal to update the launcher label
-        if launcher:
-            launcher.project_changed.emit(project_path, project_name)
-
-        _logger.info(f"Project path set to '{project_path}'")
-        return project_path, project_name
-
-    else:
-        _logger.warning("Invalid project path")
-        return None
-
-
-def open_project_directory() -> None:
-    """Opens the project directory in the system file manager."""
-
-    project_info = get_project()
-    project_root = project_info.get("FXQUINOX_PROJECT_ROOT", None)
-    if project_root:
-        fxutils.open_directory(project_root)
-    else:
-        _logger.warning("No project set")
-
-
-def run_launcher(
-    parent: QWidget = None, quit_on_last_window_closed: bool = True, show_splashscreen: bool = False
-) -> None:
-    """Runs the launcher UI.
-
-    Args:
-        quit_on_last_window_closed (bool): Whether to quit the application when
-            the last window is closed. Defaults to `True`.
-        show_splashscreen (bool): Whether to show the splash screen.
-            Defaults to `False`.
-    """
-
-    # Check for an existing lock file
-    lock_file = Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock"
-    if not fxutils.check_and_create_lock(lock_file):
-        _logger.warning("Launcher already running")
-        return
-    else:
-        _logger.debug(f"Lock file created: {lock_file.as_posix()}")
-
-    # Get the current project
-    project_info = get_project()
-    project_root = project_info.get("FXQUINOX_PROJECT_ROOT", None)
-    project_name = project_info.get("FXQUINOX_PROJECT_NAME", None)
-
-    # If it doesn't exist but has been set in the environment file, error
-    if project_root and not Path(project_root).exists():
-        _logger.error(f"Project set in the environment file doesn't exist: '{project_root}'")
-        # Ask the user if they want to delete the environment file, allowing
-        # the creation of a new one from the launcher
-        while True:
-            confirmation = input(f"Delete the corrupted environment file? (y/n): ")
-            if confirmation.lower() == "y":
-                Path(fxenvironment.FXQUINOX_ENV_FILE).unlink()
-                _logger.info(f"Environment '{Path(fxenvironment.FXQUINOX_ENV_FILE).as_posix()}' file deleted")
-                break
-            elif confirmation.lower() == "n":
-                _logger.info(f"Deletion cancelled")
-                return None
-            else:
-                _logger.warning("Please enter 'y' to continue or 'n' to cancel")
-
-    # Application
-    if not parent:
-        app = fxwidgets.FXApplication().instance()
-        app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
-
-    # Icon
-    icon_path = (Path(__file__).parents[1] / "images" / "fxquinox_logo_light.svg").as_posix()
-
-    if show_splashscreen:
-        splash_image_path = (Path(__file__).parents[1] / "images" / "splash.png").as_posix()
-
-        # Splashscreen
-        information = textwrap.dedent(
-            """\
-        USD centric pipeline for feature animation and VFX projects. Made with love by Valentin Beaumont.
-
-        This project is a very early work in progress and is not ready for production use.
-        """
-        )
-        splashscreen = fxwidgets.FXSplashScreen(
-            image_path=splash_image_path,
-            icon=icon_path,
-            title="Fxquinox",
-            information=information,
-            project=project_name or "No project set",
-            version="0.0.1",
-            company="fxquinox",
-        )
-        splashscreen.show()
-
-        # ' Launcher
-        splashscreen.showMessage("Communication with CG gods...")
-        splashscreen.showMessage("Loading project...")
-        temp_widget = fxlauncher._FXTempWidget(parent=None)
-        splashscreen.showMessage("Starting launcher...")
-        launcher = fxlauncher.FXLauncherSystemTray(parent=None, icon=icon_path, project=project_name)
-        splashscreen.finish(temp_widget)
-    else:
-        launcher = fxlauncher.FXLauncherSystemTray(parent=None, icon=icon_path, project=project_name)
-
-    launcher.show()
-    _logger.info("Started launcher")
-
-    if not parent:
-        app.exec_()
-
-
-def run_project_browser(
-    parent: QWidget = None, quit_on_last_window_closed: bool = False, dcc: fxentities.DCC = fxentities.DCC.standalone
-) -> QMainWindow:
-    """Runs the project browser UI.
-
-    Args:
-        parent (QWidget): The parent widget. Defaults to `None`.
-        quit_on_last_window_closed (bool): Whether to quit the application when
-            the last window is closed. Defaults to `False`.
-        dcc (DCC): The DCC to use. Defaults to `None`.
-
-    Returns:
-        QMainWindow: The project browser window.
-    """
-
-    base_path = Path(__file__).resolve().parent
-    images_path = base_path.parent / "images"
-
-    if not parent:
-        app = fxwidgets.FXApplication.instance()
-        app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
-
-    # Get current project
-    project_info = get_project()
-    project_name = project_info.get("FXQUINOX_PROJECT_NAME", None)
-
-    ui_file = base_path / "ui" / "project_browser.ui"
-    icon_path = images_path / "fxquinox_logo_background_light.svg"
-
-    window = fxprojectbrowser.FXProjectBrowserWindow(
-        parent=parent if isinstance(parent, QWidget) else None,
-        icon=icon_path.resolve().as_posix(),
-        title="Project Browser",
-        size=(2000, 1200),
-        project=project_name,
-        version="0.0.1",
-        company="fxquinox",
-        ui_file=ui_file.resolve().as_posix(),
-        dcc=dcc,
-    )
-    window.show()
-    # window.setStyleSheet(fxstyle.load_stylesheet())
-
-    if not parent:
-        app.exec_()
-
-    return window
-
-
-###### Runtime
-
-# os.environ["FXQUINOX_DEBUG"] = "1"
-
-if __name__ == "__main__":
-    # Debug
-    if os.getenv("FXQUINOX_DEBUG") == "1":
-        _logger.info("Running in debug mode")
-    # Production
-    else:
-        run_project_browser(parent=None, quit_on_last_window_closed=True, dcc=fxentities.DCC.houdini)
-        # run_launcher(parent=None, show_splashscreen=True)

@@ -2,5 +2,6 @@ fxgui>=2.2.4
 colorama>=0.4.6
 PyYAML>=6.0.1
 tabulate>=0.9.0
+pillow>=10.4.0
 # jupyter
 # ipykernel

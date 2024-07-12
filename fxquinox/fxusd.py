@@ -1,11 +1,10 @@
 """Module for creating and manipulating USD (Universal Scene Description) files.
 
-Some functions coming from:
-- [usd_scene_construction_utils](https://github.com/NVIDIA-Omniverse/usd_scene_construction_utils/blob/main/usd_scene_construction_utils.py).
+Some functions coming from [usd_scene_construction_utils](https://github.com/NVIDIA-Omniverse/usd_scene_construction_utils/blob/main/usd_scene_construction_utils.py).
+And here is the USD C++ API [documentation](https://openusd.org/release/api/index.html).
 """
 
 # Built-in
-import os
 import math
 import numpy as np
 from pathlib import Path
@@ -13,14 +12,14 @@ from typing import Any, Optional, Sequence, Tuple, Callable, List, Dict
 from typing_extensions import Literal
 
 # Third-party
-from pxr import Gf, Plug, Sdf, Usd, Kind, UsdGeom, UsdLux, UsdShade
+from pxr import Gf, Plug, Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
 # Internal
 from fxquinox import fxlog
 
 
 # Log
-_logger = fxlog.get_logger("fxquinix.fxusd")
+_logger = fxlog.get_logger("fxusd")
 _logger.setLevel(fxlog.DEBUG)
 
 
@@ -193,7 +192,7 @@ def add_box(stage: Usd.Stage, path: str, size: Tuple[float, float, float]) -> Us
     return get_prim(stage, path)
 
 
-def add_xform(stage: Usd.Stage, path: str):
+def add_xform(stage: Usd.Stage, path: str) -> Usd.Prim:
     """Adds a USD transform (Xform) to a USD stage.
 
     This method adds a USD Xform to the USD stage at a given path.  This is
@@ -213,7 +212,7 @@ def add_xform(stage: Usd.Stage, path: str):
     return get_prim(stage, path)
 
 
-def add_plane(stage: Usd.Stage, path: str, size: Tuple[float, float], uv: Tuple[float, float] = (1, 1)):
+def add_plane(stage: Usd.Stage, path: str, size: Tuple[float, float], uv: Tuple[float, float] = (1, 1)) -> Usd.Prim:
     """Adds a 2D plane to a USD stage.
 
     Args:
@@ -296,7 +295,9 @@ def add_dome_light(
     return light
 
 
-def add_sphere_light(stage: Usd.Stage, path: str, intensity=30000, radius=50, angle=180, exposure=0.0):
+def add_sphere_light(
+    stage: Usd.Stage, path: str, intensity=30000, radius=50, angle=180, exposure=0.0
+) -> UsdLux.SphereLight:
     """Adds a sphere light to a USD stage.
 
     Args:
@@ -397,7 +398,7 @@ def export_stage(stage: Usd.Stage, filepath: str, default_prim=None):
 
     Args:
         stage (Usd.Stage): The USD stage to export.
-        path (str):  The filepath to export the USD stage to.
+        filepath (str):  The filepath to export the USD stage to.
         default_prim (Optional[str]):  The path of the USD prim in the
             stage to set as the default prim.  This is useful when you
             want to use the exported USD as a reference, or when you want
@@ -409,7 +410,7 @@ def export_stage(stage: Usd.Stage, filepath: str, default_prim=None):
     stage.Export(filepath)
 
 
-def add_semantics(prim: Usd.Prim, type: str, name: str):
+def add_semantics(prim: Usd.Prim, type: str, name: str) -> Usd.Prim:
     """Adds semantics to a USD prim.
 
     This function adds semantics to a USD prim.  This is useful for assigning
@@ -428,7 +429,7 @@ def add_semantics(prim: Usd.Prim, type: str, name: str):
             correspond to the class label.
 
     Returns:
-        Usd.Prim:  The USD prim with added semantics.
+        Usd.Prim: The USD prim with added semantics.
     """
 
     prim.AddAppliedSchema(f"SemanticsAPI:{type}_{name}")
@@ -438,7 +439,7 @@ def add_semantics(prim: Usd.Prim, type: str, name: str):
     return prim
 
 
-def bind_material(prim: Usd.Prim, material: UsdShade.Material):
+def bind_material(prim: Usd.Prim, material: UsdShade.Material) -> Usd.Prim:
     """Binds a USD material to a USD prim.
 
     Args:
@@ -455,7 +456,7 @@ def bind_material(prim: Usd.Prim, material: UsdShade.Material):
     return prim
 
 
-def collapse_xform(prim: Usd.Prim):
+def collapse_xform(prim: Usd.Prim) -> Usd.Prim:
     """Collapses all xforms on a given USD prim.
 
     This method collapses all Xforms on a given prim.  For example,
@@ -542,14 +543,16 @@ def get_num_xform_ops(prim: Usd.Prim) -> int:
 
 
 def apply_xform_matrix(prim: Usd.Prim, transform: np.ndarray) -> Usd.Prim:
-    """Applies a homogeneous transformation matrix to the current prim's xform list.
+    """Applies a homogeneous transformation matrix to the current prim's xform
+    list.
 
     Args:
         prim (Usd.Prim):  The USD prim to transform.
         transform (np.ndarray):  The 4x4 homogeneous transform matrix to apply.
 
     Returns:
-        Usd.Prim:  The modified USD prim with the provided transform applied after current transforms.
+        Usd.Prim:  The modified USD prim with the provided transform applied
+            after current transforms.
     """
 
     x = UsdGeom.Xformable(prim)
@@ -558,12 +561,13 @@ def apply_xform_matrix(prim: Usd.Prim, transform: np.ndarray) -> Usd.Prim:
     return prim
 
 
-def scale(prim: Usd.Prim, scale: Tuple[float, float, float]):
+def scale(prim: Usd.Prim, scale: Tuple[float, float, float]) -> Usd.Prim:
     """Scales a prim along the (x, y, z) dimensions.
 
     Args:
         prim (Usd.Prim):  The USD prim to scale.
-        scale (Tuple[float, float, float]):  The scaling factors for the (x, y, z) dimensions.
+        scale (Tuple[float, float, float]):  The scaling factors for the
+            (x, y, z) dimensions.
 
     Returns:
         Usd.Prim:  The scaled prim.
@@ -575,12 +579,13 @@ def scale(prim: Usd.Prim, scale: Tuple[float, float, float]):
     return prim
 
 
-def translate(prim: Usd.Prim, offset: Tuple[float, float, float]):
+def translate(prim: Usd.Prim, offset: Tuple[float, float, float]) -> Usd.Prim:
     """Translates a prim along the (x, y, z) dimensions.
 
     Args:
         prim (Usd.Prim):  The USD prim to translate.
-        offset (Tuple[float, float, float]):  The offsets for the (x, y, z) dimensions.
+        offset (Tuple[float, float, float]):  The offsets for the (x, y, z)
+            dimensions.
 
     Returns:
         Usd.Prim:  The translated prim.
@@ -592,15 +597,15 @@ def translate(prim: Usd.Prim, offset: Tuple[float, float, float]):
     return prim
 
 
-def rotate_x(prim: Usd.Prim, angle: float):
+def rotate_x(prim: Usd.Prim, angle: float) -> Usd.Prim:
     """Rotates a prim around the X axis.
 
     Args:
-        prim (Usd.Prim):  The USD prim to rotate.
-        angle (float):  The rotation angle in degrees.
+        prim (Usd.Prim): The USD prim to rotate.
+        angle (float): The rotation angle in degrees.
 
     Returns:
-        Usd.Prim:  The rotated prim.
+        Usd.Prim: The rotated prim.
     """
 
     x = UsdGeom.Xformable(prim)
@@ -609,15 +614,15 @@ def rotate_x(prim: Usd.Prim, angle: float):
     return prim
 
 
-def rotate_y(prim: Usd.Prim, angle: float):
+def rotate_y(prim: Usd.Prim, angle: float) -> Usd.Prim:
     """Rotates a prim around the Y axis.
 
     Args:
-        prim (Usd.Prim):  The USD prim to rotate.
-        angle (float):  The rotation angle in degrees.
+        prim (Usd.Prim): The USD prim to rotate.
+        angle (float): The rotation angle in degrees.
 
     Returns:
-        Usd.Prim:  The rotated prim.
+        Usd.Prim: The rotated prim.
     """
 
     x = UsdGeom.Xformable(prim)
@@ -626,31 +631,33 @@ def rotate_y(prim: Usd.Prim, angle: float):
     return prim
 
 
-def rotate_z(prim: Usd.Prim, angle: float):
+def rotate_z(prim: Usd.Prim, angle: float) -> Usd.Prim:
     """Rotates a prim around the Z axis.
 
     Args:
-        prim (Usd.Prim):  The USD prim to rotate.
-        angle (float):  The rotation angle in degrees.
+        prim (Usd.Prim): The USD prim to rotate.
+        angle (float): The rotation angle in degrees.
 
     Returns:
-        Usd.Prim:  The rotated prim.
+        Usd.Prim: The rotated prim.
     """
+
     x = UsdGeom.Xformable(prim)
     x.AddRotateZOp(opSuffix=f"num_{get_num_xform_ops(prim)}").Set(angle)
     xform_op_move_end_to_front(prim)
     return prim
 
 
-def stack_prims(prims: Sequence[Usd.Prim], axis: int = 2, gap: float = 0, align_center=False):
+def stack_prims(prims: Sequence[Usd.Prim], axis: int = 2, gap: float = 0, align_center=False) -> Sequence[Usd.Prim]:
     """Stacks prims on top of each other (or side-by-side).
 
     This function stacks prims by placing them so their bounding boxes
     are adjacent along a given axis.
 
     Args:
-        prim (Usd.Prim):  The USD prims to stack.
-        axis (int): The axis along which to stack the prims. x=0, y=1, z=2. Default 2.
+        prims (Usd.Prim):  The USD prims to stack.
+        axis (int): The axis along which to stack the prims. x=0, y=1, z=2.
+            Defaults to `2`.
         gap (float):  The spacing to add between stacked elements.
 
     Returns:
@@ -690,7 +697,9 @@ def compute_bbox(prim: Usd.Prim) -> Tuple[Tuple[float, float, float], Tuple[floa
         prim (Usd.Prim):  The USD prim to compute the bounding box of.
 
     Returns:
-        Tuple[Tuple[float, float, float], Tuple[float, float, float]] The ((min_x, min_y, min_z), (max_x, max_y, max_z)) values of the bounding box.
+        Tuple[Tuple[float, float, float], Tuple[float, float, float]]
+            The ((min_x, min_y, min_z), (max_x, max_y, max_z)) values of the
+            bounding box.
     """
 
     bbox_cache: UsdGeom.BBoxCache = UsdGeom.BBoxCache(
@@ -737,7 +746,7 @@ def compute_bbox_center(prim: Usd.Prim) -> Tuple[float, float, float]:
     return center
 
 
-def set_visibility(prim: Usd.Prim, visibility: Literal["inherited", "invisible"] = "inherited"):
+def set_visibility(prim: Usd.Prim, visibility: Literal["inherited", "invisible"] = "inherited") -> Usd.Prim:
     """Sets the visibility of a prim.
 
     Args:

@@ -27,7 +27,6 @@ __all__ = [
     "set_log_level",
 ]
 
-
 # Globals
 CRITICAL = 50
 FATAL = CRITICAL
@@ -45,6 +44,24 @@ just_fix_windows_console()
 
 
 class FXFormatter(logging.Formatter):
+    """Custom log formatter that adds color to log messages based on the log
+    level.
+
+    Args:
+        fmt (str): The log message format string.
+        datefmt (str): The date format string.
+        style (str): The format style.
+        color (bool): Whether to enable color logging. Defaults to `False`.
+        separator (bool): Whether to enable a separator between log messages.
+            Defaults to `False`.
+
+    Attributes:
+        LEVEL_COLORS (dict): A dictionary mapping log levels to their respective
+            color codes.
+        color (bool): Whether to enable color logging.
+        separator (bool): Whether to enable a separator between log messages.
+    """
+
     def __init__(self, fmt=None, datefmt=None, style="{", color=False, separator=False):
         super().__init__(fmt=fmt, datefmt=datefmt, style=style)
         self.LEVEL_COLORS = {
@@ -77,7 +94,7 @@ class FXFormatter(logging.Formatter):
             log_fmt = (
                 f"{separator}{{asctime}} | {{name:^{width_name}s}} | "
                 f"{Fore.YELLOW}{{lineno}}{Style.RESET_ALL} | "
-                # f"{Fore.YELLOW}{{funcName:<{width_funcName}s}}{Style.RESET_ALL} |  "
+                # f"{Fore.YELLOW}{{funcName:^{width_funcName}s}}{Style.RESET_ALL} |  "
                 f"{Style.BRIGHT}{self.LEVEL_COLORS.get(record.levelno, Fore.WHITE)}"
                 f"{{levelname:>{width_levelname}s}}{Style.RESET_ALL} | {{message}}"
             )
@@ -85,7 +102,7 @@ class FXFormatter(logging.Formatter):
             log_fmt = (
                 f"{separator}{{asctime}} | {{name:^{width_name}s}} | "
                 f"{{lineno}} | "
-                # f"{{funcName:<{width_funcName}s}} | "
+                # f"{{funcName:^{width_funcName}s}} | "
                 f"{{levelname:>{width_levelname}s}} | {{message}}"
             )
 
@@ -95,6 +112,12 @@ class FXFormatter(logging.Formatter):
 
 
 class FXTimedRotatingFileHandler(logging.handlers.TimedRotatingFileHandler):
+    """Custom log file handler that rotates log files at midnight.
+
+    Attributes:
+        suffix (str): The suffix to append to the rotated log file.
+    """
+
     def rotation_filename(self, default_name: str) -> str:
         name, ext = os.path.splitext(default_name)
         return f"{name}.{self.suffix}{ext}"
@@ -152,7 +175,7 @@ def set_log_level(level: int) -> None:
         level (int): The logging level to set.
     """
 
-    for logger_name, logger in logging.Logger.manager.loggerDict.items():
+    for _, logger in logging.Logger.manager.loggerDict.items():
         if isinstance(logger, logging.Logger) and logger.handlers:
             for handler in logger.handlers:
                 if isinstance(handler.formatter, FXFormatter):

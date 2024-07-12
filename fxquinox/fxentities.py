@@ -2,6 +2,14 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
+# Internal
+from fxquinox import fxlog
+
+
+# Log
+_logger = fxlog.get_logger("fxentities")
+_logger.setLevel(fxlog.DEBUG)
+
 
 class entity:
     """Holds the entity names."""

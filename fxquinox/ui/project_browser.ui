@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>project_browser</class>
- <widget class="QWidget" name="project_browser">
+ <class>FXProjectBrowser</class>
+ <widget class="QWidget" name="FXProjectBrowser">
   <property name="geometry">
    <rect>
     <x>0</x>
