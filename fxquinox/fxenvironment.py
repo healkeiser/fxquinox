@@ -25,6 +25,8 @@ just_fix_windows_console()
 # Get the current OS
 _os_name = platform.system()
 
+FXQUINOX_ROOT = os.environ["FXQUINOX_ROOT"] = Path(__file__).parents[1].resolve().as_posix()
+
 
 # Package
 def get_version_from_setup() -> str:
@@ -34,7 +36,7 @@ def get_version_from_setup() -> str:
         str: The version string.
     """
 
-    setup_file_path = Path(__file__).parents[1].joinpath("setup.py")
+    setup_file_path = Path(FXQUINOX_ROOT) / "setup.py"
     version_match = re.compile(r"^.*version=['\"]([^'\"]*)['\"].*$", re.M)
     with open(setup_file_path, "r") as f:
         setup_contents = f.read()
@@ -50,8 +52,6 @@ FXQUINOX_VERSION = get_version_from_setup()
 
 
 # Set up the environment variables
-FXQUINOX_ROOT = os.environ["FXQUINOX_ROOT"] = Path(__file__).parents[1].resolve().as_posix()
-
 _home = Path.home()
 FXQUINOX_HOME = os.environ["FXQUINOX_HOME"] = _home.resolve().as_posix()
 
@@ -75,9 +75,13 @@ FXQUINOX_ENV_FILE = Path(FXQUINOX_APPDATA).resolve() / "fxquinox.env"
 FXQUINOX_CONFIG_FILE = Path(FXQUINOX_APPDATA).resolve() / "fxquinox.cfg"
 
 # Internal to the package
-_FXQUINOX_MODULE = Path(FXQUINOX_ROOT, "fxquinox").resolve().as_posix()
-_FXQUINOX_UI = Path(_FXQUINOX_MODULE, "ui").resolve().as_posix()
-_FQUINOX_IMAGES = Path(FXQUINOX_ROOT, "images").resolve().as_posix()
+_FQUINOX_IMAGES = Path(FXQUINOX_ROOT, "images").resolve().as_posix()  # fxquinox/images
+
+_FXQUINOX_MODULE = Path(FXQUINOX_ROOT, "fxquinox").resolve().as_posix()  # fxquinox/fxquinox
+_FXQUINOX_CLI = Path(_FXQUINOX_MODULE, "cli").resolve().as_posix()  # fxquinox/fxquinox/cli
+_FXQUINOX_STRUCTURES = Path(_FXQUINOX_MODULE, "structures").resolve().as_posix()  # fxquinox/fxquinox/structures
+_FXQUINOX_TOOLS = Path(_FXQUINOX_MODULE, "tools").resolve().as_posix()  # fxquinox/fxquinox/tools
+_FXQUINOX_UI = Path(_FXQUINOX_MODULE, "ui").resolve().as_posix()  # fxquinox/fxquinox/ui
 
 
 def setup_environment() -> None:
@@ -103,8 +107,15 @@ def _test() -> None:
         [f"{Fore.YELLOW}$FXQUINOX_TEMP{Style.RESET_ALL}", f"{Fore.GREEN}{FXQUINOX_TEMP}{Style.RESET_ALL}"],
         [f"{Fore.YELLOW}$FXQUINOX_APPDATA{Style.RESET_ALL}", f"{Fore.GREEN}{FXQUINOX_APPDATA}{Style.RESET_ALL}"],
         [f"{Fore.YELLOW}$FXQUINOX_LOGS{Style.RESET_ALL}", f"{Fore.GREEN}{FXQUINOX_LOGS}{Style.RESET_ALL}"],
-        [f"{Fore.YELLOW}$_FXQUINOX_UI{Style.RESET_ALL}", f"{Fore.GREEN}{_FXQUINOX_UI}{Style.RESET_ALL}"],
         [f"{Fore.YELLOW}$_FQUINOX_IMAGES{Style.RESET_ALL}", f"{Fore.GREEN}{_FQUINOX_IMAGES}{Style.RESET_ALL}"],
+        [f"{Fore.YELLOW}$_FXQUINOX_MODULE{Style.RESET_ALL}", f"{Fore.GREEN}{_FXQUINOX_MODULE}{Style.RESET_ALL}"],
+        [f"{Fore.YELLOW}$_FXQUINOX_CLI{Style.RESET_ALL}", f"{Fore.GREEN}{_FXQUINOX_CLI}{Style.RESET_ALL}"],
+        [
+            f"{Fore.YELLOW}$_FXQUINOX_STRUCTURES{Style.RESET_ALL}",
+            f"{Fore.GREEN}{_FXQUINOX_STRUCTURES}{Style.RESET_ALL}",
+        ],
+        [f"{Fore.YELLOW}$_FXQUINOX_TOOLS{Style.RESET_ALL}", f"{Fore.GREEN}{_FXQUINOX_TOOLS}{Style.RESET_ALL}"],
+        [f"{Fore.YELLOW}$_FXQUINOX_UI{Style.RESET_ALL}", f"{Fore.GREEN}{_FXQUINOX_UI}{Style.RESET_ALL}"],
     ]
     print(tabulate(env_vars, headers=["Variable", "Value"], tablefmt="pretty", colalign=("right", "left")))
 

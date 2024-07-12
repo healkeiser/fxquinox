@@ -18,6 +18,7 @@ import yaml
 from fxquinox import fxenvironment, fxlog, fxutils, fxcore
 from fxquinox.ui.fxwidgets import fxprojectbrowser
 from fxquinox.ui.fxwidgets.fxdialog import FXDialog
+from fxquinox.ui.fxwidgets.fxexecutablerunnerthread import FXExecutableRunnerThread
 
 
 # Log
@@ -32,42 +33,12 @@ class _FXTempWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setGeometry(0, 0, 0, 0)
-        self.hide()
         self.close()
 
+    def closeEvent(self, _) -> None:
+        """Overrides the close event to handle the system tray close event."""
 
-class FXExecutableRunnerThread(QThread):
-    """A QThread subclass to run an executable in a separate thread."""
-
-    # Define a signal to emit upon completion, if needed
-    finished = Signal()
-
-    def __init__(self, executable, commands=None, parent=None):
-        super(FXExecutableRunnerThread, self).__init__(parent)
-        self.executable = executable
-        self.commands = commands
-
-    def run(self):
-        if self.executable:
-            call = [self.executable] + (self.commands if self.commands else [])
-        else:
-            if self.commands:
-                call = self.commands
-            else:
-                _logger.error("No executable or commands provided to run")
-                self.finished.emit()
-                return
-
-        if sys.platform == "win32":
-            cmd = ["cmd.exe", "/c"] + call
-            _logger.debug(f"cmd: {cmd}")
-            subprocess.Popen(cmd, shell=True)
-        else:
-            subprocess.Popen(call, shell=True)
-
-        _logger.debug(f"Call: {call}")
-        self.finished.emit()
+        self.setParent(None)
 
 
 class FXLauncherSystemTray(fxwidgets.FXSystemTray):

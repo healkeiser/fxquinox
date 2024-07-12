@@ -53,7 +53,8 @@ def transform_to_valid_string(input_string: str) -> str:
 
 # Configuration file handling
 def update_configuration_file(file_name: str, sections_options_values: dict, temporary: bool = False) -> None:
-    """Updates or creates multiple values in a configuration file based on a nested dictionary.
+    """Updates or creates multiple values in a configuration file based on a
+    nested dictionary.
 
     Args:
         file_name (str): The name of the configuration file.

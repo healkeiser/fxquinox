@@ -47,7 +47,7 @@ def _get_structure_dict(entity: str, file_type: str = "yaml") -> Dict:
         every time.
     """
 
-    structure_path = Path(__file__).parent / "structures" / f"{entity}_structure.{file_type}"
+    structure_path = Path(fxenvironment._FXQUINOX_STRUCTURES) / f"{entity}_structure.{file_type}"
     if structure_path.exists():
         if file_type == "yaml":
             return yaml.safe_load(structure_path.read_text())

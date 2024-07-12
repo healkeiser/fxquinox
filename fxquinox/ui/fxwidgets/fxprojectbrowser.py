@@ -371,12 +371,17 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
                     f"<b>{shot.name}</b><hr><b>Entity</b>: Shot<br><br><b>Path</b>: {shot_path}",
                 )
 
+        # Expand all items by default
+        self._expand_all_items(self.tree_widget_shots)
+
         # Restore states
         self._restore_expanded_states(self.tree_widget_shots, expanded_states)
         self._restore_selection_state_tree(self.tree_widget_shots, selected_states)
 
         # After populating the tree, select the first item if it exists
-        # self._select_first_item_in_tree(self.tree_widget_shots)
+        self._select_first_child_item_in_tree(self.tree_widget_shots)
+        self._get_current_sequence_and_shot()
+        self._populate_steps()
 
     def _get_current_sequence_and_shot(self) -> Tuple[str, str]:
         """Returns the current sequence and shot selected in the tree widget.
@@ -526,6 +531,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
         # After populating the list, select the first item if it exists
         self._select_first_item_in_list(self.list_steps)
+        self._get_current_step()
+        self._populate_tasks()
 
     def _get_current_step(self) -> str:
         """Returns the current step selected in the list widget.
@@ -578,7 +585,9 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             self.list_tasks.addItem(task_item)
 
         # After populating the list, select the first item if it exists
-        # self._select_first_item_in_list(self.list_tasks)
+        self._select_first_item_in_list(self.list_tasks)
+        self._get_current_task()
+        self._populate_workfiles()
 
     def _get_current_task(self) -> str:
         """Returns the current task selected in the list widget.
@@ -721,7 +730,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             self.tree_widget_workfiles.setColumnWidth(column_index, current_width + extra_space)
 
         # After populating the tree, select the first item if it exists
-        # self._select_first_item_in_tree(self.tree_widget_workfiles)
+        self._select_first_item_in_tree(self.tree_widget_workfiles)
+        self._get_current_workfile()
 
     def _get_icon_based_on_type(self, item_type: str) -> QIcon:
         """Returns an icon based on the item type. To be used when populating
@@ -734,7 +744,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             QIcon: The icon.
         """
 
-        path_icons_apps = Path(__file__).parents[1] / "images" / "icons" / "apps"
+        path_icons_apps = Path(fxenvironment._FQUINOX_IMAGES) / "icons" / "apps"
 
         if item_type in ["hip", "hipnc", "hiplc"]:
             icon = path_icons_apps / "houdini.svg"
@@ -966,7 +976,27 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             first_item = tree_widget.topLevelItem(0)
             tree_widget.setSelectionMode(QAbstractItemView.SingleSelection)
             first_item.setSelected(True)
+            tree_widget.setCurrentItem(first_item)
             tree_widget.scrollToItem(first_item)
+            tree_widget.setFocus()
+
+    def _select_first_child_item_in_tree(self, tree_widget: QTreeWidget):
+        """Selects the second child item of the first top-level item in the tree widget, if it exists.
+
+        Args:
+            tree_widget (QTreeWidget): The tree widget.
+        """
+
+        if tree_widget.topLevelItemCount() > 0:
+            first_top_level_item = tree_widget.topLevelItem(0)
+            if first_top_level_item.childCount() > 0:
+                tree_widget.clearSelection()
+                first_child_item = first_top_level_item.child(0)  # Get the first child
+                tree_widget.setSelectionMode(QAbstractItemView.SingleSelection)
+                first_child_item.setSelected(True)
+                tree_widget.setCurrentItem(first_child_item)
+                tree_widget.scrollToItem(first_child_item)
+                tree_widget.setFocus()
 
     def _select_first_item_in_list(self, list_widget: QListWidget):
         """Selects the first item in the list widget.
@@ -980,8 +1010,17 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             first_item = list_widget.item(0)
             list_widget.setSelectionMode(QAbstractItemView.SingleSelection)
             first_item.setSelected(True)
+            list_widget.setCurrentItem(first_item)
+            list_widget.setFocus()
 
     # States for QTreeWidget expansion
+    def _expand_all_items(self, tree_widget: QTreeWidget) -> None:
+        """Expands all items in the given tree widget."""
+
+        for i in range(tree_widget.topLevelItemCount()):
+            item = tree_widget.topLevelItem(i)
+            tree_widget.expandItem(item)
+
     def _store_expanded_states(self, tree_widget: QTreeWidget) -> dict:
         """Stores the expanded states of the tree widget items.
 
