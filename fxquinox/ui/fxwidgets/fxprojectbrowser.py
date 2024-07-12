@@ -119,7 +119,6 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self._handle_connections()
 
         # self.status_line.hide()
-        self.set_status_line_colors("#999999", "#656565")
         self.statusBar().showMessage("Initialized project browser", self.INFO, logger=_logger)
 
     def _get_project(self) -> None:
@@ -292,9 +291,9 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         # Methods to run
         self._populate_assets()
         self._populate_shots()
-        self._populate_steps()
-        self._populate_tasks()
-        self._populate_workfiles()
+        # self._populate_steps()
+        # self._populate_tasks()
+        # self._populate_workfiles()
 
     # ' Populating methods
     # Shots
@@ -515,7 +514,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
                 step_item.setIcon(
                     fxicons.get_icon(
                         matching_step.get("icon", "check_box_outline_blank"),
-                        color=matching_step.get("color", "#ffffff"),
+                        # color=matching_step.get("color", "#ffffff"),
                     )
                 )
             else:
