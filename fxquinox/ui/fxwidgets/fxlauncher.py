@@ -144,8 +144,8 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         self.project_changed.connect(self._get_project)
         self.project_changed.connect(self._update_label)
         self.project_changed.connect(self._toggle_action_state)
-        self.project_changed.connect(self._load_and_display_apps)
-        self.project_changed.connect(lambda: _logger.debug(f"Project changed: '{self.project}'"))
+        self.project_changed.connect(self._load_applications)
+        self.project_changed.connect(lambda: _logger.debug(f"Project: '{self.project}'"))
 
     def __create_actions(self) -> None:
         """Creates the actions for the system tray.
@@ -230,6 +230,15 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         default_action.setChecked(True)
         self._set_log_level(log_levels[default_action.text()])
 
+        #
+        self.refresh_action = fxguiutils.create_action(
+            self.tray_menu,
+            "Refresh",
+            fxicons.get_icon("refresh"),
+            self.refresh,
+        )
+
+        # Add actions to the tray menu
         self.tray_menu.insertAction(self.quit_action, self.open_project_directory_action)
         self.tray_menu.insertAction(self.open_project_directory_action, self.open_project_browser_action)
         self.tray_menu.insertAction(self.open_project_browser_action, self.set_project_action)
@@ -238,6 +247,8 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         self.fxquinox_menu.addAction(self.open_fxquinox_appdata)
         self.fxquinox_menu.addAction(self.open_fxquinox_temp)
         self.tray_menu.insertMenu(self.quit_action, self.log_menu)
+        self.tray_menu.insertSeparator(self.quit_action)
+        self.tray_menu.insertAction(self.quit_action, self.refresh_action)
 
         self.tray_menu.insertSeparator(self.open_project_directory_action)
         self.tray_menu.insertSeparator(self.quit_action)
@@ -320,9 +331,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         self.tray_menu.insertAction(self.open_project_browser_action, self.list_apps_action)
 
         # Load apps
-        self._load_and_display_apps()
+        self._load_applications()
 
-    def _load_and_display_apps(self) -> None:
+    def _load_applications(self) -> None:
         """Loads the apps from the `apps.yaml` file and displays them in the
         grid layout.
 
@@ -330,8 +341,6 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
             project_root (str): The root path of the current project.
             project_name (str): The name of the current project.
         """
-
-        _logger.debug(f"Loading apps for project: '{self._project_name}'")
 
         # Clear existing widgets from the grid layout
         for i in reversed(range(self.grid_layout.count())):
@@ -408,6 +417,10 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
             executable (str): The path to the executable to launch.
             commands (list): The list of commands to pass to the executable.
         """
+
+        if not Path(executable).exists():
+            _logger.error(f"Executable not found: '{executable}'")
+            return
 
         additional_args = self.additional_args_line_edit.text().strip().split()
         if commands is None:
@@ -489,6 +502,11 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
 
         fxlog.set_log_level(level)
 
+    def refresh(self) -> None:
+        """Refreshes the launcher UI."""
+
+        self.project_changed.emit(fxcore.get_project)
+
     def closeEvent(self, _) -> None:
         """Overrides the close event to handle the system tray close event."""
 
@@ -510,6 +528,15 @@ def run_launcher(
         show_splashscreen (bool): Whether to show the splash screen.
             Defaults to `False`.
     """
+
+    # XXX: Failing the execution of this function
+    # if not QSystemTrayIcon.isSystemTrayAvailable():
+    #     message = FXDialog("error")
+    #     message.setWindowTitle("System Tray Not Available")
+    #     message.setText("The system tray is not available on this system.")
+    #     message.exec_()
+    #     _logger.error("System tray not available")
+    #     return
 
     # Application
     if not parent:

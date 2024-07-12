@@ -143,30 +143,16 @@ class FXCreateShotDialog(QDialog):
     def _set_thumbnail(self):
         """Choose a thumbnail for the shot."""
 
-        config_file_name = "general.cfg"
-        config_section_name = "project_browser_create_shot"
-        config_option_name = "last_thumbnail_directory"
-
-        previous_directory = (
-            fxutils.get_configuration_file_value(config_file_name, config_section_name, config_option_name)
-            or Path.home().resolve().as_posix()
-        )
-
         # Get the path to the thumbnail
         thumbnail_path = QFileDialog.getOpenFileName(
-            self, "Select Thumbnail", previous_directory, "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
+            self,
+            caption="Select Thumbnail",
+            dir=QDir.homePath(),
+            filter="Images (*.png *.jpg *.jpeg *.bmp *.gif)",
         )[0]
 
         if thumbnail_path:
             self.line_edit_thumbnail.setText(thumbnail_path)
-
-            # Update the config with the parent directory of the selected thumbnail
-            fxutils.update_configuration_file(
-                config_file_name,
-                config_section_name,
-                config_option_name,
-                Path(thumbnail_path).parent.resolve().as_posix(),
-            )
 
     def _add_metadata_line(self):
         """Adds a new line for entering metadata key-value pairs."""

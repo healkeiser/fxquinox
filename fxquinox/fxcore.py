@@ -306,7 +306,7 @@ def set_project(
 
         project_path = QFileDialog.getExistingDirectory(
             caption="Select Project Directory",
-            directory=fxenvironment.FXQUINOX_HOME,
+            dir=QDir.homePath(),
             options=QFileDialog.ShowDirsOnly,
         )
 

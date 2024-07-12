@@ -1442,6 +1442,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
 
         current_menu = context_menu.addMenu("New Version From Current")
         current_menu.setIcon(fxicons.get_icon("note_add"))
+        if self.dcc == fxentities.DCC.standalone:
+            current_menu.setEnabled(False)
 
         preset_menu = context_menu.addMenu("New Version From Preset")
         preset_menu.setIcon(fxicons.get_icon("note_add"))
@@ -1718,6 +1720,7 @@ def run_project_browser(
         version="0.0.1",
         company="fxquinox",
         ui_file=ui_file.resolve().as_posix(),
+        project_info=project_info,
         dcc=dcc,
     )
     window.show()
