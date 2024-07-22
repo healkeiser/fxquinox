@@ -5,7 +5,7 @@ from pathlib import Path
 import platform
 import re
 import subprocess
-from typing import Dict, Any, Optional, Union, List, Tuple
+from typing import Dict, Optional, Union, List
 
 # Internal
 from fxquinox import fxlog
@@ -249,8 +249,14 @@ def get_all_metadata(file_path: str) -> Dict[str, Optional[str]]:
     try:
         if platform.system() == "Windows":
             # Windows: Use `dir /R` command to list NTFS streams
+            file_path.replace("/", "\\")  # Convert to Windows path format
             cmd = f'dir /R "{file_path}"'
             result = subprocess.check_output(cmd, shell=True, text=True)
+
+            # Early return if no streams are found
+            if not result:
+                return metadata
+
             # Parse the output for stream names and retrieve their content
             for line in result.split("\n"):
                 if ":" in line and "$DATA" in line:
@@ -259,14 +265,14 @@ def get_all_metadata(file_path: str) -> Dict[str, Optional[str]]:
                         if ":" in part and not part.endswith(":") and not part.startswith(file_path):
                             # Format is `filename:streamname:$DATA`
                             stream_name = part.split(":")[1]
+
                             # Construct the full path to the stream
                             stream_path = f"{file_path}:{stream_name}"
                             try:
                                 with open(stream_path, "r") as stream:
                                     metadata[stream_name] = stream.read()
                             except Exception as exception:
-                                # XXX: Investigate why this fails on some streams
-                                # _logger.error(f"Error reading stream '{stream_name}': {exception}")
+                                # _logger.error(f"Error reading stream '{stream_name}': {str(exception)}")
                                 pass
                             break  # Exit the loop after finding the first valid stream name
         else:
@@ -279,7 +285,7 @@ def get_all_metadata(file_path: str) -> Dict[str, Optional[str]]:
                     attr_name = line.split("=")[0].strip()
                     metadata[attr_name] = os.getxattr(file_path, attr_name.encode()).decode()
     except subprocess.CalledProcessError as exception:
-        _logger.error(f"Error executing command: {exception}")
+        _logger.error(f"Error executing command: {str(exception)}")
         _logger.error(f"Command output: {exception.output}")
         _logger.error(f"Command error output: {exception.stderr}")
         return metadata
@@ -633,5 +639,8 @@ if __name__ == "__main__":
     # shot_dir = shot_dir.resolve().absolute().as_posix()
     # print(get_all_metadata(shot_dir))
     path = Path("D:/Projects/fxquinox_test_1582/production/shots/010/0010/workfiles/Research/Research")
-    print(get_next_version(path))
-    print(find_version_in_filename("Research_v001.ma"))
+    # print(get_next_version(path))
+    # print(find_version_in_filename("Research_v001.ma"))
+    # print(get_metadata(str(path), "creator"))
+    # print(get_metadata(str(path), "version"))
+    # print(get_all_metadata(str(path)))

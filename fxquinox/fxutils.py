@@ -201,8 +201,11 @@ def remove_lock_file(lock_file_path: str) -> None:
     """
 
     lock_path = Path(lock_file_path)
+    _logger.debug("Checking for lock file: '%s'", lock_file_path)
     if lock_path.exists():
+        _logger.debug("Removing lock file: '%s'", lock_file_path)
         lock_path.unlink()
+        _logger.debug("Lock file removed")
 
 
 # Directory

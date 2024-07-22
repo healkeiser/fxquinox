@@ -108,7 +108,7 @@ class FxquinoxRenderPass "FxquinoxRenderPass" (
         string extraIncludes = """
 #include 'pxr/usd/usd/collectionAPI.h'"""
     }
-    prepend apiSchemas = ["CollectionAPI:renderVisible", "CollectionAPI:renderPhantom", "CollectionAPI:renderMatte", "CollectionAPI:renderLights"]
+    prepend apiSchemas = ["CollectionAPI:renderInvisible", "CollectionAPI:renderVisible", "CollectionAPI:renderPhantom", "CollectionAPI:renderMatte", "CollectionAPI:renderLights"]
 )
 {
     uniform token fxquinox:passType (

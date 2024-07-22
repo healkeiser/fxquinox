@@ -15,6 +15,26 @@
             <insertBefore>help_menu</insertBefore>
             <label>Fxquinox</label>
 
+            <!-- ======================== Workfile Menu ==================== -->
+
+            <subMenu id="fxquinox::sub.file">
+                <label>File</label>
+
+                <scriptItem id="h.fxquinox::save_file">
+                    <label>Save File...</label>
+                    <scriptCode>
+                        <![CDATA[
+from fxquinox import fxentities
+from fxquinox.ui.fxwidgets import fxsaveworkfiledialog
+from importlib import reload
+reload(fxsaveworkfiledialog)
+fxsaveworkfiledialog.run_save_worfile(parent=hou.qt.mainWindow(), dcc=fxentities.DCC.houdini)
+                    ]]>
+                    </scriptCode>
+                </scriptItem>
+
+            </subMenu>
+
             <!-- ======================== Open Directory Menu ============== -->
 
             <titleItem>
@@ -82,14 +102,14 @@ hou.ui.showInFileBrowser(hou.getenv("PATH_RENDERS"))
 
                 <scriptItem id="h.fxquinox::open_logs_folder">
                     <labelExpression>
-                        from fxquinox import fxlog
-                        path = environment.FXQUINOX_LOGS
+                        from fxquinox import fxenvironment, fxlog
+                        path = fxenvironment.FXQUINOX_LOGS
                         return "Logs... [{}]".format(path)
                     </labelExpression>
                     <scriptCode>
                         <![CDATA[
-from fxquinox import environment
-path = environment.FXQUINOX_LOGS
+from fxquinox import fxenvironment
+path = fxenvironment.FXQUINOX_LOGS
 hou.ui.showInFileBrowser(path)
                 ]]>
                     </scriptCode>
@@ -172,8 +192,8 @@ hou.ui.copyTextToClipboard(hou.getenv("PATH_SHOT"))
                 <scriptItem id="h.fxquinox::flush_logs">
                     <labelExpression>
                         import os
-                        from fxquinox import environment
-                        log_path = environment.FXQUINOX_LOGS
+                        from fxquinox import fxenvironment
+                        log_path = fxenvironment.FXQUINOX_LOGS
                         return "Log Files [{}]".format(len([file for file in os.listdir(log_path)]))
                     </labelExpression>
                     <scriptCode>

@@ -26,8 +26,14 @@ SUCCESS = "success"
 
 
 class FXDialog(QDialog):
-    def __init__(self, dialog_type: Literal["info", "warning", "error", "success"] = INFO, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        parent: QWidget = None,
+        dialog_type: Literal["info", "warning", "error", "success"] = INFO,
+        *args,
+        **kwargs
+    ):
+        super().__init__(parent, *args, **kwargs)
 
         self.setWindowIcon(QIcon(str(Path(fxenvironment._FQUINOX_IMAGES) / "fxquinox_logo_background_dark.svg")))
         self.resize(400, 200)

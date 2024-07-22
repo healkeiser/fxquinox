@@ -43,7 +43,7 @@ class FxquinoxContextInfo "FxquinoxContextInfo" (
 }
 
 class FxquinoxRenderPass "FxquinoxRenderPass" (
-    apiSchemas = ["CollectionAPI:renderVisible", "CollectionAPI:renderPhantom", "CollectionAPI:renderMatte", "CollectionAPI:renderLights"]
+    apiSchemas = ["CollectionAPI:renderInvisible", "CollectionAPI:renderVisible", "CollectionAPI:renderPhantom", "CollectionAPI:renderMatte", "CollectionAPI:renderLights"]
     doc = "Define a Fxquinox render pass."
 )
 {

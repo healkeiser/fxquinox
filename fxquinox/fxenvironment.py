@@ -76,6 +76,11 @@ FXQUINOX_CONFIG_FILE = Path(FXQUINOX_APPDATA).resolve() / "fxquinox.cfg"
 
 # Internal to the package
 _FQUINOX_IMAGES = Path(FXQUINOX_ROOT, "images").resolve().as_posix()  # fxquinox/images
+_FXQUINOX_IMAGES_ICONS = Path(_FQUINOX_IMAGES, "icons").resolve().as_posix()  # fxquinox/images/icons
+_FXQUINOX_IMAGES_ICONS_APPS = Path(_FXQUINOX_IMAGES_ICONS, "apps").resolve().as_posix()  # fxquinox/images/icons/apps
+_FXQUINOX_IMAGES_ICONS_LAUNCHER = (
+    Path(_FXQUINOX_IMAGES_ICONS, "launcher").resolve().as_posix()
+)  # fxquinox/images/icons/launcher
 
 _FXQUINOX_MODULE = Path(FXQUINOX_ROOT, "fxquinox").resolve().as_posix()  # fxquinox/fxquinox
 _FXQUINOX_CLI = Path(_FXQUINOX_MODULE, "cli").resolve().as_posix()  # fxquinox/fxquinox/cli

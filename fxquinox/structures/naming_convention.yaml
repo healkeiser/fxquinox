@@ -1,0 +1,7 @@
+- workfile_shot: {sequence}_{shot}_{step}_{task}_{version}
+  example: seq001_sh0010_Research_Research_v001
+
+- workfile_asset: {asset}_{step}_{task}_{version}
+  example: car01_Modeling_Modeling_v001
+
+

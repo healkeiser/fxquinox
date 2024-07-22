@@ -1,7 +1,14 @@
 # Built-in
+import os
 from pathlib import Path
 from functools import partial
 import sys
+
+if sys.version_info < (3, 11):
+    os.environ["QT_API"] = "pyside2"
+else:
+    os.environ["QT_API"] = "pyside6"
+
 import subprocess
 import textwrap
 from typing import Optional, Dict
@@ -15,7 +22,7 @@ from qtpy.QtGui import *
 import yaml
 
 # Internal
-from fxquinox import fxenvironment, fxlog, fxutils, fxcore
+from fxquinox import fxentities, fxenvironment, fxlog, fxutils, fxcore
 from fxquinox.ui.fxwidgets import fxprojectbrowser
 from fxquinox.ui.fxwidgets.fxdialog import FXDialog
 from fxquinox.ui.fxwidgets.fxexecutablerunnerthread import FXExecutableRunnerThread
@@ -221,7 +228,7 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         self.tray_menu.insertSeparator(self.quit_action)
         self.tray_menu.insertAction(self.quit_action, self.refresh_action)
 
-        self.tray_menu.insertSeparator(self.open_project_directory_action)
+        # self.tray_menu.insertSeparator(self.open_project_directory_action)
         self.tray_menu.insertSeparator(self.quit_action)
 
     def _create_label(self) -> None:
@@ -482,10 +489,10 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         """Overrides the close event to handle the system tray close event."""
 
         _logger.info(f"Closed")
-        self.setParent(None)
         fxutils.remove_lock_file(Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock")
+        self.setParent(None)
         fxwidgets.FXApplication.instance().quit()
-        QApplication.instance().quit()
+        # QApplication.instance().quit()
 
 
 def run_launcher(
@@ -511,6 +518,7 @@ def run_launcher(
 
     # Application
     if not parent:
+        _fix = QUiLoader()  # XXX: This is a PySide6 bug
         app = fxwidgets.FXApplication().instance()
         app.setQuitOnLastWindowClosed(quit_on_last_window_closed)
 
@@ -537,14 +545,14 @@ def run_launcher(
 
     # If it doesn't exist but has been set in the environment file, error
     if project_root and not Path(project_root).exists():
-        _logger.error(f"Project set in the environment file doesn't exist: '{project_root}'")
+        _logger.error(f"Project set in the configuration file doesn't exist: '{project_root}'")
         confirmation = QMessageBox(parent)
         confirmation.setWindowIcon(
             QIcon(str(Path(fxenvironment._FQUINOX_IMAGES) / "fxquinox_logo_background_dark.svg"))
         )
         confirmation.setWindowTitle(f"Corrupted Project")
         confirmation.setText(
-            f"Project set in the environment file doesn't exist: <code>{project_root}</code><br><br>"
+            f"Project set in the configuration file doesn't exist: <code>{project_root}</code><br><br>"
             f"Fix the configuration file?"
         )
         confirmation.setIcon(QMessageBox.Critical)
@@ -552,14 +560,14 @@ def run_launcher(
         confirmation.setDefaultButton(QMessageBox.Yes)
         confirmation_response = confirmation.exec_()
         if confirmation_response == QMessageBox.No:
-            _logger.info(f"Environment file deletion cancelled")
+            _logger.info(f"Configuration file fix cancelled")
             return
 
         _config = {
             "project": {"root": "", "name": "", "assets_path": "", "shots_path": ""},
         }
         fxutils.update_configuration_file("fxquinox.cfg", _config)
-        _logger.info(f"Environment '{Path(fxenvironment.FXQUINOX_ENV_FILE).as_posix()}' file updated")
+        _logger.info(f"Configuration file '{Path(fxenvironment.FXQUINOX_CONFIG_FILE).as_posix()}' updated")
 
         # Refresh the current project reading the new configuration file
         project_info = fxcore.get_project(from_file=True)
@@ -568,7 +576,8 @@ def run_launcher(
 
     # Icon and image paths
     images_path = Path(fxenvironment._FQUINOX_IMAGES)
-    icon_path = Path(images_path / "fxquinox_logo_light.svg").resolve().as_posix()
+    launcher_icons_path = Path(fxenvironment._FXQUINOX_IMAGES_ICONS_LAUNCHER)
+    icon_path = Path(launcher_icons_path / "launcher_light.svg").resolve().as_posix()
 
     # Splashscreen
     if show_splashscreen:
@@ -611,4 +620,4 @@ def run_launcher(
 
 
 if __name__ == "__main__":
-    run_launcher(parent=None, show_splashscreen=False)
+    run_launcher(parent=None, show_splashscreen=True)

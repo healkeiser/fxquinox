@@ -60,7 +60,9 @@ class FXCreateTaskDialog(QDialog):
         self.ui = fxguiutils.load_ui(self, str(ui_file))
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.ui)
-        self.setWindowTitle(f"Create Task | {self.sequence} - {self.shot} - {self.step}")
+        self.setWindowTitle(
+            f"Create Task | {self.sequence} - {self.shot} - {self.step}"
+        )
 
     def _rename_ui(self):
         """_summary_"""
@@ -86,28 +88,45 @@ class FXCreateTaskDialog(QDialog):
     def _populate_tasks(self):
         self.list_tasks.clear()  # Clear existing tasks
 
-        steps_file = Path(self._project_root) / ".pipeline" / "project_config" / "steps.yaml"
+        steps_file = (
+            Path(self._project_root)
+            / ".pipeline"
+            / "project_config"
+            / "steps.yaml"
+        )
         if not steps_file.exists():
             return
 
         steps_data = yaml.safe_load(steps_file.read_text())
 
         # Find the step that matches self.step
-        current_step = next((step for step in steps_data["steps"] if step["name_long"] == self.step), None)
+        current_step = next(
+            (
+                step
+                for step in steps_data["steps"]
+                if step["name_long"] == self.step
+            ),
+            None,
+        )
         if not current_step:
             return  # If the step is not found, exit the function
 
         # Gather existing task names
         parent = self.parent()
         if parent:
-            existing_tasks = {parent.list_tasks.item(i).text() for i in range(parent.list_tasks.count())}
+            existing_tasks = {
+                parent.list_tasks.item(i).text()
+                for i in range(parent.list_tasks.count())
+            }
         else:
             existing_tasks = []
 
         # Iterate over the tasks of the found step
         for task in current_step.get("tasks", []):
             task_name = task.get("name", "Unknown Task")
-            if task_name not in existing_tasks:  # Check if the task is not already in the list
+            if (
+                task_name not in existing_tasks
+            ):  # Check if the task is not already in the list
                 task_item = QListWidgetItem(task_name)
                 task_item.setIcon(fxicons.get_icon("task_alt"))
                 task_item.setData(Qt.UserRole, task)
@@ -116,12 +135,20 @@ class FXCreateTaskDialog(QDialog):
 
     def _create_task(self):
         # Get the selected task
-        _logger.debug(f"Asset: '{self.asset}', sequence: '{self.sequence}', shot: '{self.shot}', step: '{self.step}'")
+        _logger.debug(
+            f"Asset: '{self.asset}', sequence: '{self.sequence}', shot: '{self.shot}', step: '{self.step}'"
+        )
         task = self.list_tasks.currentItem().text()
 
         # Create the task
         step_dir = (
-            Path(self._project_root) / "production" / "shots" / self.sequence / self.shot / "workfiles" / self.step
+            Path(self._project_root)
+            / "production"
+            / "shots"
+            / self.sequence
+            / self.shot
+            / "workfiles"
+            / self.step
         )
         task = fxcore.create_task(task, step_dir, self)
         if not task:
