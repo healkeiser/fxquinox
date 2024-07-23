@@ -207,8 +207,8 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self.group_box_tasks: QGroupBox = self.ui.group_box_tasks
         self.list_tasks: QListWidget = self.ui.list_tasks
         #
-        self.checkbox_display_latest_worfiles: QCheckBox = (
-            self.ui.checkbox_display_latest_worfiles
+        self.checkbox_display_latest_workfiles: QCheckBox = (
+            self.ui.checkbox_display_latest_workfiles
         )
         self.label_icon_filter_workfiles: QLabel = (
             self.ui.label_icon_filter_workfiles
@@ -286,7 +286,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         )
 
         # Workfiles
-        self.checkbox_display_latest_worfiles.stateChanged.connect(
+        self.checkbox_display_latest_workfiles.stateChanged.connect(
             self._on_show_latest_workfile_changed
         )
         self.combobox_filter_workfiles.currentIndexChanged.connect(
@@ -366,7 +366,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         self.tree_widget_assets.setIconSize(QSize(18, 18))
 
         # Workfiles
-        self.checkbox_display_latest_worfiles.setVisible(False)
+        self.checkbox_display_latest_workfiles.setVisible(False)
         header_item = QTreeWidgetItem(
             [
                 "Workfiles",
@@ -1198,7 +1198,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             import bpy  # type: ignore
 
             bpy.ops.wm.open_mainfile(filepath=file_path)
-            self.showMinimized()
+            self.close()
         except ImportError as exception:
             _logger.error(f"Error: {str(exception)}")
 
@@ -1213,7 +1213,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             import hou  # type: ignore
 
             hou.hipFile.load(file_path)
-            self.showMinimized()
+            self.close()
         except ImportError as exception:
             _logger.error(f"Error: {str(exception)}")
 
@@ -1228,7 +1228,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             import maya.cmds as cmds  # type: ignore
 
             cmds.file(file_path, open=True, force=True)
-            self.showMinimized()
+            self.close()
         except ImportError as exception:
             _logger.error(f"Error: {str(exception)}")
 
@@ -1243,7 +1243,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             import nuke  # type: ignore
 
             nuke.scriptOpen(file_path)
-            self.showMinimized()
+            self.close()
         except ImportError as exception:
             _logger.error(f"Error: {str(exception)}")
 
@@ -1289,7 +1289,6 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             return
 
     # Common
-
     def _on_item_clicked(
         self, item: QTreeWidgetItem, tree: QTreeWidget, entity: fxentities.DCC
     ) -> None:
@@ -2180,7 +2179,7 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             return
 
         # Iterate through the existing files to get the next version
-        worfiles_dir = (
+        workfiles_dir = (
             Path(self._project_root)
             / "production"
             / "shots"
@@ -2190,11 +2189,11 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             / self.step
             / self.task
         )
-        next_version = fxfiles.get_next_version(worfiles_dir, as_string=True)
+        next_version = fxfiles.get_next_version(workfiles_dir, as_string=True)
 
         # Build the new file name
         new_file_name = f"{self.sequence}_{self.shot}_{self.step}_{self.task}_{next_version}{preset_file_path.suffix}"
-        new_file_path = worfiles_dir / new_file_name
+        new_file_path = workfiles_dir / new_file_name
 
         _logger.debug(
             f"Old file path: '{preset_file_path.resolve().as_posix()}'"
@@ -2207,10 +2206,10 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
         # Set metadata
         metadata = {
             "creator": "fxquinox",
-            "entity": "worfile",
+            "entity": "workfile",
             "name": new_file_name,
             "path": new_file_path.resolve().as_posix(),
-            "parent": worfiles_dir.resolve().as_posix(),
+            "parent": workfiles_dir.resolve().as_posix(),
             "description": "Workfile",
             "version": next_version,
             "comment": "Created from preset file",

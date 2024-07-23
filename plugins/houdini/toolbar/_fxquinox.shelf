@@ -5,7 +5,7 @@
  Note, that two definitions of the same element are not allowed in
  a single file. -->
 
-  <tool name="fxquinox::project_browser" label="Project Browser" icon="C:/Users/valen/OneDrive/Projects/Code/fxquinox/plugins/houdini/config/Icons/FXQUINOX_badge.svg">
+  <tool name="fxquinox::project_browser" label="Project Browser" icon="FXQUINOX_project_browser">
     <helpText><![CDATA["""Open the Project Browser."""]]></helpText>
     <toolMenuContext name="network">
       <contextNetType>OBJ</contextNetType>
@@ -20,7 +20,7 @@
       <contextNetType>TOP</contextNetType>
       <contextNetType>LOP</contextNetType>
     </toolMenuContext>
-    <toolSubmenu>Beacon/Utils</toolSubmenu>
+    <toolSubmenu>Fxquinox/Core</toolSubmenu>
     <script scriptType="python"><![CDATA[from fxquinox import fxentities
 from fxquinox.ui.fxwidgets import fxprojectbrowser
 from importlib import reload
@@ -31,4 +31,33 @@ if window:
     window.setStyleSheet(hou.qt.styleSheet())
 ]]></script>
   </tool>
+
+  <tool name="fxquinox::save_workfile" label="Save Workfile" icon="FXQUINOX_save">
+    <helpText><![CDATA["""Save the current workfile."""]]></helpText>
+    <toolMenuContext name="network">
+      <contextNetType>OBJ</contextNetType>
+      <contextNetType>SOP</contextNetType>
+      <contextNetType>CHOP</contextNetType>
+      <contextNetType>ROP</contextNetType>
+      <contextNetType>SHOP</contextNetType>
+      <contextNetType>COP2</contextNetType>
+      <contextNetType>VOP</contextNetType>
+      <contextNetType>VOPNET</contextNetType>
+      <contextNetType>DOP</contextNetType>
+      <contextNetType>TOP</contextNetType>
+      <contextNetType>LOP</contextNetType>
+    </toolMenuContext>
+    <toolSubmenu>Fxquinox/Core</toolSubmenu>
+    <script scriptType="python"><![CDATA[
+from fxquinox import fxentities
+from fxquinox.ui.fxwidgets import fxsaveworkfiledialog
+from importlib import reload
+reload(fxsaveworkfiledialog)
+
+dialog = fxsaveworkfiledialog.run_save_workfile(parent=hou.qt.mainWindow(), dcc=fxentities.DCC.houdini)
+if dialog:
+    dialog.setStyleSheet(hou.qt.styleSheet())
+]]></script>
+  </tool>
+
 </shelfDocument>

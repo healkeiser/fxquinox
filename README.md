@@ -45,6 +45,8 @@
 ## About
 USD centric pipeline for feature animation and VFX projects.
 
+![Project Browser](images/screenshots/python_QOxhGGCoOU.png)
+
 
 
 <!-- ACKNOWLEDGMENTS -->

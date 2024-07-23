@@ -16,18 +16,91 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QDialogButtonBox,
-    QFrame, QHBoxLayout, QLabel, QLineEdit,
-    QSizePolicy, QSpacerItem, QSpinBox, QVBoxLayout,
-    QWidget)
+    QFrame, QGridLayout, QGroupBox, QHBoxLayout,
+    QLabel, QLineEdit, QSizePolicy, QSpacerItem,
+    QSpinBox, QTextEdit, QVBoxLayout, QWidget)
 
 class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(743, 242)
+        Form.resize(965, 294)
         self.verticalLayout = QVBoxLayout(Form)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.frame_version = QFrame(Form)
+        self.group_box_current = QGroupBox(Form)
+        self.group_box_current.setObjectName(u"group_box_current")
+        self.verticalLayout_2 = QVBoxLayout(self.group_box_current)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.frame_workfile = QFrame(self.group_box_current)
+        self.frame_workfile.setObjectName(u"frame_workfile")
+        self.frame_workfile.setFrameShape(QFrame.NoFrame)
+        self.frame_workfile.setFrameShadow(QFrame.Plain)
+        self.frame_workfile.setLineWidth(0)
+        self.horizontalLayout_2 = QHBoxLayout(self.frame_workfile)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.label_icon_workfile = QLabel(self.frame_workfile)
+        self.label_icon_workfile.setObjectName(u"label_icon_workfile")
+        self.label_icon_workfile.setMaximumSize(QSize(18, 18))
+
+        self.horizontalLayout_2.addWidget(self.label_icon_workfile)
+
+        self.label_workfile = QLabel(self.frame_workfile)
+        self.label_workfile.setObjectName(u"label_workfile")
+        self.label_workfile.setMinimumSize(QSize(65, 0))
+        self.label_workfile.setMaximumSize(QSize(65, 16777215))
+        self.label_workfile.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout_2.addWidget(self.label_workfile)
+
+        self.line_edit_workfile = QLineEdit(self.frame_workfile)
+        self.line_edit_workfile.setObjectName(u"line_edit_workfile")
+        self.line_edit_workfile.setReadOnly(True)
+
+        self.horizontalLayout_2.addWidget(self.line_edit_workfile)
+
+
+        self.verticalLayout_2.addWidget(self.frame_workfile)
+
+        self.frame_path = QFrame(self.group_box_current)
+        self.frame_path.setObjectName(u"frame_path")
+        self.frame_path.setFrameShape(QFrame.NoFrame)
+        self.frame_path.setFrameShadow(QFrame.Plain)
+        self.frame_path.setLineWidth(0)
+        self.horizontalLayout_3 = QHBoxLayout(self.frame_path)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.label_icon_path = QLabel(self.frame_path)
+        self.label_icon_path.setObjectName(u"label_icon_path")
+        self.label_icon_path.setMaximumSize(QSize(18, 18))
+
+        self.horizontalLayout_3.addWidget(self.label_icon_path)
+
+        self.label_path = QLabel(self.frame_path)
+        self.label_path.setObjectName(u"label_path")
+        self.label_path.setMinimumSize(QSize(65, 0))
+        self.label_path.setMaximumSize(QSize(65, 16777215))
+        self.label_path.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout_3.addWidget(self.label_path)
+
+        self.line_edit_path = QLineEdit(self.frame_path)
+        self.line_edit_path.setObjectName(u"line_edit_path")
+        self.line_edit_path.setReadOnly(True)
+
+        self.horizontalLayout_3.addWidget(self.line_edit_path)
+
+
+        self.verticalLayout_2.addWidget(self.frame_path)
+
+
+        self.verticalLayout.addWidget(self.group_box_current)
+
+        self.group_box_save = QGroupBox(Form)
+        self.group_box_save.setObjectName(u"group_box_save")
+        self.verticalLayout_3 = QVBoxLayout(self.group_box_save)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.frame_version = QFrame(self.group_box_save)
         self.frame_version.setObjectName(u"frame_version")
         self.frame_version.setFrameShape(QFrame.NoFrame)
         self.frame_version.setFrameShadow(QFrame.Plain)
@@ -61,76 +134,75 @@ class Ui_Form(object):
         self.horizontalLayout.addWidget(self.checkbox_next_available_version)
 
 
-        self.verticalLayout.addWidget(self.frame_version)
+        self.verticalLayout_3.addWidget(self.frame_version)
 
-        self.line = QFrame(Form)
-        self.line.setObjectName(u"line")
-        self.line.setFrameShape(QFrame.Shape.HLine)
-        self.line.setFrameShadow(QFrame.Shadow.Sunken)
+        self.frame_to_save = QFrame(self.group_box_save)
+        self.frame_to_save.setObjectName(u"frame_to_save")
+        self.frame_to_save.setFrameShape(QFrame.NoFrame)
+        self.frame_to_save.setFrameShadow(QFrame.Plain)
+        self.frame_to_save.setLineWidth(0)
+        self.horizontalLayout_4 = QHBoxLayout(self.frame_to_save)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.label_icon_to_save = QLabel(self.frame_to_save)
+        self.label_icon_to_save.setObjectName(u"label_icon_to_save")
+        self.label_icon_to_save.setMaximumSize(QSize(18, 18))
 
-        self.verticalLayout.addWidget(self.line)
+        self.horizontalLayout_4.addWidget(self.label_icon_to_save)
 
-        self.frame_workfile = QFrame(Form)
-        self.frame_workfile.setObjectName(u"frame_workfile")
-        self.frame_workfile.setFrameShape(QFrame.NoFrame)
-        self.frame_workfile.setFrameShadow(QFrame.Plain)
-        self.frame_workfile.setLineWidth(0)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame_workfile)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.label_icon_workfile = QLabel(self.frame_workfile)
-        self.label_icon_workfile.setObjectName(u"label_icon_workfile")
-        self.label_icon_workfile.setMaximumSize(QSize(18, 18))
+        self.label_to_save = QLabel(self.frame_to_save)
+        self.label_to_save.setObjectName(u"label_to_save")
+        self.label_to_save.setMinimumSize(QSize(65, 0))
+        self.label_to_save.setMaximumSize(QSize(65, 16777215))
+        self.label_to_save.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
-        self.horizontalLayout_2.addWidget(self.label_icon_workfile)
+        self.horizontalLayout_4.addWidget(self.label_to_save)
 
-        self.label_workfile = QLabel(self.frame_workfile)
-        self.label_workfile.setObjectName(u"label_workfile")
-        self.label_workfile.setMinimumSize(QSize(65, 0))
-        self.label_workfile.setMaximumSize(QSize(65, 16777215))
-        self.label_workfile.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.line_edit_to_save = QLineEdit(self.frame_to_save)
+        self.line_edit_to_save.setObjectName(u"line_edit_to_save")
+        self.line_edit_to_save.setReadOnly(True)
 
-        self.horizontalLayout_2.addWidget(self.label_workfile)
-
-        self.line_edit_workfile = QLineEdit(self.frame_workfile)
-        self.line_edit_workfile.setObjectName(u"line_edit_workfile")
-        self.line_edit_workfile.setReadOnly(True)
-
-        self.horizontalLayout_2.addWidget(self.line_edit_workfile)
+        self.horizontalLayout_4.addWidget(self.line_edit_to_save)
 
 
-        self.verticalLayout.addWidget(self.frame_workfile)
+        self.verticalLayout_3.addWidget(self.frame_to_save)
 
-        self.frame_path = QFrame(Form)
-        self.frame_path.setObjectName(u"frame_path")
-        self.frame_path.setFrameShape(QFrame.NoFrame)
-        self.frame_path.setFrameShadow(QFrame.Plain)
-        self.frame_path.setLineWidth(0)
-        self.horizontalLayout_3 = QHBoxLayout(self.frame_path)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.label_icon_path = QLabel(self.frame_path)
-        self.label_icon_path.setObjectName(u"label_icon_path")
-        self.label_icon_path.setMaximumSize(QSize(18, 18))
+        self.frame_comment = QFrame(self.group_box_save)
+        self.frame_comment.setObjectName(u"frame_comment")
+        self.frame_comment.setFrameShape(QFrame.NoFrame)
+        self.frame_comment.setFrameShadow(QFrame.Plain)
+        self.frame_comment.setLineWidth(0)
+        self.gridLayout = QGridLayout(self.frame_comment)
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.label_icon_comment = QLabel(self.frame_comment)
+        self.label_icon_comment.setObjectName(u"label_icon_comment")
+        self.label_icon_comment.setMaximumSize(QSize(18, 18))
 
-        self.horizontalLayout_3.addWidget(self.label_icon_path)
+        self.gridLayout.addWidget(self.label_icon_comment, 0, 0, 1, 1)
 
-        self.label_path = QLabel(self.frame_path)
-        self.label_path.setObjectName(u"label_path")
-        self.label_path.setMinimumSize(QSize(65, 0))
-        self.label_path.setMaximumSize(QSize(65, 16777215))
-        self.label_path.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+        self.label_comment = QLabel(self.frame_comment)
+        self.label_comment.setObjectName(u"label_comment")
+        self.label_comment.setMinimumSize(QSize(65, 0))
+        self.label_comment.setMaximumSize(QSize(65, 16777215))
+        self.label_comment.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
-        self.horizontalLayout_3.addWidget(self.label_path)
+        self.gridLayout.addWidget(self.label_comment, 0, 1, 1, 1)
 
-        self.line_edit_path = QLineEdit(self.frame_path)
-        self.line_edit_path.setObjectName(u"line_edit_path")
-        self.line_edit_path.setReadOnly(True)
+        self.text_edit_comment = QTextEdit(self.frame_comment)
+        self.text_edit_comment.setObjectName(u"text_edit_comment")
 
-        self.horizontalLayout_3.addWidget(self.line_edit_path)
+        self.gridLayout.addWidget(self.text_edit_comment, 0, 2, 2, 1)
+
+        self.verticalSpacer_2 = QSpacerItem(20, 44, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+
+        self.gridLayout.addItem(self.verticalSpacer_2, 1, 1, 1, 1)
 
 
-        self.verticalLayout.addWidget(self.frame_path)
+        self.verticalLayout_3.addWidget(self.frame_comment)
+
+
+        self.verticalLayout.addWidget(self.group_box_save)
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -150,14 +222,22 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
-        self.label_icon_version.setText(QCoreApplication.translate("Form", u"Icon", None))
-        self.label_version.setText(QCoreApplication.translate("Form", u"Version", None))
-        self.checkbox_next_available_version.setText(QCoreApplication.translate("Form", u"Next Available Version", None))
+        self.group_box_current.setTitle(QCoreApplication.translate("Form", u"Current", None))
         self.label_icon_workfile.setText(QCoreApplication.translate("Form", u"Icon", None))
         self.label_workfile.setText(QCoreApplication.translate("Form", u"Workfile", None))
         self.line_edit_workfile.setPlaceholderText(QCoreApplication.translate("Form", u"Workfile...", None))
         self.label_icon_path.setText(QCoreApplication.translate("Form", u"Icon", None))
         self.label_path.setText(QCoreApplication.translate("Form", u"Path", None))
         self.line_edit_path.setPlaceholderText(QCoreApplication.translate("Form", u"Path...", None))
+        self.group_box_save.setTitle(QCoreApplication.translate("Form", u"Save", None))
+        self.label_icon_version.setText(QCoreApplication.translate("Form", u"Icon", None))
+        self.label_version.setText(QCoreApplication.translate("Form", u"Version", None))
+        self.checkbox_next_available_version.setText(QCoreApplication.translate("Form", u"Next Available Version", None))
+        self.label_icon_to_save.setText(QCoreApplication.translate("Form", u"Icon", None))
+        self.label_to_save.setText(QCoreApplication.translate("Form", u"To Save", None))
+        self.line_edit_to_save.setPlaceholderText(QCoreApplication.translate("Form", u"Path...", None))
+        self.label_icon_comment.setText(QCoreApplication.translate("Form", u"Icon", None))
+        self.label_comment.setText(QCoreApplication.translate("Form", u"Comment", None))
+        self.text_edit_comment.setPlaceholderText(QCoreApplication.translate("Form", u"Comment...", None))
     # retranslateUi
 

@@ -6,7 +6,7 @@
  a single file. -->
 
     <shelfSet name="fxquinox" label="Fxquinox">
-        <readOnly />
+        <!-- <readOnly /> -->
         <memberToolshelf name="fxquinox" inPosition="1" />
     </shelfSet>
 

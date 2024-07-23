@@ -19,7 +19,9 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
     # The `show_thumbnail` flag should be stored in the `Qt.UserRole + 1` as bool
     # The thumbnail path should be stored in the `Qt.UserRole + 2` as str
 
-    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
+    def sizeHint(
+        self, option: QStyleOptionViewItem, index: QModelIndex
+    ) -> QSize:
         """Return the size hint for the item at the given index.
 
         Args:
@@ -30,14 +32,25 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
             QSize: The size hint for the item.
         """
         show_thumbnail = index.data(Qt.UserRole + 1)
-        if show_thumbnail is None or show_thumbnail:  # Show thumbnail by default
+        if (
+            show_thumbnail is None or show_thumbnail
+        ):  # Show thumbnail by default
             original_size = super().sizeHint(option, index)
-            return QSize(original_size.width(), 50)  # Increased item height for thumbnails
+            return QSize(
+                original_size.width(), 50
+            )  # Increased item height for thumbnails
         else:
             original_size = super().sizeHint(option, index)
-            return QSize(original_size.width(), 20)  # Reduced item height without thumbnails
+            return QSize(
+                original_size.width(), 20
+            )  # Reduced item height without thumbnails
 
-    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(
+        self,
+        painter: QPainter,
+        option: QStyleOptionViewItem,
+        index: QModelIndex,
+    ) -> None:
         """Paint the item at the given index with the given painter.
 
         Args:
@@ -50,11 +63,12 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
         if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
         else:
-            # Draw alternating row colors
-            if index.row() % 2 == 0:
-                painter.fillRect(option.rect, option.palette.base())
-            else:
-                painter.fillRect(option.rect, option.palette.alternateBase())
+            pass
+            # # Draw alternating row colors
+            # if index.row() % 2 == 0:
+            #     painter.fillRect(option.rect, option.palette.base())
+            # else:
+            #     painter.fillRect(option.rect, option.palette.alternateBase())
 
         # Initialize variables for thumbnail dimensions and offsets
         x_offset = 5
@@ -64,14 +78,23 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
         # Check if it's the first column and the thumbnail should be shown
         if index.column() == 0:
             show_thumbnail = index.data(Qt.UserRole + 1)
-            if show_thumbnail is None or show_thumbnail:  # Show thumbnail by default
+            if (
+                show_thumbnail is None or show_thumbnail
+            ):  # Show thumbnail by default
                 thumbnail_path = index.data(Qt.UserRole + 2)
                 if not thumbnail_path:
-                    thumbnail_path = str(Path(fxenvironment._FQUINOX_IMAGES) / "missing_image.png")
+                    thumbnail_path = str(
+                        Path(fxenvironment._FQUINOX_IMAGES)
+                        / "missing_image.png"
+                    )
                 thumbnail = QPixmap(thumbnail_path)
 
-                item_height = option.rect.height() - 10  # 5 pixels space on top and bottom
-                thumbnail = thumbnail.scaledToHeight(item_height - 2, Qt.SmoothTransformation)
+                item_height = (
+                    option.rect.height() - 10
+                )  # 5 pixels space on top and bottom
+                thumbnail = thumbnail.scaledToHeight(
+                    item_height - 2, Qt.SmoothTransformation
+                )
 
                 bordered_thumbnail = QPixmap(thumbnail.size() + QSize(2, 2))
                 bordered_thumbnail.fill(Qt.transparent)
@@ -82,7 +105,11 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
                 painter_with_border.setBrush(QBrush(thumbnail))
                 radius = 2
                 painter_with_border.drawRoundedRect(
-                    bordered_thumbnail.rect().marginsRemoved(QMargins(1, 1, 1, 1)), radius, radius
+                    bordered_thumbnail.rect().marginsRemoved(
+                        QMargins(1, 1, 1, 1)
+                    ),
+                    radius,
+                    radius,
                 )
                 painter_with_border.end()
 
@@ -90,10 +117,14 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
                 y = option.rect.top() + y_offset
 
                 # Draw the thumbnail
-                painter.drawPixmap(option.rect.left() + x_offset, y, bordered_thumbnail)
+                painter.drawPixmap(
+                    option.rect.left() + x_offset, y, bordered_thumbnail
+                )
 
                 # Update the width for the thumbnail with padding
-                thumbnail_width_with_padding = bordered_thumbnail.width() + x_offset * 2
+                thumbnail_width_with_padding = (
+                    bordered_thumbnail.width() + x_offset * 2
+                )
 
         # Adjust the rectangle for drawing the text and icon to not overlap the thumbnail
         text_icon_rect = QRect(

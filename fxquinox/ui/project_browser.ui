@@ -80,7 +80,7 @@
        <string>Filter the assets by name</string>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_assets">
        <attribute name="title">
@@ -90,10 +90,13 @@
         <item>
          <widget class="QFrame" name="frame_filter_assets">
           <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
+           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
+           <enum>QFrame::Plain</enum>
+          </property>
+          <property name="lineWidth">
+           <number>0</number>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout">
            <property name="leftMargin">
@@ -319,7 +322,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QCheckBox" name="checkbox_display_latest_worfiles">
+           <widget class="QCheckBox" name="checkbox_display_latest_workfiles">
             <property name="text">
              <string>Show Only Latest</string>
             </property>

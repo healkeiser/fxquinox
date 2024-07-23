@@ -1,6 +1,8 @@
 # Built-in
+import getpass
 import os
 from pathlib import Path
+import re
 import sys
 from typing import Optional
 
@@ -74,6 +76,7 @@ class FXSaveWorkfile(QDialog):
         self._toggle_next_available_version()
         self._toggle_save_button()
         self._get_current_workfile()
+        self._build_save_path()
 
     def _create_ui(self) -> None:
         """Create the UI for the Save Workfile dialog."""
@@ -83,26 +86,34 @@ class FXSaveWorkfile(QDialog):
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.ui)
         self.setWindowTitle("Save Workfile")
-        self.resize(500, 125)
+        self.resize(750, 200)
 
     def _rename_ui(self) -> None:
         """Rename the UI elements for the Save Workfile dialog."""
 
-        self.label_icon_version = self.ui.label_icon_version
-        self.label_version = self.ui.label_version
-        self.spinbox_version = self.ui.spinbox_version
-        self.checkbox_next_available_version = (
+        self.label_icon_version: QLabel = self.ui.label_icon_version
+        self.label_version: QLabel = self.ui.label_version
+        self.spinbox_version: QSpinBox = self.ui.spinbox_version
+        self.checkbox_next_available_version: QCheckBox = (
             self.ui.checkbox_next_available_version
         )
         #
-        self.label_icon_workfile = self.ui.label_icon_workfile
-        self.label_workfile = self.ui.label_workfile
-        self.line_edit_workfile = self.ui.line_edit_workfile
+        self.label_icon_workfile: QLabel = self.ui.label_icon_workfile
+        self.label_workfile: QLabel = self.ui.label_workfile
+        self.line_edit_workfile: QLineEdit = self.ui.line_edit_workfile
         self.button_box: QDialogButtonBox = self.ui.button_box
         #
-        self.label_icon_path = self.ui.label_icon_path
-        self.label_path = self.ui.label_path
-        self.line_edit_path = self.ui.line_edit_path
+        self.label_icon_path: QLabel = self.ui.label_icon_path
+        self.label_path: QLabel = self.ui.label_path
+        self.line_edit_path: QLineEdit = self.ui.line_edit_path
+        #
+        self.label_icon_to_save: QLabel = self.ui.label_icon_to_save
+        self.label_to_save: QLabel = self.ui.label_to_save
+        self.line_edit_to_save: QLineEdit = self.ui.line_edit_to_save
+        #
+        self.label_comment: QLabel = self.ui.label_comment
+        self.label_icon_comment: QLabel = self.ui.label_icon_comment
+        self.text_edit_comment: QTextEdit = self.ui.text_edit_comment
 
     def _modify_ui(self) -> None:
         """Modify the UI elements for the Save Workfile dialog."""
@@ -113,6 +124,10 @@ class FXSaveWorkfile(QDialog):
             fxicons.get_pixmap("description", width=18)
         )
         self.label_icon_path.setPixmap(fxicons.get_pixmap("folder", width=18))
+        self.label_icon_to_save.setPixmap(fxicons.get_pixmap("save", width=18))
+        self.label_icon_comment.setPixmap(
+            fxicons.get_pixmap("comment", width=18)
+        )
 
         # Contains some slots connections, to avoid iterating multiple times
         # over the buttons
@@ -122,7 +137,7 @@ class FXSaveWorkfile(QDialog):
                 button.setIcon(fxicons.get_icon("save", color="#8fc550"))
                 button.setText("Save")
                 # Create step
-                # button.clicked.connect(self._create_step)
+                button.clicked.connect(self._save_workfile)
             elif role == QDialogButtonBox.RejectRole:
                 button.setIcon(fxicons.get_icon("close", color="#ec0811"))
                 # Close
@@ -132,7 +147,11 @@ class FXSaveWorkfile(QDialog):
         self.checkbox_next_available_version.stateChanged.connect(
             self._toggle_next_available_version
         )
+        self.checkbox_next_available_version.stateChanged.connect(
+            self._get_current_version
+        )
         self.line_edit_path.textChanged.connect(self._toggle_save_button)
+        self.spinbox_version.valueChanged.connect(self._build_save_path)
 
     def _toggle_next_available_version(self) -> None:
         """Toggle the next available version spinbox."""
@@ -155,12 +174,10 @@ class FXSaveWorkfile(QDialog):
         try:
             import hou  # type: ignore
 
-            path_workfile = Path(hou.hipFile.name())
+            path_workfile = Path(hou.hipFile.basename())
             path_workfile_path = Path(hou.hipFile.path())
-
-            self.workfile = str(path_workfile)
+            self.workfile = str(path_workfile.as_posix())
             self.workfile_path = str(path_workfile_path.as_posix())
-
             self.line_edit_workfile.setText(self.workfile)
             self.line_edit_path.setText(self.workfile_path)
         except ImportError as exception:
@@ -168,9 +185,6 @@ class FXSaveWorkfile(QDialog):
 
     def _get_current_workfile(self) -> None:
         """Get the current workfile."""
-
-        _logger.debug(f"DCC: {self.dcc}")
-        _logger.debug(f"Getting current workfile...")
 
         if self.dcc == fxentities.DCC.standalone:
             pass
@@ -192,13 +206,78 @@ class FXSaveWorkfile(QDialog):
 
         self._get_current_version()
 
+    def _build_save_path(self) -> None:
+        """Build the save path for the workfile."""
+
+        directory = Path(self.line_edit_path.text()).parent
+        workfile = Path(self.line_edit_workfile.text())
+        version = self.spinbox_version.value()
+
+        # Workfile saved with fxquinox: "Research_Research_010_0010_v015.hip"
+        # Other workfile: "untitled.hip"
+
+        version_str = f"v{version:03d}"
+        base_name = workfile.stem
+        extension = workfile.suffix
+
+        # Regular expression to find an existing version pattern (e.g., v001)
+        version_pattern = re.compile(r"_v(\d{3})(\.\w+)?$")
+
+        # Check if the base name ends with a version pattern
+        if version_pattern.search(base_name):
+            # Replace the existing version with the new version
+            new_base_name = version_pattern.sub(f"_{version_str}", base_name)
+        else:
+            # Append the new version to the base name
+            new_base_name = f"{base_name}_{version_str}"
+
+        # Reconstruct the full path with the new base name and extension
+        new_path = directory / f"{new_base_name}{extension}"
+        self.line_edit_to_save.setText(new_path.as_posix())
+
+        # WRONG: "C:/Users/valen/untitled.hip/v001"
+
     def _get_current_version(self) -> None:
+        """Get the current version of the workfile."""
 
         workfile = self.line_edit_workfile.text()
         version = fxfiles.find_version_in_filename(workfile)
 
         if version:
-            self.spinbox_version.setValue(version)
+            self.spinbox_version.setValue(version + 1)
+        else:
+            self.spinbox_version.setValue(1)
+
+    def _set_workfile_metadata(
+        self,
+        file_name: str,
+        file_path: str,
+        file_dir: str,
+        version: str,
+        comment: str,
+    ) -> None:
+        """Set the metadata for the workfile.
+
+        Args:
+            file_name (str): The name of the workfile.
+            file_path (str): The path to the workfile.
+            file_dir (str): The directory of the workfile.
+            version (str): The version of the workfile, e.g. "v001".
+            comment (str): The comment for the workfile.
+        """
+
+        metadata = {
+            "creator": "fxquinox",
+            "entity": "workfile",
+            "name": file_name,
+            "path": file_path,
+            "parent": file_dir,
+            "description": "Workfile",
+            "version": version,
+            "comment": comment,
+            "user": getpass.getuser(),
+        }
+        fxfiles.set_multiple_metadata(file_path, metadata)
 
     def _save_workfile_houdini(self, file_path: str) -> None:
         """Opens the workfile in Houdini.
@@ -211,12 +290,21 @@ class FXSaveWorkfile(QDialog):
             import hou  # type: ignore
 
             hou.hipFile.save(file_path)
-            self.close()
         except ImportError as exception:
             _logger.error(f"Error: {str(exception)}")
 
     def _save_workfile(self) -> None:
         """Save the workfile."""
+
+        workfile_path = self.line_edit_to_save.text()
+        workfile_name = Path(workfile_path).name
+        workfile_dir = Path(workfile_path).parent.as_posix()
+        workfile_version = f"v{self.spinbox_version.value():03d}"
+        workfile_comment = (
+            self.text_edit_comment.toPlainText()
+            if self.text_edit_comment.toPlainText()
+            else ""
+        )
 
         if self.dcc == fxentities.DCC.standalone:
             pass
@@ -225,7 +313,15 @@ class FXSaveWorkfile(QDialog):
             pass
 
         elif self.dcc == fxentities.DCC.houdini:
-            pass
+            self._save_workfile_houdini(workfile_path)
+            self._set_workfile_metadata(
+                file_name=workfile_name,
+                file_path=workfile_path,
+                file_dir=workfile_dir,
+                version=workfile_version,
+                comment=workfile_comment,
+            )
+            self.close()
 
         elif self.dcc == fxentities.DCC.maya:
             pass
@@ -237,7 +333,7 @@ class FXSaveWorkfile(QDialog):
             pass
 
 
-def run_save_worfile(
+def run_save_workfile(
     parent: Optional[QWidget] = None,
     quit_on_last_window_closed: bool = True,
     dcc: fxentities.DCC = fxentities.DCC.standalone,
@@ -268,4 +364,4 @@ def run_save_worfile(
 
 
 if __name__ == "__main__":
-    run_save_worfile()
+    run_save_workfile()

@@ -6,9 +6,10 @@
  a single file. -->
 
     <toolshelf name="fxquinox" label="Fxquinox">
-        <readOnly />
+        <!-- <readOnly /> -->
         <memberTool name="fxquinox::project_browser" />
         <memberTool name="separator_01" />
+        <memberTool name="fxquinox::save_workfile" />
     </toolshelf>
 
 </shelfDocument>

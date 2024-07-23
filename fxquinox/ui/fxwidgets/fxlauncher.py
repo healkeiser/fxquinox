@@ -9,7 +9,6 @@ if sys.version_info < (3, 11):
 else:
     os.environ["QT_API"] = "pyside6"
 
-import subprocess
 import textwrap
 from typing import Optional, Dict
 
@@ -22,10 +21,11 @@ from qtpy.QtGui import *
 import yaml
 
 # Internal
-from fxquinox import fxentities, fxenvironment, fxlog, fxutils, fxcore
+from fxquinox import fxenvironment, fxlog, fxutils, fxcore
 from fxquinox.ui.fxwidgets import fxprojectbrowser
-from fxquinox.ui.fxwidgets.fxdialog import FXDialog
-from fxquinox.ui.fxwidgets.fxexecutablerunnerthread import FXExecutableRunnerThread
+from fxquinox.ui.fxwidgets.fxexecutablerunnerthread import (
+    FXExecutableRunnerThread,
+)
 
 
 # Log
@@ -106,10 +106,19 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
 
         if all(not value for value in self.project_info.values()):
             self.project_info = fxcore.get_project()
-        self._project_root = self.project_info.get("FXQUINOX_PROJECT_ROOT", None)
-        self._project_name = self.project_info.get("FXQUINOX_PROJECT_NAME", None)
-        self._project_assets_path = self.project_info.get("FXQUINOX_PROJECT_ASSETS_PATH", None)
-        self._project_shots_path = self.project_info.get("FXQUINOX_PROJECT_SHOTS_PATH", None)
+
+        self._project_root = self.project_info.get(
+            "FXQUINOX_PROJECT_ROOT", None
+        )
+        self._project_name = self.project_info.get(
+            "FXQUINOX_PROJECT_NAME", None
+        )
+        self._project_assets_path = self.project_info.get(
+            "FXQUINOX_PROJECT_ASSETS_PATH", None
+        )
+        self._project_shots_path = self.project_info.get(
+            "FXQUINOX_PROJECT_SHOTS_PATH", None
+        )
 
     def __handle_connections(self) -> None:
         """Connects the signals to the slots.
@@ -123,7 +132,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         self.project_changed.connect(self._update_label)
         self.project_changed.connect(self._toggle_action_state)
         self.project_changed.connect(self._load_applications)
-        self.project_changed.connect(lambda: _logger.debug(f"Project: '{self.project}'"))
+        self.project_changed.connect(
+            lambda: _logger.debug(f"Project: '{self.project}'")
+        )
 
     def __create_actions(self) -> None:
         """Creates the actions for the system tray.
@@ -163,7 +174,14 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
 
         # Fxquinox menu
         self.fxquinox_menu = QMenu("Fxquinox", self.tray_menu)
-        self.fxquinox_menu.setIcon(QIcon(str(Path(fxenvironment._FQUINOX_IMAGES) / "fxquinox_logo_light.svg")))
+        self.fxquinox_menu.setIcon(
+            QIcon(
+                str(
+                    Path(fxenvironment._FQUINOX_IMAGES)
+                    / "fxquinox_logo_light.svg"
+                )
+            )
+        )
 
         self.open_fxquinox_appdata = fxguiutils.create_action(
             self.fxquinox_menu,
@@ -204,7 +222,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
             self.log_menu.addAction(action)
 
         # Set a default log level
-        default_action = log_level_group.actions()[0]  # Setting `Debug` as default
+        default_action = log_level_group.actions()[
+            0
+        ]  # Setting `Debug` as default
         default_action.setChecked(True)
         self._set_log_level(log_levels[default_action.text()])
 
@@ -217,9 +237,16 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         )
 
         # Add actions to the tray menu
-        self.tray_menu.insertAction(self.quit_action, self.open_project_directory_action)
-        self.tray_menu.insertAction(self.open_project_directory_action, self.open_project_browser_action)
-        self.tray_menu.insertAction(self.open_project_browser_action, self.set_project_action)
+        self.tray_menu.insertAction(
+            self.quit_action, self.open_project_directory_action
+        )
+        self.tray_menu.insertAction(
+            self.open_project_directory_action,
+            self.open_project_browser_action,
+        )
+        self.tray_menu.insertAction(
+            self.open_project_browser_action, self.set_project_action
+        )
 
         self.tray_menu.insertMenu(self.quit_action, self.fxquinox_menu)
         self.fxquinox_menu.addAction(self.open_fxquinox_appdata)
@@ -253,11 +280,13 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         container_widget = QWidget()
         container_widget.setObjectName("app_launcher_container")
         container_widget.setStyleSheet(
-            "#app_launcher_container { background-color: #131212; border-top: 1px solid #424242; border-bottom: 1px solid #424242}"
+            "#app_launcher_container { background-color: #131212; border-top: 1px solid #424242; border-bottom: 1px solid #424242 }"
         )
         container_widget.setFixedSize(330, 300)
 
-        main_layout = QVBoxLayout(container_widget)  # Main layout for everything
+        main_layout = QVBoxLayout(
+            container_widget
+        )  # Main layout for everything
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(10)
 
@@ -285,7 +314,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
 
         # Line edit for additional arguments
         self.additional_args_line_edit = QLineEdit()
-        self.additional_args_line_edit.setPlaceholderText("Additional arguments...")
+        self.additional_args_line_edit.setPlaceholderText(
+            "Additional arguments..."
+        )
         fxguiutils.set_formatted_tooltip(
             self.additional_args_line_edit,
             "Additional Arguments",
@@ -306,7 +337,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         # Add the container widget to the tray menu
         self.list_apps_action = QWidgetAction(self.tray_menu)
         self.list_apps_action.setDefaultWidget(container_widget)
-        self.tray_menu.insertAction(self.open_project_browser_action, self.list_apps_action)
+        self.tray_menu.insertAction(
+            self.open_project_browser_action, self.list_apps_action
+        )
 
         # Load apps
         self._load_applications()
@@ -329,7 +362,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         # Load apps from YAML file
         project_info = self.project_info
         project_root = project_info.get("FXQUINOX_PROJECT_ROOT", None)
-        apps_config_path = Path(project_root) / ".pipeline" / "project_config" / "apps.yaml"
+        apps_config_path = (
+            Path(project_root) / ".pipeline" / "project_config" / "apps.yaml"
+        )
         if not apps_config_path.exists():
             return
         apps_config = yaml.safe_load(apps_config_path.read_text())
@@ -351,7 +386,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
                     .replace("$VERSION_PATCH$", str(version_patch))
                 )
                 commands = details.get("commands", [])
-                icon_file = details.get("icon", "").replace("$FXQUINOX_ROOT$", fxenvironment.FXQUINOX_ROOT)
+                icon_file = details.get("icon", "").replace(
+                    "$FXQUINOX_ROOT$", fxenvironment.FXQUINOX_ROOT
+                )
 
                 # Create the button
                 button = QPushButton()
@@ -359,7 +396,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
                 button.setIconSize(QSize(48, 48))
                 button.setFixedSize(button_size)
                 # button.clicked.connect(lambda exe=executable, cmds=commands: self._launch_executable(exe, cmds))
-                button.clicked.connect(partial(self._launch_executable, executable, commands))
+                button.clicked.connect(
+                    partial(self._launch_executable, executable, commands)
+                )
 
                 # Tooltip
                 version_string = (
@@ -376,7 +415,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
                     f"<b>Executable</b>: {executable if executable else None}<br><br>"
                     f"<b>Commands</b>: <code>{commands if commands else None}</code>"
                 )
-                fxguiutils.set_formatted_tooltip(button, app.capitalize(), tooltip)
+                fxguiutils.set_formatted_tooltip(
+                    button, app.capitalize(), tooltip
+                )
                 # Add the button to the grid layout
                 self.grid_layout.addWidget(button, row, col)
 
@@ -388,7 +429,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
                     row += 1
                     col = 0
 
-    def _launch_executable(self, executable: str, commands: list = None) -> None:
+    def _launch_executable(
+        self, executable: str, commands: list = None
+    ) -> None:
         """Launches the given executable, with optional commands.
 
         Args:
@@ -410,10 +453,14 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         self.runner_threads.append(runner_thread)
 
         # Delete thread on completion
-        runner_thread.finished.connect(lambda rt=runner_thread: self._on_thread_finished(rt))
+        runner_thread.finished.connect(
+            lambda rt=runner_thread: self._on_thread_finished(rt)
+        )
         runner_thread.start()
 
-        _logger.info(f"Launching executable: '{executable}' with commands: '{commands}'")
+        _logger.info(
+            f"Launching executable: '{executable}' with commands: '{commands}'"
+        )
 
     def _on_thread_finished(self, thread: FXExecutableRunnerThread) -> None:
         """Slot to handle thread finished signal. Attempt to remove the thread
@@ -443,7 +490,9 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
             color = self.colors["feedback"]["success"]["light"]
         else:
             color = self.colors["feedback"]["warning"]["light"]
-        self.label.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 12pt;")
+        self.label.setStyleSheet(
+            f"color: {color}; font-weight: bold; font-size: 12pt;"
+        )
 
     def _toggle_action_state(self) -> None:
         """Toggles the state of the actions based on the project status.
@@ -489,14 +538,18 @@ class FXLauncherSystemTray(fxwidgets.FXSystemTray):
         """Overrides the close event to handle the system tray close event."""
 
         _logger.info(f"Closed")
-        fxutils.remove_lock_file(Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock")
+        fxutils.remove_lock_file(
+            Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock"
+        )
         self.setParent(None)
         fxwidgets.FXApplication.instance().quit()
         # QApplication.instance().quit()
 
 
 def run_launcher(
-    parent: QWidget = None, quit_on_last_window_closed: bool = True, show_splashscreen: bool = False
+    parent: QWidget = None,
+    quit_on_last_window_closed: bool = True,
+    show_splashscreen: bool = False,
 ) -> None:
     """Runs the launcher UI.
 
@@ -526,10 +579,18 @@ def run_launcher(
     lock_file = Path(fxenvironment.FXQUINOX_TEMP) / "launcher.lock"
     if not fxutils.check_and_create_lock_file(lock_file):
         warning = QMessageBox(parent)
-        warning.setWindowIcon(QIcon(str(Path(fxenvironment._FQUINOX_IMAGES) / "fxquinox_logo_background_dark.svg")))
+        warning.setWindowIcon(
+            QIcon(
+                str(
+                    Path(fxenvironment._FQUINOX_IMAGES)
+                    / "fxquinox_logo_background_dark.svg"
+                )
+            )
+        )
         warning.setWindowTitle(f"Launcher Already Running")
         warning.setText(
-            f"The launcher is already running.<br><br>" f"Close the existing launcher before starting a new one."
+            f"The launcher is already running.<br><br>"
+            f"Close the existing launcher before starting a new one."
         )
         warning.setIcon(QMessageBox.Warning)
         warning.exec_()
@@ -545,10 +606,17 @@ def run_launcher(
 
     # If it doesn't exist but has been set in the environment file, error
     if project_root and not Path(project_root).exists():
-        _logger.error(f"Project set in the configuration file doesn't exist: '{project_root}'")
+        _logger.error(
+            f"Project set in the configuration file doesn't exist: '{project_root}'"
+        )
         confirmation = QMessageBox(parent)
         confirmation.setWindowIcon(
-            QIcon(str(Path(fxenvironment._FQUINOX_IMAGES) / "fxquinox_logo_background_dark.svg"))
+            QIcon(
+                str(
+                    Path(fxenvironment._FQUINOX_IMAGES)
+                    / "fxquinox_logo_background_dark.svg"
+                )
+            )
         )
         confirmation.setWindowTitle(f"Corrupted Project")
         confirmation.setText(
@@ -564,10 +632,17 @@ def run_launcher(
             return
 
         _config = {
-            "project": {"root": "", "name": "", "assets_path": "", "shots_path": ""},
+            "project": {
+                "root": "",
+                "name": "",
+                "assets_path": "",
+                "shots_path": "",
+            },
         }
         fxutils.update_configuration_file("fxquinox.cfg", _config)
-        _logger.info(f"Configuration file '{Path(fxenvironment.FXQUINOX_CONFIG_FILE).as_posix()}' updated")
+        _logger.info(
+            f"Configuration file '{Path(fxenvironment.FXQUINOX_CONFIG_FILE).as_posix()}' updated"
+        )
 
         # Refresh the current project reading the new configuration file
         project_info = fxcore.get_project(from_file=True)
@@ -577,11 +652,15 @@ def run_launcher(
     # Icon and image paths
     images_path = Path(fxenvironment._FQUINOX_IMAGES)
     launcher_icons_path = Path(fxenvironment._FXQUINOX_IMAGES_ICONS_LAUNCHER)
-    icon_path = Path(launcher_icons_path / "launcher_light.svg").resolve().as_posix()
+    icon_path = (
+        Path(launcher_icons_path / "launcher_light.svg").resolve().as_posix()
+    )
 
     # Splashscreen
     if show_splashscreen:
-        splash_image_path = Path(images_path / "splash.png").resolve().as_posix()
+        splash_image_path = (
+            Path(images_path / "splash.png").resolve().as_posix()
+        )
         information = textwrap.dedent(
             """\
         USD centric pipeline for feature animation and VFX projects. Made with love by Valentin Beaumont.
@@ -605,12 +684,22 @@ def run_launcher(
         splashscreen.showMessage("Loading project...")
         temp_widget = _FXTempWidget(parent=None)
         splashscreen.showMessage("Starting launcher...")
-        launcher = FXLauncherSystemTray(parent=None, icon=icon_path, project=project_name, project_info=project_info)
+        launcher = FXLauncherSystemTray(
+            parent=None,
+            icon=icon_path,
+            project=project_name,
+            project_info=project_info,
+        )
         splashscreen.finish(temp_widget)
 
     # No splashscreen
     else:
-        launcher = FXLauncherSystemTray(parent=None, icon=icon_path, project=project_name, project_info=project_info)
+        launcher = FXLauncherSystemTray(
+            parent=None,
+            icon=icon_path,
+            project=project_name,
+            project_info=project_info,
+        )
 
     launcher.show()
     _logger.info("Started launcher")

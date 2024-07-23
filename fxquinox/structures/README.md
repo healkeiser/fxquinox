@@ -6,7 +6,7 @@
     ├── 📁 .pipeline/
     │   ├── 📁 custom_modules/
     │   │   └── 📄 README.md
-    │   ├── 📁 worfile_presets/
+    │   ├── 📁 workfile_presets/
     │       └── 📄 README.md
     ├── 📁 production/
     │   ├── 📁 assets/
