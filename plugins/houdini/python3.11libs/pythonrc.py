@@ -6,15 +6,19 @@ instead.
 """
 
 # Third-party
+from curses import meta
 import hou
 
 # Internal
-from fxquinox import fxlog, fxenvironment
+from fxquinox import fxlog, fxenvironment, fxfiles
 
 
 # Log
 _logger = fxlog.get_logger("houdini.pythonrc")
 _logger.setLevel(fxlog.DEBUG)
+
+# Global
+metadata = None
 
 
 def _set_solaris_default_prim_paths() -> None:
@@ -30,5 +34,22 @@ def _set_solaris_default_prim_paths() -> None:
     _logger.debug(f"Lights prim path: '{hou.lop.defaultLightsPrimPath()}'")
 
 
+def _retrieve_metadata_before_save(event_type):
+    global metadata
+    if event_type == hou.hipFileEventType.BeforeSave:
+        _logger.debug(f"Triggered `BeforeSave`: '{hou.hipFile.path()}'")
+        metadata = fxfiles.get_all_metadata(hou.hipFile.path())
+
+
+def _set_metadata_after_save(event_type):
+    global metadata
+    if event_type == hou.hipFileEventType.AfterSave:
+        _logger.debug(f"Triggered `AfterSave`: '{hou.hipFile.path()}'")
+        print(type(metadata))
+        print(metadata)
+
+
 if __name__ == "__main__":
     _set_solaris_default_prim_paths()
+    hou.hipFile.addEventCallback(_retrieve_metadata_before_save)
+    hou.hipFile.addEventCallback(_set_metadata_after_save)

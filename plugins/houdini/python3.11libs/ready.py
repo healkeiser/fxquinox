@@ -42,4 +42,6 @@ def set_context_options_callback(event_type: hou.hipFileEventType) -> None:
 
 if __name__ == "__main__":
     set_context_options()  # Run a first time
-    hou.hipFile.addEventCallback(set_context_options_callback)  # Set callback to update on scene load
+    hou.hipFile.addEventCallback(
+        set_context_options_callback
+    )  # Set callback to update on scene load

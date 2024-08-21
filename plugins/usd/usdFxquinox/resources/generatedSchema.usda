@@ -10,11 +10,19 @@ class FxquinoxContextInfo "FxquinoxContextInfo" (
     string fxquinox:asset (
         doc = "If the entity is an asset, the asset."
     )
+    asset fxquinox:assetPath (
+        doc = "If the entity is an asset, the asset path."
+    )
     string fxquinox:assetType (
         doc = "If the entity is an asset, the type of asset."
     )
-    string fxquinox:entity (
-        doc = "The current context entity (asset or shot)."
+    token fxquinox:entity (
+        allowedTokens = ["asset", "shot"]
+        doc = '''The current context entity (asset or shot).\r
+\r
+        - "asset": Resolve the asset context.\r
+        - "shot": Resolve the shot context.\r
+        '''
     )
     string fxquinox:hostname (
         doc = "The current hostname (machine name)."
@@ -28,17 +36,35 @@ class FxquinoxContextInfo "FxquinoxContextInfo" (
     string fxquinox:sequence (
         doc = "If the entity is a shot, the sequence."
     )
+    asset fxquinox:sequencePath (
+        doc = "If the entity is a shot, the sequence path."
+    )
     string fxquinox:shot (
         doc = "If the entity is a shot, the shot."
+    )
+    asset fxquinox:shotPath (
+        doc = "If the entity is a shot, the shot path."
     )
     string fxquinox:step (
         doc = "The context pipeline step."
     )
+    asset fxquinox:stepPath (
+        doc = "The step path."
+    )
     string fxquinox:task (
         doc = "The context pipeline task."
     )
+    asset fxquinox:taskPath (
+        doc = "The task path."
+    )
     string fxquinox:user (
         doc = "The current username."
+    )
+    string fxquinox:workfile (
+        doc = "The workfile name."
+    )
+    asset fxquinox:workfilePath (
+        doc = "The workfile path."
     )
 }
 

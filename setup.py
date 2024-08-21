@@ -29,8 +29,14 @@ setup(
     keywords="VFX USD Qt Houdini Maya Nuke PySide2 DCC UI",
     packages=find_packages(),
     install_requires=[
-        "fxgui",
         "colorama",
+        "fxgui",
+        "mss",
+        "pillow",
+        "PySide2",
+        "PySide6",
+        "PyYAML",
+        "tabulate",
     ],
     include_package_data=True,
 )

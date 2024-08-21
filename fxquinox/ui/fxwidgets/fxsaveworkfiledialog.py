@@ -1,5 +1,6 @@
 # Built-in
 import getpass
+import mss
 import os
 from pathlib import Path
 import re
@@ -17,10 +18,10 @@ from qtpy.QtWidgets import *
 from qtpy.QtUiTools import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
-import yaml
 
 # Internal
-from fxquinox import fxentities, fxenvironment, fxfiles, fxlog
+from fxquinox import fxentities, fxenvironment, fxfiles, fxlog, fxutils
+from fxquinox.ui.fxwidgets.fxscreencapturewindow import FXScreenCaptureWindow
 
 
 # Log
@@ -66,6 +67,8 @@ class FXSaveWorkfile(QDialog):
         self.new_workfile: Optional[str] = None
         self.new_workfile_path: Optional[str] = None
 
+        self.screen_capture_window: QMainWindow = None
+
         # Methods
         self.setModal(True)
 
@@ -86,7 +89,7 @@ class FXSaveWorkfile(QDialog):
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.ui)
         self.setWindowTitle("Save Workfile")
-        self.resize(750, 200)
+        self.resize(900, 200)
 
     def _rename_ui(self) -> None:
         """Rename the UI elements for the Save Workfile dialog."""
@@ -111,6 +114,20 @@ class FXSaveWorkfile(QDialog):
         self.label_to_save: QLabel = self.ui.label_to_save
         self.line_edit_to_save: QLineEdit = self.ui.line_edit_to_save
         #
+        self.label_icon_thumbnail: QLabel = self.ui.label_icon_thumbnail
+        self.label_thumbnail: QLabel = self.ui.label_thumbnail
+        self.line_edit_thumbnail: QLineEdit = self.ui.line_edit_thumbnail
+        self.button_pick_thumbnail: QPushButton = self.ui.button_pick_thumbnail
+        self.button_discard_thumbnail: QPushButton = (
+            self.ui.button_discard_thumbnail
+        )
+        self.button_capture_thumbnail: QPushButton = (
+            self.ui.button_capture_thumbnail
+        )
+        self.button_preview_thumbnail: QPushButton = (
+            self.ui.button_preview_thumbnail
+        )
+        #
         self.label_comment: QLabel = self.ui.label_comment
         self.label_icon_comment: QLabel = self.ui.label_icon_comment
         self.text_edit_comment: QTextEdit = self.ui.text_edit_comment
@@ -125,9 +142,17 @@ class FXSaveWorkfile(QDialog):
         )
         self.label_icon_path.setPixmap(fxicons.get_pixmap("folder", width=18))
         self.label_icon_to_save.setPixmap(fxicons.get_pixmap("save", width=18))
+        self.label_icon_thumbnail.setPixmap(
+            fxicons.get_pixmap("camera", width=18)
+        )
         self.label_icon_comment.setPixmap(
             fxicons.get_pixmap("comment", width=18)
         )
+
+        self.button_pick_thumbnail.setIcon(fxicons.get_icon("folder_open"))
+        self.button_capture_thumbnail.setIcon(fxicons.get_icon("fit_screen"))
+        self.button_discard_thumbnail.setIcon(fxicons.get_icon("delete"))
+        self.button_preview_thumbnail.setIcon(fxicons.get_icon("preview"))
 
         # Contains some slots connections, to avoid iterating multiple times
         # over the buttons
@@ -152,6 +177,11 @@ class FXSaveWorkfile(QDialog):
         )
         self.line_edit_path.textChanged.connect(self._toggle_save_button)
         self.spinbox_version.valueChanged.connect(self._build_save_path)
+        self.button_pick_thumbnail.clicked.connect(self._set_thumbnail)
+        self.button_discard_thumbnail.clicked.connect(
+            lambda: self.line_edit_thumbnail.setText("")
+        )
+        self.button_capture_thumbnail.clicked.connect(self._capture_thumbnail)
 
     def _toggle_next_available_version(self) -> None:
         """Toggle the next available version spinbox."""
@@ -248,6 +278,47 @@ class FXSaveWorkfile(QDialog):
         else:
             self.spinbox_version.setValue(1)
 
+    def _set_thumbnail(self):
+        """Choose a thumbnail for the shot."""
+
+        # Get the path to the thumbnail
+        thumbnail_path = QFileDialog.getOpenFileName(
+            self,
+            caption="Select Thumbnail",
+            dir=QDir.homePath(),
+            filter="Images (*.png *.jpg *.jpeg *.bmp *.gif)",
+        )[0]
+
+        if thumbnail_path:
+            self.line_edit_thumbnail.setText(thumbnail_path)
+
+    def _capture_thumbnail(self):
+        """Capture a thumbnail for the current workfile."""
+
+        self.screen_capture_window = FXScreenCaptureWindow(
+            self,
+            entity_name=Path(self.line_edit_to_save.text()).stem,
+            entity_dir=Path(self.line_edit_to_save.text()).parent,
+        )
+        self.screen_capture_window.selection_complete.connect(
+            lambda path: self._on_thumbnail_capture_complete(path)
+        )
+        self.screen_capture_window._exec()
+
+    def _on_thumbnail_capture_complete(self, thumbnail_path: str):
+        """Handle the completion of the thumbnail capture.
+
+        Args:
+            thumbnail_path (str): The path to the captured thumbnail.
+        """
+
+        self.line_edit_thumbnail.setText(thumbnail_path)
+
+    def _preview_thumbnail(self):
+        """Preview the thumbnail for the shot."""
+
+        fxutils.open_directory(self.line_edit_thumbnail.text())
+
     def _set_workfile_metadata(
         self,
         file_name: str,
@@ -255,6 +326,7 @@ class FXSaveWorkfile(QDialog):
         file_dir: str,
         version: str,
         comment: str,
+        thumbnail: str,
     ) -> None:
         """Set the metadata for the workfile.
 
@@ -276,6 +348,7 @@ class FXSaveWorkfile(QDialog):
             "version": version,
             "comment": comment,
             "user": getpass.getuser(),
+            "thumbnail": thumbnail,
         }
         fxfiles.set_multiple_metadata(file_path, metadata)
 
@@ -300,11 +373,8 @@ class FXSaveWorkfile(QDialog):
         workfile_name = Path(workfile_path).name
         workfile_dir = Path(workfile_path).parent.as_posix()
         workfile_version = f"v{self.spinbox_version.value():03d}"
-        workfile_comment = (
-            self.text_edit_comment.toPlainText()
-            if self.text_edit_comment.toPlainText()
-            else ""
-        )
+        workfile_comment = self.text_edit_comment.toPlainText() or ""
+        workfile_thumbnail = self.line_edit_thumbnail.text() or ""
 
         if self.dcc == fxentities.DCC.standalone:
             pass
@@ -320,6 +390,7 @@ class FXSaveWorkfile(QDialog):
                 file_dir=workfile_dir,
                 version=workfile_version,
                 comment=workfile_comment,
+                thumbnail=workfile_thumbnail,
             )
             self.close()
 

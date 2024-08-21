@@ -251,7 +251,7 @@ class Ui_FXProjectBrowser(object):
 
         self.retranslateUi(FXProjectBrowser)
 
-        self.tab_assets_shots.setCurrentIndex(0)
+        self.tab_assets_shots.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(FXProjectBrowser)

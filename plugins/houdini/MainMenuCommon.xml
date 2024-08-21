@@ -15,6 +15,23 @@
             <insertBefore>help_menu</insertBefore>
             <label>Fxquinox</label>
 
+            <scriptItem id="h.fxquinox::project_browser">
+                <label>Project Browser...</label>
+                <scriptCode>
+                    <![CDATA[
+from fxquinox import fxentities
+from fxquinox.ui.fxwidgets import fxprojectbrowser
+from importlib import reload
+reload(fxprojectbrowser)
+window = fxprojectbrowser.run_project_browser(parent=hou.qt.mainWindow(), quit_on_last_window_closed=True, dcc=fxentities.DCC.houdini)
+if window:
+    window.setStyleSheet(hou.qt.styleSheet())
+                ]]>
+                </scriptCode>
+            </scriptItem>
+
+            <separatorItem />
+
             <!-- ======================== Workfile Menu ==================== -->
 
             <subMenu id="fxquinox::sub.file">
@@ -28,7 +45,9 @@ from fxquinox import fxentities
 from fxquinox.ui.fxwidgets import fxsaveworkfiledialog
 from importlib import reload
 reload(fxsaveworkfiledialog)
-fxsaveworkfiledialog.run_save_worfile(parent=hou.qt.mainWindow(), dcc=fxentities.DCC.houdini)
+dialog = fxsaveworkfiledialog.run_save_workfile(parent=hou.qt.mainWindow(), dcc=fxentities.DCC.houdini)
+if dialog:
+    dialog.setStyleSheet(hou.qt.styleSheet())
                     ]]>
                     </scriptCode>
                 </scriptItem>
@@ -37,12 +56,12 @@ fxsaveworkfiledialog.run_save_worfile(parent=hou.qt.mainWindow(), dcc=fxentities
 
             <!-- ======================== Open Directory Menu ============== -->
 
-            <titleItem>
-                <label>Environment</label>
-            </titleItem>
-
             <subMenu id="fxquinox::sub.open_directory">
                 <label>Open Parent Directory</label>
+
+                <titleItem>
+                    <label>Environment</label>
+                </titleItem>
 
                 <scriptItem id="h.fxquinox::open_job_folder">
                     <labelExpression>

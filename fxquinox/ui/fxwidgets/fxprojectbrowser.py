@@ -862,6 +862,11 @@ class FXProjectBrowserWindow(fxwidgets.FXMainWindow):
             workfile_item.setText(0, workfile_name)
             workfile_path = workfile.resolve().absolute().as_posix()
 
+            # Set thumbnail
+            thumbnail_path = fxfiles.get_metadata(workfile_path, "thumbnail")
+            if thumbnail_path:
+                workfile_item.setData(0, Qt.UserRole + 2, thumbnail_path)
+
             # Workfile
             workfile_item.setIcon(
                 0, self._get_icon_based_on_type(workfile_type)

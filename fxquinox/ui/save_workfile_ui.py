@@ -17,14 +17,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QDialogButtonBox,
     QFrame, QGridLayout, QGroupBox, QHBoxLayout,
-    QLabel, QLineEdit, QSizePolicy, QSpacerItem,
-    QSpinBox, QTextEdit, QVBoxLayout, QWidget)
+    QLabel, QLineEdit, QPushButton, QSizePolicy,
+    QSpacerItem, QSpinBox, QTextEdit, QVBoxLayout,
+    QWidget)
 
 class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(965, 294)
+        Form.resize(898, 464)
         self.verticalLayout = QVBoxLayout(Form)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.group_box_current = QGroupBox(Form)
@@ -167,6 +168,64 @@ class Ui_Form(object):
 
         self.verticalLayout_3.addWidget(self.frame_to_save)
 
+        self.frame_thumbnail = QFrame(self.group_box_save)
+        self.frame_thumbnail.setObjectName(u"frame_thumbnail")
+        self.frame_thumbnail.setFrameShape(QFrame.NoFrame)
+        self.frame_thumbnail.setFrameShadow(QFrame.Plain)
+        self.frame_thumbnail.setLineWidth(0)
+        self.horizontalLayout_5 = QHBoxLayout(self.frame_thumbnail)
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.label_icon_thumbnail = QLabel(self.frame_thumbnail)
+        self.label_icon_thumbnail.setObjectName(u"label_icon_thumbnail")
+        self.label_icon_thumbnail.setMaximumSize(QSize(18, 18))
+
+        self.horizontalLayout_5.addWidget(self.label_icon_thumbnail)
+
+        self.label_thumbnail = QLabel(self.frame_thumbnail)
+        self.label_thumbnail.setObjectName(u"label_thumbnail")
+        self.label_thumbnail.setMinimumSize(QSize(65, 0))
+        self.label_thumbnail.setMaximumSize(QSize(65, 16777215))
+        self.label_thumbnail.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
+
+        self.horizontalLayout_5.addWidget(self.label_thumbnail)
+
+        self.line_edit_thumbnail = QLineEdit(self.frame_thumbnail)
+        self.line_edit_thumbnail.setObjectName(u"line_edit_thumbnail")
+
+        self.horizontalLayout_5.addWidget(self.line_edit_thumbnail)
+
+        self.button_pick_thumbnail = QPushButton(self.frame_thumbnail)
+        self.button_pick_thumbnail.setObjectName(u"button_pick_thumbnail")
+
+        self.horizontalLayout_5.addWidget(self.button_pick_thumbnail)
+
+        self.button_capture_thumbnail = QPushButton(self.frame_thumbnail)
+        self.button_capture_thumbnail.setObjectName(u"button_capture_thumbnail")
+
+        self.horizontalLayout_5.addWidget(self.button_capture_thumbnail)
+
+        self.horizontalSpacer = QSpacerItem(20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_5.addItem(self.horizontalSpacer)
+
+        self.button_discard_thumbnail = QPushButton(self.frame_thumbnail)
+        self.button_discard_thumbnail.setObjectName(u"button_discard_thumbnail")
+
+        self.horizontalLayout_5.addWidget(self.button_discard_thumbnail)
+
+        self.horizontalSpacer_2 = QSpacerItem(20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_5.addItem(self.horizontalSpacer_2)
+
+        self.button_preview_thumbnail = QPushButton(self.frame_thumbnail)
+        self.button_preview_thumbnail.setObjectName(u"button_preview_thumbnail")
+
+        self.horizontalLayout_5.addWidget(self.button_preview_thumbnail)
+
+
+        self.verticalLayout_3.addWidget(self.frame_thumbnail)
+
         self.frame_comment = QFrame(self.group_box_save)
         self.frame_comment.setObjectName(u"frame_comment")
         self.frame_comment.setFrameShape(QFrame.NoFrame)
@@ -236,6 +295,16 @@ class Ui_Form(object):
         self.label_icon_to_save.setText(QCoreApplication.translate("Form", u"Icon", None))
         self.label_to_save.setText(QCoreApplication.translate("Form", u"To Save", None))
         self.line_edit_to_save.setPlaceholderText(QCoreApplication.translate("Form", u"Path...", None))
+        self.label_icon_thumbnail.setText(QCoreApplication.translate("Form", u"Icon", None))
+        self.label_thumbnail.setText(QCoreApplication.translate("Form", u"Thumbnail", None))
+#if QT_CONFIG(tooltip)
+        self.line_edit_thumbnail.setToolTip(QCoreApplication.translate("Form", u"<b>Thumbnail</b><hr>Choose the thumbnail image that will be displayed.", None))
+#endif // QT_CONFIG(tooltip)
+        self.line_edit_thumbnail.setPlaceholderText(QCoreApplication.translate("Form", u"Thumbnail...", None))
+        self.button_pick_thumbnail.setText(QCoreApplication.translate("Form", u"Pick", None))
+        self.button_capture_thumbnail.setText(QCoreApplication.translate("Form", u"Capture", None))
+        self.button_discard_thumbnail.setText(QCoreApplication.translate("Form", u"Discard", None))
+        self.button_preview_thumbnail.setText(QCoreApplication.translate("Form", u"Preview", None))
         self.label_icon_comment.setText(QCoreApplication.translate("Form", u"Icon", None))
         self.label_comment.setText(QCoreApplication.translate("Form", u"Comment", None))
         self.text_edit_comment.setPlaceholderText(QCoreApplication.translate("Form", u"Comment...", None))

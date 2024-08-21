@@ -1,6 +1,10 @@
 # Test folder
 _tests/
 
+#
+python310/
+python311/
+
 # Houdini
 *.hip
 *.hiplc

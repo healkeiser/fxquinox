@@ -4,6 +4,7 @@ import os
 from pathlib import Path, WindowsPath
 
 # Third-party
+from qtpy import QtWidgets
 import hou
 
 # Internal
@@ -15,7 +16,40 @@ _logger = fxlog.get_logger("houdini.contextoptions")
 _logger.setLevel(fxlog.DEBUG)
 
 
+def refresh_context_options_editor() -> None:
+    """Refresh the context options editor."""
+
+    editors = [
+        widget
+        for widget in QtWidgets.QApplication.instance().allWidgets()
+        if str(type(widget)) == "<class 'contextoptions.OptionsEditor'>"
+    ]
+    for editor in editors:
+        editor.reload()
+
+
 def set_context_options():
+    # Heading
+    context_option_name = "fxquinox_heading"
+    context_option_config = {
+        "label": "Fxquinox",
+        "type": "heading",
+        "order": 9,
+        "comment": "",
+        "menu_items": [],
+        "autovalues": False,
+        "menu_source": "",
+        "minimum": 0.0,
+        "maximum": 10.0,
+        "min_locked": False,
+        "max_locked": False,
+        "hidden": False,
+    }
+    hou.setContextOption(context_option_name, "")
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+
     # Project
     context_option_name = "fxquinox_project"
     context_option_config = {
@@ -32,9 +66,15 @@ def set_context_options():
         "max_locked": False,
         "hidden": False,
     }
-    hou.setContextOption(context_option_name, os.getenv("FXQUINOX_PROJECT_NAME", ""))
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOption(
+        context_option_name, os.getenv("FXQUINOX_PROJECT_NAME", "")
+    )
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
     # Project root
     context_option_name = "fxquinox_project_root"
@@ -52,9 +92,15 @@ def set_context_options():
         "max_locked": False,
         "hidden": True,
     }
-    hou.setContextOption(context_option_name, os.getenv("FXQUINOX_PROJECT_ROOT", ""))
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOption(
+        context_option_name, os.getenv("FXQUINOX_PROJECT_ROOT", "")
+    )
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
     # Entity
     context_option_name = "fxquinox_entity"
@@ -73,24 +119,15 @@ def set_context_options():
         "hidden": False,
     }
 
-    # {
-    #     "label": "",
-    #     "type": "string_menu",
-    #     "order": 4,
-    #     "comment": "",
-    #     "menu_items": [["Asset", "value"], ["Shot", "value"]],
-    #     "autovalues": true,
-    #     "menu_source": "",
-    #     "minimum": 0.0,
-    #     "maximum": 10.0,
-    #     "min_locked": false,
-    #     "max_locked": false,
-    #     "hidden": false,
-    # }
-
-    hou.setContextOption(context_option_name, os.getenv("FXQUINOX_ENTITY", "Shot"))
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOption(
+        context_option_name, os.getenv("FXQUINOX_ENTITY", "Shot")
+    )
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
     # Asset
     context_option_name = "fxquinox_asset"
@@ -118,18 +155,22 @@ def set_context_options():
         "hidden": False,
     }
     hou.setContextOption(context_option_name, os.getenv("FXQUINOX_ASSET", ""))
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
     # Sequence
     context_option_name = "fxquinox_sequence"
     context_option_python = (
         "import os\n"
         "from pathlib import Path\n\n"
-        "shot_root = os.getenv('FXQUINOX_PROJECT_SHOTS_PATH')\n"
-        "if not shot_root:\n"
+        "project_shots_path = os.getenv('FXQUINOX_PROJECT_SHOTS_PATH')\n"
+        "if not project_shots_path:\n"
         "    return []\n"
-        "sequences = [(sequence.name, sequence.name) for sequence in Path(shot_root).iterdir() if sequence.is_dir()]\n"
+        "sequences = [(sequence.name, sequence.name) for sequence in Path(project_shots_path).iterdir() if sequence.is_dir()]\n"
         "return sequences\n"
     )
     context_option_config = {
@@ -146,9 +187,15 @@ def set_context_options():
         "max_locked": False,
         "hidden": False,
     }
-    hou.setContextOption(context_option_name, os.getenv("FXQUINOX_SEQUENCE", ""))
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOption(
+        context_option_name, os.getenv("FXQUINOX_SEQUENCE", "")
+    )
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
     # Shot
     context_option_name = "fxquinox_shot"
@@ -156,8 +203,8 @@ def set_context_options():
         "import os\n"
         "from pathlib import Path\n"
         "import hou\n\n"
-        "shot_root = os.getenv('FXQUINOX_PROJECT_SHOTS_PATH', '')\n"
-        "if not shot_root:\n"
+        "project_shots_path = os.getenv('FXQUINOX_PROJECT_SHOTS_PATH', '')\n"
+        "if not project_shots_path:\n"
         "    return []\n"
         "sequence = hou.contextOption('fxquinox_sequence')\n"
         "path_shot_root = Path(shot_root)\n"
@@ -180,8 +227,12 @@ def set_context_options():
         "hidden": False,
     }
     hou.setContextOption(context_option_name, os.getenv("FXQUINOX_SHOT", ""))
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
     # # Step
     # context_option_name = "fxquinox_step"
@@ -189,7 +240,7 @@ def set_context_options():
     #     "import os\n"
     #     "from pathlib import Path\n"
     #     "import hou\n\n"
-    #     "shot_root = os.getenv('FXQUINOX_PROJECT_SHOTS', '')\n"
+    #     "shot_root = os.getenv('FXQUINOX_PROJECT_SHOTS_PATH', '')\n"
     #     "if not shot_root:\n"
     #     "    return []\n"
     #     "sequence = hou.contextOption('fxquinox_sequence')\n"
@@ -225,7 +276,7 @@ def set_context_options():
     #     "import os\n"
     #     "from pathlib import Path\n"
     #     "import hou\n\n"
-    #     "shot_root = os.getenv('FXQUINOX_PROJECT_SHOTS', '')\n"
+    #     "shot_root = os.getenv('FXQUINOX_PROJECT_SHOTS_PATH', '')\n"
     #     "if not shot_root:\n"
     #     "    return []\n"
     #     "sequence = hou.contextOption('fxquinox_sequence')\n"
@@ -274,16 +325,23 @@ def set_context_options():
         "hidden": False,
     }
 
-    project_shots = os.getenv("FXQUINOX_PROJECT_SHOTS", "")
+    project_shots = os.getenv("FXQUINOX_PROJECT_SHOTS_PATH", "")
     sequence = hou.contextOption("fxquinox_sequence")
     shot = hou.contextOption("fxquinox_shot")
     if project_shots and sequence and shot:
         shot_path = Path(project_shots) / sequence / shot
-        hou.setContextOption(context_option_name, fxfiles.get_metadata(shot_path.resolve().as_posix(), "cut_in"))
+        hou.setContextOption(
+            context_option_name,
+            fxfiles.get_metadata(shot_path.resolve().as_posix(), "cut_in"),
+        )
     else:
         hou.setContextOption(context_option_name, 1001)
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
     # Cut out
     context_option_name = "fxquinox_cut_out"
@@ -302,17 +360,24 @@ def set_context_options():
         "hidden": False,
     }
 
-    project_shots = os.getenv("FXQUINOX_PROJECT_SHOTS", "")
+    project_shots = os.getenv("FXQUINOX_PROJECT_SHOTS_PATH", "")
     sequence = hou.contextOption("fxquinox_sequence")
     shot = hou.contextOption("fxquinox_shot")
     if project_shots and sequence and shot:
         shot_path = Path(project_shots) / sequence / shot
-        hou.setContextOption(context_option_name, fxfiles.get_metadata(shot_path.resolve().as_posix(), "cut_out"))
+        hou.setContextOption(
+            context_option_name,
+            fxfiles.get_metadata(shot_path.resolve().as_posix(), "cut_out"),
+        )
     else:
         hou.setContextOption(context_option_name, 1100)
 
-    hou.setContextOptionConfig(context_option_name, json.dumps(context_option_config))
-    _logger.debug(f"{context_option_name}: {hou.contextOption(context_option_name)}")
+    hou.setContextOptionConfig(
+        context_option_name, json.dumps(context_option_config)
+    )
+    _logger.debug(
+        f"{context_option_name}: {hou.contextOption(context_option_name)}"
+    )
 
 
 def _entity_callback(context_option: str):
@@ -325,8 +390,8 @@ def _entity_callback(context_option: str):
     if not context_option == "fxquinox_entity":
         return
 
-    context_option_value = hou.contextOption(context_option)
-    os.environ["FXQUINOX_ENTITY"] = context_option_value if context_option_value else ""
+    context_option_value = hou.contextOption(context_option) or ""
+    os.environ["FXQUINOX_ENTITY"] = context_option_value
     _logger.debug(f"{context_option}: {context_option_value}")
 
 
@@ -340,17 +405,17 @@ def _sequence_callback(context_option: str):
     if not context_option == "fxquinox_sequence":
         return
 
-    context_option_value = hou.contextOption(context_option)
-    context_option_value = context_option_value if context_option_value else ""
+    context_option_value = hou.contextOption(context_option) or ""
     os.environ["FXQUINOX_SEQUENCE"] = context_option_value
 
-    if context_option_value is not None and context_option_value is not "":
-        path_sequence: Path = Path(os.getenv("FXQUINOX_PROJECT_SHOTS_PATH", "")) / context_option_value
-        os.environ["FXQUINOX_SEQUENCE_PATH"] = path_sequence.resolve().as_posix()
-
-        for shot in path_sequence.iterdir():
-            hou.setContextOption("fxquinox_shot", shot.name)
-            break
+    if context_option_value != None and context_option_value != "":
+        path_sequence: Path = (
+            Path(os.getenv("FXQUINOX_PROJECT_SHOTS_PATH", ""))
+            / context_option_value
+        )
+        os.environ["FXQUINOX_SEQUENCE_PATH"] = (
+            path_sequence.resolve().as_posix()
+        )
 
     _logger.debug(f"{context_option}: {context_option_value}")
 
@@ -365,37 +430,34 @@ def _shot_callback(context_option: str):
     if not context_option == "fxquinox_shot":
         return
 
-    context_option_value = hou.contextOption(context_option)
-    context_option_value = context_option_value if context_option_value else ""
+    context_option_value = hou.contextOption(context_option) or ""
     os.environ["FXQUINOX_SHOT"] = context_option_value
 
-    _logger.debug(f"{context_option}: {context_option_value}")
-
-    project_shots = os.getenv("FXQUINOX_PROJECT_SHOTS_PATH", "")
     sequence = hou.contextOption("fxquinox_sequence")
-    shot = hou.contextOption("fxquinox_shot")
 
-    if not project_shots or not sequence or not shot:
-        return
+    if context_option_value and sequence:
+        path_shot: Path = (
+            Path(os.getenv("FXQUINOX_PROJECT_SHOTS_PATH", ""))
+            / sequence
+            / context_option_value
+        )
+        os.environ["FXQUINOX_SHOT_PATH"] = path_shot.resolve().as_posix()
 
-    path_shot: Path = Path(project_shots) / sequence / shot
-    os.environ["FXQUINOX_SHOT_PATH"] = str(path_shot.resolve().as_posix())
-
-    cut_in_str = fxfiles.get_metadata(file_path=path_shot.resolve().as_posix(), metadata_name="cut_in")
-    if cut_in_str:
-        hou.setContextOption("fxquinox_cut_in", int(cut_in_str))
-
-    cut_out_str = fxfiles.get_metadata(file_path=path_shot.resolve().as_posix(), metadata_name="cut_out")
-    if cut_out_str:
-        hou.setContextOption("fxquinox_cut_out", int(cut_out_str))
+    _logger.debug(f"{context_option}: {context_option_value}")
 
 
 def add_context_options_callbacks() -> None:
     """Add callbacks on the context options."""
 
     hou.addContextOptionChangeCallback(_entity_callback)
-    _logger.debug(f"Added context option change callback: {_entity_callback.__name__}")
+    _logger.debug(
+        f"Added context option change callback: {_entity_callback.__name__}"
+    )
     hou.addContextOptionChangeCallback(_sequence_callback)
-    _logger.debug(f"Added context option change callback: {_sequence_callback.__name__}")
+    _logger.debug(
+        f"Added context option change callback: {_sequence_callback.__name__}"
+    )
     hou.addContextOptionChangeCallback(_shot_callback)
-    _logger.debug(f"Added context option change callback: {_shot_callback.__name__}")
+    _logger.debug(
+        f"Added context option change callback: {_shot_callback.__name__}"
+    )

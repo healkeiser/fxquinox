@@ -1,15 +1,3 @@
-<p align="left">
-  <a href="https://www.python.org">
-  <img src="https://img.shields.io/badge/-Python-FFD43B?style=for-the-badge&logo=python" alt="Python"/></a>
-  <img src="https://img.shields.io/badge/-Qt-284821?style=for-the-badge&logo=qt" alt="Python"/></a>
-  <img src="https://img.shields.io/badge/-Windows-00A4EF?style=for-the-badge&logo=windows" alt="Compatible with Windows"/></a>
-  <img src="https://img.shields.io/badge/-macOS-000000?style=for-the-badge&logo=apple" alt="Compatible with macOS"/></a>
-  <img src="https://img.shields.io/badge/-Linux-E95420?style=for-the-badge&logo=linux" alt="Compatible with Linux"/></a>
-</p>
-
-> [!WARNING]
-> This project is a very early WIP.
-
 <div align="center">
 
   ![Logo](https://raw.githubusercontent.com/healkeiser/fxquinox/main/images/fxquinox_logo_background_dark.svg#gh-light-mode-only)
@@ -18,15 +6,37 @@
   <h3 align="center">fxquinox</h3>
 
   <p align="center">
-    USD centric pipeline for feature animation and VFX projects
-    <br />
-    <br />
+    USD centric pipeline for feature animation and VFX projects.
+    <br/><br/>
     <a href="https://healkeiser.github.io/fxquinox"><strong>Documentation</strong></a>
-    <br />
-    <br />
+  </p>
+
+  ##
+
+  <p align="center">
+    <!-- Maintenance status -->
+    <img src="https://img.shields.io/badge/maintenance-experimental-blue?&label=Maintenance">&nbsp;&nbsp;
+    <!-- <img src="https://img.shields.io/badge/maintenance-deprecated-red.svg?&label=Maintenance">&nbsp;&nbsp; -->
+    <!-- License -->
+    <!-- <img src="https://img.shields.io/badge/License-MIT-brightgreen.svg?&logo=open-source-initiative&logoColor=white" alt="License: MIT"/>&nbsp;&nbsp; -->
+    <!-- PyPI -->
+    <!-- <a href="https://pypi.org/project/fxquinox">
+      <img src="https://img.shields.io/pypi/v/fxquinox?&logo=pypi&logoColor=white&label=PyPI" alt="PyPI version"/></a>&nbsp;&nbsp; -->
+    <!-- Last Commit -->
+    <img src="https://img.shields.io/github/last-commit/healkeiser/fxquinox?logo=github&label=Last%20Commit" alt="Last Commit"/>&nbsp;&nbsp;
+    <!-- Commit Activity -->
+    <a href="https://github.com/healkeiser/fxquinox/pulse" alt="Activity">
+      <img src="https://img.shields.io/github/commit-activity/m/healkeiser/fxquinox?&logo=github&label=Commit%20Activity"/></a>&nbsp;&nbsp;
+    <!-- GitHub stars -->
+    <img src="https://img.shields.io/github/stars/healkeiser/fxquinox" alt="GitHub Stars"/>&nbsp;&nbsp;
   </p>
 
 </div>
+
+
+
+> [!WARNING]
+> This project is a very early WIP.
 
 
 
@@ -62,15 +72,29 @@ USD centric pipeline for feature animation and VFX projects.
 
 Project Link: [fxquinox](https://github.com/healkeiser/fxquinox)
 
-<p align='left'>
+<p align='center'>
+  <!-- GitHub profile -->
+  <a href="https://github.com/healkeiser">
+    <img src="https://img.shields.io/badge/healkeiser-181717?logo=github&style=social" alt="GitHub"/></a>&nbsp;&nbsp;
+  <!-- LinkedIn -->
   <a href="https://www.linkedin.com/in/valentin-beaumont">
-  <img src="https://img.shields.io/badge/-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin" alt="LinkedIn"/></a>
+    <img src="https://img.shields.io/badge/Valentin%20Beaumont-0A66C2?logo=linkedin&style=social" alt="LinkedIn"/></a>&nbsp;&nbsp;
+  <!-- Behance -->
   <a href="https://www.behance.net/el1ven">
-  <img src="https://img.shields.io/badge/-Behance-313131?style=for-the-badge&logo=behance" alt="Behance"/></a>
+    <img src="https://img.shields.io/badge/el1ven-1769FF?logo=behance&style=social" alt="Behance"/></a>&nbsp;&nbsp;
+  <!-- X -->
   <a href="https://twitter.com/valentinbeaumon">
-  <img src="https://img.shields.io/badge/-Twitter-E1E8ED?style=for-the-badge&logo=twitter" alt="Twitter"/></a>
+    <img src="https://img.shields.io/badge/@valentinbeaumon-1DA1F2?logo=x&style=social" alt="Twitter"/></a>&nbsp;&nbsp;
+  <!-- Instagram -->
   <a href="https://www.instagram.com/val.beaumontart">
-  <img src="https://img.shields.io/badge/-Instagram-85255b?style=for-the-badge&logo=instagram" alt="Instagram"/></a>
+    <img src="https://img.shields.io/badge/@val.beaumontart-E4405F?logo=instagram&style=social" alt="Instagram"/></a>&nbsp;&nbsp;
+  <!-- Gumroad -->
+  <a href="https://healkeiser.gumroad.com/subscribe">
+    <img src="https://img.shields.io/badge/healkeiser-36a9ae?logo=gumroad&style=social" alt="Gumroad"/></a>&nbsp;&nbsp;
+  <!-- Gmail -->
+  <a href="mailto:valentin.onze@gmail.com">
+    <img src="https://img.shields.io/badge/valentin.onze@gmail.com-D14836?logo=gmail&style=social" alt="Email"/></a>&nbsp;&nbsp;
+  <!-- Buy me a coffee -->
+  <a href="https://www.buymeacoffee.com/healkeiser">
+    <img src="https://img.shields.io/badge/Buy Me A Coffee-FFDD00?&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"/></a>&nbsp;&nbsp;
 </p>
-
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/healkeiser)

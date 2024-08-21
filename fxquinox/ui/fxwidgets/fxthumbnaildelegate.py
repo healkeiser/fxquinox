@@ -62,13 +62,12 @@ class FXThumbnailItemDelegate(QStyledItemDelegate):
         # Draw the selection background for the entire item first
         if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
-        else:
-            pass
-            # # Draw alternating row colors
-            # if index.row() % 2 == 0:
-            #     painter.fillRect(option.rect, option.palette.base())
-            # else:
-            #     painter.fillRect(option.rect, option.palette.alternateBase())
+        # else:
+        #     # Draw alternating row colors
+        #     if index.row() % 2 == 0:
+        #         painter.fillRect(option.rect, option.palette.base())
+        #     else:
+        #         painter.fillRect(option.rect, option.palette.alternateBase())
 
         # Initialize variables for thumbnail dimensions and offsets
         x_offset = 5
