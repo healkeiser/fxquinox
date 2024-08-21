@@ -1,3 +1,8 @@
+> [!WARNING]
+> This project is a very early WIP.
+
+
+
 <div align="center">
 
   ![Logo](https://raw.githubusercontent.com/healkeiser/fxquinox/main/images/fxquinox_logo_background_dark.svg#gh-light-mode-only)
@@ -32,11 +37,6 @@
   </p>
 
 </div>
-
-
-
-> [!WARNING]
-> This project is a very early WIP.
 
 
 
